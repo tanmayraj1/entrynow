@@ -115,7 +115,7 @@ export default async function CityHomePage({
             scrim below keeps the white headline readable over the bright
             stage lights in the upper third. */}
         <Image
-          src="/images/hero-entry.png"
+          src="/images/hero-entry-v2.png"
           alt=""
           aria-hidden
           fill
