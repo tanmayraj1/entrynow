@@ -233,8 +233,19 @@ export function TicketPicker({
         </div>
       </div>
 
-      {/* Mobile sticky book bar — 56px, price left, CTA right */}
-      <div className="lg:hidden fixed bottom-[56px] inset-x-0 z-40 bg-surface border-t border-border px-4 py-3 flex items-center justify-between gap-3">
+      {/* Mobile sticky book bar — price left, CTA right.
+       *
+       * `bottom: var(--dock-h)`, never a hardcoded 56px. The dock is
+       * `content-box` plus `env(safe-area-inset-bottom)`, so on a notched
+       * phone it stands about 34px taller than its nominal height and a fixed
+       * 56px offset slides this bar underneath it — the Book now button was
+       * cut in half on a real iPhone and looked perfect in every emulator
+       * without a home indicator.
+       *
+       * `z-50` puts it above the dock (z-40) rather than below. If the two
+       * ever do overlap again, losing the top edge of the tab bar is a great
+       * deal better than losing the only way to buy a ticket. */}
+      <div className="lg:hidden fixed bottom-[var(--dock-h)] inset-x-0 z-50 bg-surface border-t border-border px-4 py-3 flex items-center justify-between gap-3">
         <div>
           <p className="text-[10.5px] text-ink-muted font-bold">
             {totalQty} {totalQty === 1 ? "ticket" : "tickets"}

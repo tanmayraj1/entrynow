@@ -87,6 +87,8 @@ export function TileMap({
   const [size, setSize] = useState({ width: 0, height: 0 });
   const [dragging, setDragging] = useState(false);
   const [showZoomHint, setShowZoomHint] = useState(false);
+  // "Ctrl" until a wheel event proves otherwise — see the note by the hint.
+  const [modifierLabel, setModifierLabel] = useState("Ctrl");
 
   // Latest-value refs, so the wheel and idle effects never re-subscribe on
   // every viewport tick. Synced in an effect rather than during render, and
@@ -178,6 +180,9 @@ export function TileMap({
     const onWheel = (e: WheelEvent) => {
       if (!e.ctrlKey && !e.metaKey) {
         // Let the page scroll. Say why, once, so the zoom is discoverable.
+        setModifierLabel(
+          /Mac|iPhone|iPad/.test(navigator.userAgent) ? "\u2318" : "Ctrl",
+        );
         setShowZoomHint(true);
         clearTimeout(hintTimer);
         hintTimer = setTimeout(() => setShowZoomHint(false), 1400);
@@ -399,7 +404,7 @@ export function TileMap({
         )}
       >
         <span className="rounded-full bg-white/95 px-4 py-2 text-[13px] font-bold text-ink shadow-[var(--shadow-e3)]">
-          Hold {modifierLabel()} and scroll to zoom
+          Hold {modifierLabel} and scroll to zoom
         </span>
       </div>
 
@@ -441,13 +446,18 @@ export function TileMap({
 }
 
 /**
- * "⌘" on a Mac, "Ctrl" everywhere else.
+ * A note on why the modifier label lives in state.
  *
- * Read at call time rather than module scope: `navigator` does not exist
- * during the server render, and the hint is only ever shown after a real
- * wheel event, so by then it does.
+ * The hint element is always in the DOM — it is faded with `opacity`, not
+ * conditionally rendered — so reading `navigator` during render ran on the
+ * *first* paint, not after the first wheel event as an earlier comment here
+ * claimed. The server said "Ctrl", a Mac client said "⌘", and React threw a
+ * hydration mismatch and regenerated the whole map subtree on every home-page
+ * load.
+ *
+ * It is now set inside the wheel handler, which is the exact moment the value
+ * is first needed and is an event rather than a render or an effect. The
+ * server render and the first client render agree on "Ctrl", which is all
+ * hydration asks for, and nobody ever sees that value on a Mac: the hint is
+ * invisible until the scroll that corrects it.
  */
-function modifierLabel(): string {
-  if (typeof navigator === "undefined") return "Ctrl";
-  return /Mac|iPhone|iPad/.test(navigator.userAgent) ? "⌘" : "Ctrl";
-}

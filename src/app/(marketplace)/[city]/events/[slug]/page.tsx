@@ -1,8 +1,13 @@
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { BadgeCheck, Clock, Star } from "lucide-react";
 import { Money, StatusPill } from "@/components/ui";
+import {
+  CategoryGlyph,
+  categoryAccent,
+} from "@/components/brand/category-glyph";
 import { TicketPicker } from "@/components/marketplace/ticket-picker";
 import { ZonePlan } from "@/components/marketplace/zone-plan";
 import { VenueDirections } from "@/components/marketplace/venue-directions";
@@ -59,10 +64,40 @@ export default async function EventPage({
   return (
     <div className="pb-32 lg:pb-10">
       {/* ------------------------------------------------------------ Gallery */}
-      <div
-        className="h-[240px] md:h-[360px] relative"
-        style={{ background: `var(--gradient-${event.category.gradient})` }}
-      >
+      {/* The same plate the card uses, deliberately: cover art when the
+          organizer has uploaded it, otherwise the navy plate with an oversized
+          category glyph. It used to be a category gradient here, which broke
+          two things at once — it contradicted D-019 (the gradient is reserved
+          for action), and it meant the photo someone tapped on the listing
+          vanished the moment the page opened, which reads as the wrong event
+          having loaded. */}
+      <div className="h-[240px] md:h-[360px] relative overflow-hidden bg-[#16264c]">
+        {event.coverImageUrl ? (
+          <>
+            <Image
+              src={event.coverImageUrl}
+              alt=""
+              fill
+              priority
+              sizes="100vw"
+              className="object-cover"
+            />
+            {/* The date chip and the PAUSED pill sit on top of an unknown
+                photograph, so they need their own contrast, not luck. */}
+            <div
+              aria-hidden
+              className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-black/20"
+            />
+          </>
+        ) : (
+          <span
+            aria-hidden
+            className="absolute -right-8 -bottom-10"
+            style={{ color: categoryAccent(event.category.slug) }}
+          >
+            <CategoryGlyph slug={event.category.slug} size={280} strokeWidth={1.2} />
+          </span>
+        )}
         {first && (
           <span className="absolute bottom-4 left-4 md:left-12 bg-gold text-ink text-[12px] font-extrabold px-3 py-1.5 rounded-[9px]">
             {formatIstDate(first.startsAt)}

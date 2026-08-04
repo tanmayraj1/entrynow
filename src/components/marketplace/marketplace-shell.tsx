@@ -4,7 +4,6 @@ import { DemoBanner } from "./demo-banner";
 import { isDemoMode } from "@/lib/demo";
 import { SiteFooter } from "./site-footer";
 import { MobileDock } from "./mobile-dock";
-import { DOCK_HEIGHT_PX } from "./dock-height";
 import {
   getCategories,
   getCities,
@@ -52,13 +51,12 @@ export async function MarketplaceShell({
         user={user}
         unreadCount={unreadCount}
       />
-      {/* The dock is sticky, so it overlays the last screenful. This padding
-          is what stops the footer's final rows — and any page's last CTA —
-          from sitting permanently underneath it on a phone. */}
-      <main
-        className="grow"
-        style={{ paddingBottom: `var(--dock-pad, ${DOCK_HEIGHT_PX}px)` }}
-      >
+      {/* The dock is sticky, so it overlays the last screenful. `--dock-h` is
+          what stops the footer's final rows — and any page's last CTA — from
+          sitting permanently underneath it on a phone. It carries the iOS
+          safe-area inset; a bare 56px does not, and is off by the height of
+          the home indicator on every notched device. */}
+      <main className="grow pb-[var(--dock-h)]">
         {children}
       </main>
       <SiteFooter citySlug={citySlug} />

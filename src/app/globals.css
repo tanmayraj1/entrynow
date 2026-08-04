@@ -492,13 +492,23 @@
   }
 }
 
-/* The mobile dock (category rail + tab bar) is sticky and only exists below
-   the `lg` breakpoint, so the padding it needs must disappear with it —
-   otherwise every desktop page carries 110px of dead space at the bottom. */
+/* How much room the sticky mobile dock occupies, measured from the bottom of
+   the viewport. Zero at `lg`, where the dock does not exist — otherwise every
+   desktop page would carry dead space at the bottom.
+
+   **It must include `env(safe-area-inset-bottom)`.** The dock is `content-box`
+   with that inset as padding, so on any notched iPhone it stands ~34px taller
+   than its nominal 56px. A hardcoded `bottom-[56px]` on anything above it —
+   the event page's Book now bar, for one — put the control *behind* the dock
+   by exactly the height of the home indicator, which is why the CTA was cut
+   in half on a real phone and looked fine in every desktop emulator. */
 @layer base {
+  :root {
+    --dock-h: calc(56px + env(safe-area-inset-bottom));
+  }
   @media (min-width: 1024px) {
     :root {
-      --dock-pad: 0px;
+      --dock-h: 0px;
     }
   }
 }
