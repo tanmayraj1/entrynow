@@ -441,6 +441,19 @@ interface Clause {
   rule: string;
   impl: string | null;
   test: string | null;
+  /**
+   * A decision id (e.g. "D-036") that deliberately relaxes this clause.
+   *
+   * Some clauses are overruled on purpose — the spec wins on conflict, but the
+   * product owner outranks the spec, and Part J requires the call to be
+   * written down. Without this field such a clause sits in the "not built yet"
+   * bucket forever, which is a lie in the other direction: it reads as pending
+   * work nobody has got to, when in fact it was decided against.
+   *
+   * The waiver is only accepted if the decision it names actually exists in
+   * DECISIONS.md, so no clause can be waved away without a written rationale.
+   */
+  relaxed?: string;
 }
 
 const spec = JSON.parse(
@@ -453,7 +466,9 @@ const needsTest = (c: Clause) =>
   c.kind === "invariant" || c.kind === "behaviour";
 
 const isCovered = (c: Clause) =>
-  Boolean(c.impl) && (!needsTest(c) || Boolean(c.test));
+  Boolean(c.relaxed) || (Boolean(c.impl) && (!needsTest(c) || Boolean(c.test)));
+
+const decisionsDoc = readFileSync(join(ROOT, "DECISIONS.md"), "utf8");
 
 /** A reference that points at a file which no longer exists is worse than no
  *  reference — it reads as covered. */
@@ -470,6 +485,15 @@ for (const c of spec.clauses) {
         detail: `${c.id} references a missing file: ${path}`,
       });
     }
+  }
+  if (c.relaxed && !decisionsDoc.includes(`## ${c.relaxed} `)) {
+    add({
+      check: "A8",
+      severity: "broken",
+      file: "spec-coverage.json",
+      line: 0,
+      detail: `${c.id} is relaxed by ${c.relaxed}, which is not in DECISIONS.md`,
+    });
   }
   if (!isCovered(c)) {
     add({
@@ -1033,6 +1057,7 @@ async function main() {
 
   // --- Completion meter ---------------------------------------------------
   const covered = spec.clauses.filter(isCovered).length;
+  const relaxedCount = spec.clauses.filter((c) => c.relaxed).length;
   const pct = Math.round((covered / spec.clauses.length) * 100);
   const writtenModels = modelNames.length - unwrittenModels.length;
   const bar =
@@ -1040,7 +1065,8 @@ async function main() {
 
   console.log(
     `\n  \x1b[1mCompletion\x1b[0m  ${bar}  \x1b[1m${pct}%\x1b[0m` +
-      `   spec ${covered}/${spec.clauses.length} · models written ${writtenModels}/${modelNames.length}`,
+      `   spec ${covered}/${spec.clauses.length} · models written ${writtenModels}/${modelNames.length}` +
+      (relaxedCount ? ` · ${relaxedCount} relaxed by decision` : ""),
   );
 
   if (findings.length > 0) {

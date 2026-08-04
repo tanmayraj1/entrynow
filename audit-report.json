@@ -72,8 +72,8 @@
     "/tickets/[ticketNumber]"
   ],
   "completion": {
-    "pct": 43,
-    "specCovered": 57,
+    "pct": 45,
+    "specCovered": 60,
     "specTotal": 132,
     "modelsWritten": 33,
     "modelsTotal": 47,
@@ -206,13 +206,6 @@
       "severity": "incomplete",
       "file": "spec A",
       "line": 0,
-      "detail": "A1.1 untested — Visitor may browse everything public but cannot book without phone verificat"
-    },
-    {
-      "check": "A8",
-      "severity": "incomplete",
-      "file": "spec A",
-      "line": 0,
       "detail": "A1.4 untested — Scanner Staff is a User with scan-only permission scoped per event and gate"
     },
     {
@@ -332,13 +325,6 @@
       "severity": "incomplete",
       "file": "spec C",
       "line": 0,
-      "detail": "C1.5 unimplemented — Google/email auth still requires phone verification before the first booking"
-    },
-    {
-      "check": "A8",
-      "severity": "incomplete",
-      "file": "spec C",
-      "line": 0,
       "detail": "C2.1 unimplemented — First visit IP-geo guesses the city and offers a confirm/change banner; the "
     },
     {
@@ -368,13 +354,6 @@
       "file": "spec C",
       "line": 0,
       "detail": "C3.4 untested — Multi-session events default to the nearest upcoming session; sold-out sessi"
-    },
-    {
-      "check": "A8",
-      "severity": "incomplete",
-      "file": "spec C",
-      "line": 0,
-      "detail": "C4.3 unimplemented — Attendee name per ticket, editable until payment; buyer phone and email capt"
     },
     {
       "check": "A8",
@@ -865,6 +844,27 @@
       "file": "src/lib/adapters/sms.ts",
       "line": 0,
       "detail": "driver \"twilio\" is declared in .env.example but not implemented"
+    },
+    {
+      "check": "A11",
+      "severity": "incomplete",
+      "file": "src/lib/adapters/email.ts",
+      "line": 0,
+      "detail": "driver \"ses\" is declared in .env.example but not implemented"
+    },
+    {
+      "check": "A11",
+      "severity": "incomplete",
+      "file": "src/lib/adapters/email.ts",
+      "line": 0,
+      "detail": "driver \"resend\" is declared in .env.example but not implemented"
+    },
+    {
+      "check": "A11",
+      "severity": "incomplete",
+      "file": "src/lib/adapters/email.ts",
+      "line": 0,
+      "detail": "driver \"postmark\" is declared in .env.example but not implemented"
     },
     {
       "check": "A11",

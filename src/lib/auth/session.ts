@@ -59,10 +59,20 @@ export interface SessionUser {
 /** Issue a session and set the cookie. */
 export async function createSession(
   userId: string,
-  meta?: { userAgent?: string; ip?: string },
+  meta?: {
+    userAgent?: string;
+    ip?: string;
+    /**
+     * Lifetime in days. Guest checkout passes a short one: that session was
+     * issued on an unverified claim to a phone number, so it should expire
+     * well before a session backed by a real OTP (D-036).
+     */
+    days?: number;
+  },
 ) {
   const sessionId = randomUUID();
-  const expiresAt = new Date(Date.now() + MAX_AGE_DAYS * 86_400_000);
+  const days = meta?.days ?? MAX_AGE_DAYS;
+  const expiresAt = new Date(Date.now() + days * 86_400_000);
 
   await db.session.create({
     data: {
@@ -77,7 +87,7 @@ export async function createSession(
   const token = await new SignJWT({ sid: sessionId, uid: userId })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
-    .setExpirationTime(`${MAX_AGE_DAYS}d`)
+    .setExpirationTime(`${days}d`)
     .sign(secret());
 
   const jar = await cookies();
@@ -173,6 +183,12 @@ export async function findOrCreateUserByPhone(phone: string) {
   const existing = await db.user.findUnique({ where: { phone } });
   if (existing) {
     if (!existing.phoneVerifiedAt) {
+      // First real proof that someone holds this number. The row may have been
+      // created by a guest checkout, where all anyone proved was that they
+      // could type it — so every session minted under that weaker claim is
+      // revoked here, before the new one is issued (D-036).
+      const { claimUserSessions } = await import("./guest");
+      await claimUserSessions(existing.id);
       return db.user.update({
         where: { id: existing.id },
         data: { phoneVerifiedAt: new Date() },

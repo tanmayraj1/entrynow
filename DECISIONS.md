@@ -668,3 +668,82 @@ Found while building the portals. Each had been quietly passing over real code.
   read as dead code. `SessionScan` and `ScanLog` were reported unwritten while
   the gate was using them. It now also matches `INSERT INTO`/`UPDATE`/`DELETE
   FROM` against each model's `@@map` name.
+
+## D-035 — Each portal gets its own front door, and a signed-out visitor is sent to it
+
+**Conflict:** none in the documents; a product-owner request ("keep the admin
+and organizer login separate, on their own page"), plus one behaviour of D-028
+that turned out to be hostile to the people it was protecting.
+
+Everyone signed in at `/auth`. That page is written for an attendee — *"Sign in
+to book"*, the terms line, the marketplace header offering festivals and
+categories — so an organizer arriving to check last night's sales landed
+somewhere plainly not meant for them. `/organizer/login` and `/admin/login` now
+exist, each in its portal's theme, with no marketplace chrome.
+
+**They are presentation, not a boundary.** Same credential store; a staff
+account still signs in fine from `/auth`. What keeps a stranger out is
+`requireOrganizer` / `requireAdmin` on every route *and* every action. Nothing
+about a separate URL should ever be mistaken for the gate.
+
+Phone + OTP only on both. No staff row has a `passwordHash` — the email path
+exists so a demo reviewer can sign in without an SMS provider (D-025) — so an
+email tab there would be a door that cannot open.
+
+To sit outside their own portal's guard, each needs its own route group; the
+admin routes moved into `src/app/admin/(portal)/`.
+
+**The D-028 amendment.** That decision said `notFound()`, never
+`redirect("/auth")`, because a redirect confirms a route exists and hands an
+attacker a map. That reasoning is sound for an *authenticated* caller probing
+for surfaces, and that case still 404s. It is wrong for a caller with **no
+session at all**: an organizer whose session simply expired got a bare 404 on a
+portal they use daily, with nothing to click. They are now redirected to that
+portal's sign-in page — which is public, linked from the footer, and therefore
+gives away nothing anybody could not already see.
+
+## D-036 — Checkout works without an account, and cannot be used to reach one
+
+**Conflict:** direct, with spec C1.5 — *phone verification before a first
+booking*. The product owner asked for guest checkout collecting name, phone and
+email. Under Part J's ordering (attendee money → organizer trust → platform
+revenue) the attendee-facing argument wins: making an account the price of a
+ticket is the largest single drop-off on a checkout, and everything the
+platform actually needs from a buyer is collected either way. C1.5 is
+**deliberately relaxed**, not overlooked, and `spec-coverage.json` records it as
+such rather than silently reading as satisfied.
+
+A guest booking still writes a `User` row. `Booking.userId` is required, and
+tickets, refunds, the wallet and the gate all hang off it — so guest checkout
+fills in the fields that matter and creates an *unclaimed* row, and nothing
+downstream needs a guest branch.
+
+**The trap, and the two things that close it.** `User.phone` is unique, so the
+obvious "find or create by phone" hands the buyer whatever account already holds
+the number they typed. That is an account takeover in one line.
+
+1. **A claimed row is never handed out.** Claimed means someone has proven they
+   hold it: `phoneVerifiedAt`, a `passwordHash`, or an organizer/admin role.
+   Those are refused and sent to OTP sign-in. Only a row nobody could sign into
+   by any other means is reused — and reusing it is what keeps a returning
+   guest's tickets together instead of scattered across duplicates. The same
+   check applies to email, which is also unique.
+2. **Claiming a row revokes every session on it.** Otherwise the attack runs the
+   other way: guest-book against a stranger's number today, keep the cookie,
+   inherit the account the day they verify it. `claimUserSessions` is called
+   from the OTP path, and only when the row was previously unverified, so an
+   ordinary repeat sign-in does not log anyone out of their other devices.
+
+A guest session lasts 7 days rather than the usual term. It was issued on an
+unverified claim; it is enough to collect the tickets and come back for the
+event, and it is not a standing login.
+
+**Delivery.** Capture now calls `deliverTickets` — an in-app notification
+always, then SMS to the buyer's phone and email to their address. It runs
+*outside* the capture transaction and swallows its own errors: the money has
+moved, and a provider outage must produce a confirmed booking with a failed
+send, never a rolled-back payment. `EMAIL_DRIVER` is a new adapter whose
+sandbox driver logs rather than sends, so the delivery path is real code on
+every capture with nothing new to wire when a provider is added. Until then
+**no screen may claim a message arrived** — the confirmation shows the ticket
+itself, which is the thing that actually admits someone.

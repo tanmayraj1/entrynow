@@ -20,8 +20,9 @@
       "part": "A",
       "kind": "behaviour",
       "rule": "Visitor may browse everything public but cannot book without phone verification",
-      "impl": "src/app/booking/new/page.tsx",
-      "test": null
+      "impl": "src/lib/auth/guest.ts",
+      "test": "tests/auth/guest.test.ts",
+      "relaxed": "D-036"
     },
     {
       "id": "A1.3",
@@ -348,8 +349,9 @@
       "part": "C",
       "kind": "behaviour",
       "rule": "Google/email auth still requires phone verification before the first booking",
-      "impl": null,
-      "test": null
+      "impl": "src/lib/auth/guest.ts",
+      "test": "tests/auth/guest.test.ts",
+      "relaxed": "D-036"
     },
     {
       "id": "C2.1",
@@ -444,8 +446,8 @@
       "part": "C",
       "kind": "ui",
       "rule": "Attendee name per ticket, editable until payment; buyer phone and email captured",
-      "impl": null,
-      "test": null
+      "impl": "src/components/marketplace/guest-checkout.tsx",
+      "test": "tests/auth/guest.test.ts"
     },
     {
       "id": "C4.4",

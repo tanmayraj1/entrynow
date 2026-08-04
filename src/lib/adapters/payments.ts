@@ -155,10 +155,20 @@ export function getPaymentsAdapter(): PaymentsAdapter {
  * checkout silently.
  */
 export function webhookUrl(): string {
+  return `${appUrl()}/api/webhooks/payments`;
+}
+
+/**
+ * This deployment's public origin, with no trailing slash.
+ *
+ * Shared with ticket delivery, which has to put a real link in an SMS — a
+ * message that says "open localhost:3000" is worse than no message.
+ */
+export function appUrl(): string {
   const explicit = process.env.NEXT_PUBLIC_APP_URL;
   const vercel = process.env.VERCEL_URL
     ? `https://${process.env.VERCEL_URL}`
     : undefined;
   const base = explicit ?? vercel ?? "http://localhost:3000";
-  return `${base.replace(/\/+$/, "")}/api/webhooks/payments`;
+  return base.replace(/\/+$/, "");
 }

@@ -16,6 +16,7 @@ import {
   sellSeatsDirect,
 } from "./inventory";
 import { cancelHoldRelease } from "@/lib/jobs/hold-release";
+import { deliverTickets } from "./deliver";
 
 /**
  * Payment capture — the moment a hold becomes tickets and money.
@@ -295,9 +296,15 @@ export async function captureBooking(input: CaptureInput): Promise<CaptureResult
   });
 
   // Best-effort, outside the transaction: a queue failure must not undo a
-  // captured payment.
+  // captured payment. Neither must a failed SMS — `deliverTickets` swallows
+  // and logs its own errors for exactly that reason, and the tickets are in
+  // the database regardless of whether any message went out.
+  //
+  // Guarded on `!replayed` so a gateway retrying a webhook it already sent
+  // does not text the buyer a second time.
   if (result.ok && !result.replayed) {
     await cancelHoldRelease(input.bookingId);
+    await deliverTickets(input.bookingId);
   }
 
   return result;

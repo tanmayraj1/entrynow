@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { AlertCircle } from "lucide-react";
 import { Button, Money } from "@/components/ui";
-import { SignInPrompt } from "@/components/marketplace/sign-in-prompt";
+import { GuestCheckout } from "@/components/marketplace/guest-checkout";
 import { CheckoutButton } from "@/components/marketplace/checkout-button";
 import { getSessionUser } from "@/lib/auth/session";
 import { getBusinessConfig } from "@/lib/config";
@@ -60,13 +60,10 @@ export default async function NewBookingPage({
 
   const user = await getSessionUser();
   if (!user) {
-    return (
-      <SignInPrompt
-        title="Sign in to hold your seats"
-        body="Your number is how the tickets reach you and how you're identified at the gate. It takes about twenty seconds."
-        next={returnTo}
-      />
-    );
+    // No account required (D-036). The three fields collected here are the
+    // three the platform actually needs, and the buyer comes straight back to
+    // this URL with their selection intact.
+    return <GuestCheckout next={returnTo} />;
   }
 
   // Invariant I4: prices come from the database, never from the URL.
