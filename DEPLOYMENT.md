@@ -1,0 +1,175 @@
+# Deploying Entry Now
+
+**Read this first: what this deploy can and cannot do.**
+
+Today's build takes **no real money**. `PAYMENTS_DRIVER=sandbox` means there is
+no gateway wired, there is no payout run to pay organizers with, refunds land
+in a non-withdrawable wallet rather than back on a card, and attendees cannot
+cancel their own booking — only an admin can. That makes this a **client-review
+deploy**, and it must sit behind access control. See "Before real money" at the
+bottom for the list that changes that.
+
+Target stack: **Vercel** (app) + **Neon** (Postgres) + **Upstash** (Redis).
+No third host is needed yet — see "Background jobs".
+
+---
+
+## 1. Database — Neon
+
+Create a project, then take **both** connection strings from the dashboard.
+They are not interchangeable:
+
+| String | Host | Used for |
+|---|---|---|
+| **Pooled** | `…-pooler.…neon.tech` | `DATABASE_URL` — the app |
+| **Direct** | `….neon.tech` | `DIRECT_DATABASE_URL` — migrations |
+
+`src/lib/db.ts` builds Prisma with `PrismaPg`, which owns a real `pg` pool.
+Every Vercel function instance opens its own, so the app **must** use the
+pooled host or you will exhaust Neon's connection limit under any real traffic.
+
+Migrations must use the **direct** host — `prisma migrate` needs a session-level
+connection that PgBouncer cannot give it.
+
+Then, from your machine, against the direct URL:
+
+```bash
+DATABASE_URL="<direct-url>" npx prisma migrate deploy
+```
+
+Seed it — this is a demo, so the demo data is the point:
+
+```bash
+DATABASE_URL="<direct-url>" npm run db:seed
+```
+
+The seed prints every login it creates. It is **destructive**; never point it
+at a database you care about.
+
+## 2. Redis — Upstash
+
+Create a Redis database in the same region as your Vercel deployment. Take the
+`rediss://` TCP URL (not the REST one — `src/lib/redis.ts` uses `ioredis`).
+
+Redis holds OTP codes, rate-limit counters and short-lived checkout state. If
+it is unreachable the site still serves, but phone sign-in stops working.
+
+## 3. Vercel
+
+Import the GitHub repo. Framework auto-detects as Next.js. Leave the build
+command alone — `postinstall` runs `prisma generate`, which is why the
+generated client is not in git.
+
+### Environment variables
+
+| Key | Value |
+|---|---|
+| `DATABASE_URL` | Neon **pooled** URL |
+| `DIRECT_DATABASE_URL` | Neon **direct** URL |
+| `REDIS_URL` | Upstash `rediss://…` |
+| `SESSION_JWT_SECRET` | **generate a new one** — see below |
+| `QR_JWT_SECRET` | **generate a new one** |
+| `NEXT_PUBLIC_APP_URL` | `https://<your-domain>` |
+| `NEXT_PUBLIC_DEFAULT_CITY` | `ahmedabad` |
+| `NEXT_PUBLIC_MAP_TILE_URL` | see "Map tiles" |
+| `NEXT_PUBLIC_MAP_ATTRIBUTION` | whatever that provider's licence requires |
+| `DEMO_MODE` | `true` |
+| `DEMO_MODE_ALLOW_PRODUCTION` | `true` — **only after step 4** |
+| `RUN_WORKERS` | `false` |
+
+Everything else in `.env.example` keeps its default.
+
+**Generate the two secrets. Do not reuse the values in `.env.example` —
+they are public in this repository:**
+
+```bash
+node -e "const c=require('crypto');console.log('SESSION_JWT_SECRET='+c.randomBytes(32).toString('hex'));console.log('QR_JWT_SECRET='+c.randomBytes(32).toString('hex'))"
+```
+
+Rotate `QR_JWT_SECRET` **before** any ticket is issued. Rotating it invalidates
+every outstanding QR — that property is deliberate (D-032), but you only want
+to exercise it once, on an empty database.
+
+`RUN_WORKERS=false` is correct on Vercel. Serverless instances cannot host
+BullMQ workers, and without the flag every cold start would open a Redis
+connection for a worker that dies with the invocation. Expired holds are still
+reclaimed by the sweep at the top of every `createBooking` (D-022).
+
+## 4. Access control — do this before `DEMO_MODE_ALLOW_PRODUCTION`
+
+`DEMO_MODE=true` means the OTP is a fixed `123456` for every seeded number,
+including `9000000001`, the **super admin**. Anyone with the URL can sign in
+as anyone.
+
+The server refuses to boot a production build in demo mode unless
+`DEMO_MODE_ALLOW_PRODUCTION=true` is also set. That flag is you asserting the
+deployment is gated. Gate it first:
+
+- Vercel **Deployment Protection** → Password Protection (simplest), or
+- Vercel Authentication (team members only), or
+- an IP allowlist.
+
+Then set the flag, and share the URL and the password together.
+
+## 5. Verify the deploy
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" https://<domain>/ahmedabad   # 200
+curl -s -o /dev/null -w "%{http_code}\n" https://<domain>/admin       # 404 signed out
+curl -sI https://<domain>/ | grep -i strict-transport                 # header present
+```
+
+`/admin` and `/organizer/dashboard` returning **404** signed out is correct,
+not a bug — the portals never confirm a route exists to someone who cannot use
+it.
+
+Then sign in and click through all four surfaces. Credentials are printed by
+`npm run db:seed`; the defaults are in `CLAUDE.md`.
+
+---
+
+## Background jobs
+
+Nothing extra is needed today. Only `hold-release` exists and it has a
+synchronous fallback, so a deployment with no worker is a supported
+configuration.
+
+That changes when the payout run and the reminder jobs land (Iteration 8).
+At that point pick one:
+
+- **Vercel Cron** hitting protected API routes. Enough for everything
+  cron-shaped — the 02:00 IST payout run, T-24h/T-2h reminders, digests. No
+  new host.
+- **A background worker** (Render, Railway, Fly) running the same image with
+  `RUN_WORKERS=true`. Worth it only for BullMQ's retry and backoff semantics,
+  which matter for refund-retry and payout-retry, where giving up silently
+  costs someone money.
+
+## Map tiles
+
+`NEXT_PUBLIC_MAP_TILE_URL` defaults to OpenStreetMap's public endpoint, which
+is rate-limited and **not licensed for production traffic**. Point it at a paid
+provider or your own proxy before launch, and update the attribution string to
+whatever that provider requires. The attribution is a licence condition, not
+decoration — the same is true of `/legal/image-credits` for the event
+photography.
+
+## Before real money
+
+Everything above ships a demo. Taking a rupee needs all of:
+
+1. **A real payments driver** — `PAYMENTS_DRIVER=razorpay` plus the three
+   `RAZORPAY_*` keys, and the webhook endpoint registered at the gateway.
+2. **The payout run** — approve and mark-paid exist and sweep the ledger
+   correctly, but nothing creates the batches, so money would come in with no
+   path out to organizers.
+3. **Source-mode refunds** — refunds currently credit a non-withdrawable
+   wallet. Refunding a card payment that way is not acceptable; this needs a
+   gateway refund adapter.
+4. **User-initiated cancellation** — `refundBooking` has exactly one caller,
+   in the admin actions. Attendees cannot cancel their own booking.
+5. **`DEMO_MODE=false`**, with a real SMS driver so OTP is not a fixed code.
+6. **`STORAGE_DRIVER`** — until it exists, organizers cannot upload a cover
+   image or KYC documents.
+
+Items 2 and 4 are the next two iterations in the plan.
