@@ -230,11 +230,19 @@ do it **before** selling, not after.
   dropped it as invalid, and the sticky dock covered the last 56px of every
   mobile page. Shared constants get their own plain module
   (`src/components/marketplace/dock-height.ts`).
-- **A refused page does not answer 404.** Both portals guard in a `layout.tsx`
-  and check row ownership in the `page`, so Next has already streamed the layout
-  and committed a 200 before anything calls `notFound()` — the 404 arrives as a
-  *body*. Any check asserting on status alone is measuring the wrong thing;
-  `scripts/preflight.mts` asserts on content with a canary instead.
+- **A `loading.tsx` above a `notFound()` turns a 404 into a 200** (D-037). It is
+  a Suspense boundary, so Next flushes the shell — and commits the status —
+  before anything below it runs. Adding preloaders "everywhere" silently made
+  `/`, unknown cities, dead event URLs, foreign bookings and every portal
+  refusal answer 200. **Keep a `loading.tsx` only where nothing beneath it can
+  404**; today that is `account/` and `admin/(portal)/` alone. Removing one is
+  not a blank screen — Next keeps the current page up during a client
+  navigation.
+- **A refused page can still answer 200 even without that.** A guard in a
+  `layout.tsx` with the row check in the `page` streams the layout first, so the
+  404 arrives as a *body*. Any check asserting on status alone is measuring the
+  wrong thing; `scripts/preflight.mts` asserts on content with a canary drawn
+  from the protected row.
 - **Guest checkout must never reach a claimed account.** `User.phone` is unique,
   so "find or create by phone" is one line away from an account takeover. See
   `src/lib/auth/guest.ts` and D-036.

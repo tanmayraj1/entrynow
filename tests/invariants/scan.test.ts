@@ -311,6 +311,92 @@ describe("the F1.3 check order", () => {
     expect(row.status).toBe("ACTIVE");
   });
 
+  it("refuses an organizer scanning at another organizer's event", async () => {
+    // The concrete worry: organizer B opens the scanner and starts admitting
+    // people at organizer A's gate. B is a real organizer with real staff of
+    // their own, so "is this a legitimate user" is the wrong question — the
+    // check has to be about *this* event.
+    const other = await db.organizerProfile.findFirstOrThrow({
+      where: { userId: { not: staffUserId } },
+      select: { userId: true },
+    });
+    const ticket = await makeTicket();
+
+    const outcome = await scanTicket({
+      token: ticket.token,
+      eventId,
+      gateId: gateAId,
+      staffUserId: other.userId,
+    });
+
+    expect(outcome.result).toBe("NOT_AUTHORIZED");
+    // Not one byte about the attendee reaches the wrong organizer's screen.
+    expect(outcome.ticket).toBeUndefined();
+    const row = await db.ticket.findUniqueOrThrow({
+      where: { id: ticket.id },
+      select: { status: true },
+    });
+    expect(row.status).toBe("ACTIVE");
+  });
+
+  it("refuses a ticket sold by another organizer, presented at this gate", async () => {
+    // The mirror image, and the one an authorisation check alone would miss:
+    // the *scanner* is legitimate, and the ticket is genuine — it simply
+    // belongs to somebody else's event. It must not admit, and it must not
+    // burn the other event's ticket either.
+    const foreign = await db.ticket.findFirstOrThrow({
+      where: { eventId: { not: eventId }, status: "ACTIVE" },
+      select: { id: true, qrTokenId: true, eventId: true },
+    });
+    const foreignToken = await signQr(
+      { jti: foreign.qrTokenId, ev: foreign.eventId },
+      farFuture(),
+    );
+
+    const outcome = await scanTicket({
+      token: foreignToken,
+      eventId,
+      gateId: gateAId,
+      staffUserId,
+    });
+
+    expect(outcome.result).toBe("INVALID");
+    expect(outcome.message).toMatch(/different event/i);
+
+    const row = await db.ticket.findUniqueOrThrow({
+      where: { id: foreign.id },
+      select: { status: true, scannedAt: true },
+    });
+    expect(row.status).toBe("ACTIVE");
+    expect(row.scannedAt).toBeNull();
+  });
+
+  it("refuses a foreign ticket even on a legacy unsigned token", async () => {
+    // A signed token names its own event, so the check above short-circuits
+    // before any query. A legacy bare token does not — the only thing standing
+    // between it and admission is the `ticket.eventId !== input.eventId`
+    // comparison after the lookup. Worth its own test, because that is the
+    // line someone would delete as redundant.
+    const foreign = await db.ticket.findFirstOrThrow({
+      where: { eventId: { not: eventId }, status: "ACTIVE" },
+      select: { id: true, qrTokenId: true },
+    });
+
+    const outcome = await scanTicket({
+      token: foreign.qrTokenId,
+      eventId,
+      gateId: gateAId,
+      staffUserId,
+    });
+
+    expect(outcome.result).toBe("INVALID");
+    const row = await db.ticket.findUniqueOrThrow({
+      where: { id: foreign.id },
+      select: { status: true },
+    });
+    expect(row.status).toBe("ACTIVE");
+  });
+
   it("rejects a forged signature without touching the ticket", async () => {
     const ticket = await makeTicket();
     const forged = `${ticket.token.slice(0, -6)}AAAAAA`;

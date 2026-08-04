@@ -747,3 +747,51 @@ sandbox driver logs rather than sends, so the delivery path is real code on
 every capture with nothing new to wire when a provider is added. Until then
 **no screen may claim a message arrived** — the confirmation shows the ticket
 itself, which is the thing that actually admits someone.
+
+## D-037 — A `loading.tsx` above a `notFound()` turns a 404 into a 200
+
+**Conflict:** none in the documents. A regression I introduced, found by audit
+check A4 and worth writing down because the mechanism is invisible and the
+instinct — "add a nice preloader everywhere" — walks straight into it.
+
+The ticket-tear preloader shipped as a route-level `loading.tsx` on seven
+segments. A `loading.tsx` is a Suspense boundary, and a Suspense boundary makes
+Next **flush the response shell immediately** — which commits the HTTP status
+before any code below it runs. So every `notFound()` and `redirect()` beneath
+one silently became a **200 carrying a not-found body**:
+
+| Route | Should be | Was |
+|---|---|---|
+| `/` | 307 to the default city | 200 |
+| `/mars` (unknown city) | 404 | 200 |
+| `/ahmedabad/events/does-not-exist` | 404 | 200 |
+| `/booking/{someone else's}` | 404 | 200 |
+| `/tickets/{invalid}` | 404 | 200 |
+| organizer B on A's event | 404 | 200 |
+| a sub-admin on `/admin/finance` | 404 | 200 |
+
+Nothing looked wrong: the right screen rendered every time. But a dead event URL
+answering 200 is one a search engine keeps in its index forever, and a refusal
+answering 200 is one no monitor, crawler or client library can recognise.
+
+**The rule: keep a `loading.tsx` only where nothing beneath it can 404.**
+
+Removed from `app/`, `(marketplace)/`, `(marketplace)/[city]/`,
+`organizer/(portal)/`, `tickets/` and `scan/`. Kept on `account/` and
+`admin/(portal)/`, where it was measured to mask nothing — the admin permission
+check lives in the *layout*, which runs above the boundary, so those refusals
+still answer a real 404.
+
+Losing a fallback is not a blank screen. On a client-side navigation Next keeps
+the current page on screen until the next one is ready, which is better than a
+flash of a spinner. The cost is only on a cold hard load, and only the browser's
+own blank moment — worth it to keep the status line honest.
+
+The preloader itself is unchanged and still shows on the account hub and the
+admin portal, which are the slowest surfaces in the app.
+
+**This also explains the preflight finding in D-035's commit** from the other
+direction: the portals answer 200 on a refused *row* because their guard is in
+the layout and the ownership check is in the page. Removing the portal
+`loading.tsx` files closed that gap for the organizer portal too — those four
+checks now report a real 404 rather than "not-found body, streamed 200".
