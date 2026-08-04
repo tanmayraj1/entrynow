@@ -76,6 +76,7 @@ generated client is not in git.
 | `DEMO_MODE` | `true` |
 | `DEMO_MODE_ALLOW_PRODUCTION` | `true` — **only after step 4** |
 | `RUN_WORKERS` | `false` |
+| `SITE_PASSWORD` | a strong shared password — gates `/admin` |
 
 Everything else in `.env.example` keeps its default.
 
@@ -95,21 +96,28 @@ BullMQ workers, and without the flag every cold start would open a Redis
 connection for a worker that dies with the invocation. Expired holds are still
 reclaimed by the sweep at the top of every `createBooking` (D-022).
 
-## 4. Access control — do this before `DEMO_MODE_ALLOW_PRODUCTION`
+## 4. Access control — the admin portal only
 
 `DEMO_MODE=true` means the OTP is a fixed `123456` for every seeded number,
 including `9000000001`, the **super admin**. Anyone with the URL can sign in
 as anyone.
 
-The server refuses to boot a production build in demo mode unless
-`DEMO_MODE_ALLOW_PRODUCTION=true` is also set. That flag is you asserting the
-deployment is gated. Gate it first:
+For an attendee or an organizer that is harmless — the data is seeded. For the
+platform admin it is not: that role cancels events irreversibly, suspends
+organizers and rewrites commission rates. So `src/middleware.ts` gates
+**`/admin` and nothing else**, via HTTP Basic against `SITE_PASSWORD`. The
+marketplace, booking, organizer portal and scanner stay open, because gating
+those taxed the whole demo to protect a fraction of it.
 
-- Vercel **Deployment Protection** → Password Protection (simplest), or
-- Vercel Authentication (team members only), or
-- an IP allowlist.
+`SITE_PASSWORD` is therefore **required** whenever
+`DEMO_MODE_ALLOW_PRODUCTION=true` — the server refuses to boot on that
+combination without it. The flag was once taken at its word and was wrong
+(Vercel's free "Standard Protection" does not cover the production
+`*.vercel.app` alias), so the acknowledgement now has to be backed by the
+thing that enforces it.
 
-Then set the flag, and share the URL and the password together.
+Share the URL freely; share the password only with whoever needs the admin
+portal.
 
 ## 5. Verify the deploy
 

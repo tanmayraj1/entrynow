@@ -3,16 +3,27 @@ import { NextResponse, type NextRequest } from "next/server";
 /**
  * The access-control gate for a demo deployment.
  *
- * `DEMO_MODE` accepts a fixed OTP, so anyone who reaches the sign-in page can
- * become the seeded super admin and cancel events, move money and read every
- * organizer's data. `src/lib/demo.ts` refuses to boot a production build in
- * that state unless `DEMO_MODE_ALLOW_PRODUCTION=true` asserts the deployment
- * is behind access control — **this file is what makes that assertion true.**
+ * **Scoped to `/admin` only**, and the reason is a trade rather than an
+ * oversight. `DEMO_MODE` accepts a fixed OTP, so anyone who finds the URL can
+ * sign in as any seeded account. For an attendee or an organizer that is
+ * harmless — the data is seeded, and the worst case is someone browsing fake
+ * bookings. For the platform admin it is not: that role can cancel an event
+ * (terminal, irreversible, triggers bulk refunds), suspend an organizer and
+ * rewrite the commission rates.
  *
- * Vercel's free "Standard Protection" does not cover the production
- * `*.vercel.app` alias (it protects previews and non-production custom
- * domains), and Password Protection is a paid add-on. So the gate lives in the
- * app, where it costs nothing and is portable to any host.
+ * The realistic failure mode was never an attacker. It was a client opening
+ * the link mid-review to find half the events cancelled by a passer-by. So the
+ * gate covers exactly the surface that can cause that, and the whole
+ * marketplace, booking flow, organizer portal and gate scanner stay open —
+ * gating those taxed the entire demo to protect a fraction of it.
+ *
+ * `src/lib/demo.ts` refuses to boot a production build with
+ * `DEMO_MODE_ALLOW_PRODUCTION=true` unless `SITE_PASSWORD` is set, so this
+ * file is what makes that acknowledgement true. Vercel's free "Standard
+ * Protection" does not cover the production `*.vercel.app` alias (it covers
+ * previews and non-production custom domains) and Password Protection is a
+ * paid add-on, so the gate lives in the app, where it costs nothing and is
+ * portable to any host.
  *
  * HTTP Basic rather than a login page: the browser owns the credential prompt
  * and the re-send on every request, so there is no session, no cookie and no
@@ -79,17 +90,18 @@ function constantTimeEqual(a: string, b: string): boolean {
 }
 
 export const config = {
-  matcher: [
-    /**
-     * Everything except the payment webhook.
-     *
-     * The sandbox payments driver delivers by real HTTP POST to our own
-     * endpoint (`src/lib/adapters/payments.ts`), and a real gateway would too
-     * — neither can present Basic credentials, so gating it would break
-     * checkout on the demo and every capture in production. It is not a hole:
-     * that route verifies an HMAC signature and answers 401 to anything
-     * unsigned or forged, which `npm run preflight` asserts.
-     */
-    "/((?!api/webhooks).*)",
-  ],
+  /**
+   * The admin portal and nothing else.
+   *
+   * `/admin` catches the page itself; `/admin/:path*` catches every route
+   * under it. The payment webhook needs no exclusion at this scope — it never
+   * matched — which is just as well, because a gateway cannot present Basic
+   * credentials and gating it would break every capture.
+   *
+   * Note this protects the admin *pages*. The admin server actions are
+   * protected independently by `authorizeAdmin(permission)` on every single
+   * one of them, and would be even if this file did not exist — a middleware
+   * matcher is a convenience here, never the security boundary.
+   */
+  matcher: ["/admin", "/admin/:path*"],
 };
