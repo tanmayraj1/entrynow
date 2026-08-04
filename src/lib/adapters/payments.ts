@@ -138,8 +138,27 @@ export function getPaymentsAdapter(): PaymentsAdapter {
   }
 }
 
-/** Absolute URL of our own webhook endpoint, for drivers that self-deliver. */
+/**
+ * Absolute URL of our own webhook endpoint, for drivers that self-deliver.
+ *
+ * The fallback chain matters more than it looks. A self-delivering driver
+ * POSTs over real HTTP, so if this resolves wrongly the payment screen still
+ * "succeeds" and the booking is simply never confirmed — money taken, no
+ * ticket, no error anywhere. On a serverless host with no
+ * `NEXT_PUBLIC_APP_URL` set, the old localhost default did exactly that: the
+ * function dialled a port on itself that nothing was listening on.
+ *
+ * `VERCEL_URL` is preferred over the production alias because it names *this*
+ * deployment — a self-delivered webhook should come back to the build that
+ * created the order, not to whatever is currently aliased to production.
+ * Vercel injects it automatically, so a forgotten env var can no longer break
+ * checkout silently.
+ */
 export function webhookUrl(): string {
-  const base = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const explicit = process.env.NEXT_PUBLIC_APP_URL;
+  const vercel = process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : undefined;
+  const base = explicit ?? vercel ?? "http://localhost:3000";
   return `${base.replace(/\/+$/, "")}/api/webhooks/payments`;
 }

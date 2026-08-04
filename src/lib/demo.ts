@@ -41,8 +41,36 @@ export function assertDemoModeIsIntentional(): void {
         "and unverified email sign-ups, so anyone can sign in as anyone — " +
         "including the seeded admin accounts.\n\n" +
         "If this deployment is a PRIVATE review environment behind access " +
-        "control, set DEMO_MODE_ALLOW_PRODUCTION=true to confirm.\n" +
+        "control, set SITE_PASSWORD and DEMO_MODE_ALLOW_PRODUCTION=true.\n" +
         "If it is public, set DEMO_MODE=false and configure SMS_DRIVER.",
+    );
+  }
+
+  /**
+   * The acknowledgement has to be backed by something.
+   *
+   * This check exists because the first deploy proved the failure mode is
+   * real: `DEMO_MODE_ALLOW_PRODUCTION=true` was set on the understanding that
+   * Vercel's free "Standard Protection" gated the site, and it did not — it
+   * covers preview deployments and non-production custom domains, not the
+   * production `*.vercel.app` alias. The build came up fully public with a
+   * fixed super-admin OTP.
+   *
+   * So the flag is no longer taken at its word. `SITE_PASSWORD` is what
+   * `src/middleware.ts` enforces, and requiring it here means the promise and
+   * the mechanism cannot drift apart again.
+   */
+  if (
+    process.env.NODE_ENV === "production" &&
+    acknowledged &&
+    !process.env.SITE_PASSWORD
+  ) {
+    throw new Error(
+      "DEMO_MODE_ALLOW_PRODUCTION=true claims this deployment is behind " +
+        "access control, but SITE_PASSWORD is not set — so nothing is " +
+        "actually gating it and the fixed OTP is public.\n\n" +
+        "Set SITE_PASSWORD to a strong shared password (src/middleware.ts " +
+        "enforces it), or set DEMO_MODE=false.",
     );
   }
 
