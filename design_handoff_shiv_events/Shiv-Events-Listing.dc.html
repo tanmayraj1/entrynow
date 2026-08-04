@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>Shiv Events — Explore Events in Ahmedabad</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="./image-slot.js"></script>
+<style>
+  body { margin:0; font-family:'Plus Jakarta Sans',sans-serif; background:#F7FAF9; color:#16302B; }
+  a { color:#0D8A72; text-decoration:none; }
+  a:hover { color:#0A6B59; }
+  * { box-sizing:border-box; }
+  input[type=range] { accent-color:#0D8A72; }
+</style>
+</helmet>
+
+<div style="min-width:1200px">
+<!-- Utility bar -->
+<div style="background:#16302B;color:#fff;font-size:13px;display:flex;align-items:center;justify-content:space-between;padding:8px 48px">
+  <div style="display:flex;align-items:center;gap:20px">
+    <span style="display:flex;align-items:center;gap:6px;font-weight:700;cursor:pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F5B301" stroke-width="2.4"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg>Ahmedabad ▾</span>
+    <span style="opacity:.65">support@shivevents.in</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:16px">
+    <span style="opacity:.85;cursor:pointer">EN · हिंदी · ગુજરાતી</span>
+    <a href="Shiv-Events-Auth.dc.html" style="color:#fff;font-weight:600">Login / Signup</a>
+    <a href="Shiv-Events-Organizer.dc.html" style="background:#0D8A72;color:#fff;font-weight:700;padding:7px 16px;border-radius:999px" style-hover="background:#0A6B59">List Your Event</a>
+  </div>
+</div>
+
+<!-- Navbar -->
+<div style="background:#fff;border-bottom:1px solid #E3EBE8;display:flex;align-items:center;justify-content:space-between;padding:14px 48px;position:sticky;top:0;z-index:50">
+  <div style="display:flex;align-items:center;gap:40px">
+    <a href="Shiv-Events-Home.dc.html" style="display:flex;align-items:center;gap:9px">
+      <span style="width:34px;height:34px;border-radius:10px;background:#0D8A72;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:18px">S</span>
+      <span style="font-size:22px;font-weight:800;color:#16302B;letter-spacing:-.5px">shiv events<span style="color:#F5B301">.</span></span>
+    </a>
+    <div style="display:flex;gap:26px;font-size:14.5px;font-weight:600">
+      <a href="Shiv-Events-Listing.dc.html" style="color:#0D8A72">Explore Events</a>
+      <a href="Shiv-Events-Festival.dc.html" style="color:#16302B" style-hover="color:#0D8A72">Festivals</a>
+      <a href="Shiv-Events-Tickets.dc.html" style="color:#16302B" style-hover="color:#0D8A72">My Tickets</a>
+      <a href="Shiv-Events-Organizer.dc.html" style="color:#16302B" style-hover="color:#0D8A72">For Organizers</a>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:14px">
+    <span style="width:38px;height:38px;border-radius:50%;background:#E6F4F1;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#0D8A72" stroke-width="2.4"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"></path></svg></span>
+    <a href="Shiv-Events-Account.dc.html" style="width:38px;height:38px;border-radius:50%;background:#0D8A72;color:#fff;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center">AP</a>
+  </div>
+</div>
+
+<div style="display:flex;gap:26px;padding:28px 48px;align-items:flex-start">
+  <!-- Filter sidebar -->
+  <div style="flex:0 0 290px;background:#fff;border:1px solid #E3EBE8;border-radius:18px;padding:22px" data-screen-label="Filters">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <span style="font-size:18px;font-weight:800">Filters</span>
+      <button onClick="{{ resetFilters }}" style="font:inherit;font-size:12.5px;font-weight:700;color:#0D8A72;background:#E6F4F1;border:none;border-radius:999px;padding:6px 14px;cursor:pointer" style-hover="background:#0D8A72;color:#fff">↺ Reset</button>
+    </div>
+    <div style="position:relative;margin-bottom:20px">
+      <input placeholder="Keyword, artist, venue…" style="width:100%;padding:10px 14px 10px 36px;border:1.5px solid #E3EBE8;border-radius:11px;font:inherit;font-size:13.5px;outline-color:#0D8A72">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5C6B68" stroke-width="2.4" style="position:absolute;left:12px;top:12px"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+    </div>
+
+    <div style="font-size:13px;font-weight:800;margin-bottom:10px">Category</div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px">
+      <sc-for list="{{ catFilters }}" as="c" hint-placeholder-count="6">
+        <button onClick="{{ c.onToggle }}" style="display:flex;align-items:center;gap:9px;font:inherit;font-size:13.5px;font-weight:600;color:#16302B;background:none;border:none;padding:0;cursor:pointer;text-align:left">
+          <span style="width:18px;height:18px;border-radius:5px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;border:1.5px solid {{ c.boxBorder }};background:{{ c.boxBg }}">
+            <sc-if value="{{ c.on }}" hint-placeholder-val="{{ false }}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4"><path d="m4 12.5 5.5 5.5L20 6.5"></path></svg></sc-if>
+          </span>
+          {{ c.name }} <span style="color:#5C6B68;font-weight:500;font-size:12px;margin-left:auto">{{ c.count }}</span>
+        </button>
+      </sc-for>
+    </div>
+
+    <div style="font-size:13px;font-weight:800;margin-bottom:8px">Festival</div>
+    <select style="width:100%;padding:10px 12px;border:1.5px solid #E3EBE8;border-radius:11px;font:inherit;font-size:13.5px;margin-bottom:20px;background:#fff;color:#16302B">
+      <option>All festivals</option><option>Navratri</option><option>Diwali</option><option>Holi</option><option>Uttarayan</option><option>Christmas &amp; NYE</option><option>Ganesh Chaturthi</option>
+    </select>
+
+    <div style="font-size:13px;font-weight:800;margin-bottom:10px">Date</div>
+    <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:20px">
+      <sc-for list="{{ dateChips }}" as="d" hint-placeholder-count="4">
+        <button onClick="{{ d.onPick }}" style="font:inherit;font-size:12.5px;font-weight:700;padding:7px 13px;border-radius:999px;cursor:pointer;border:1.5px solid {{ d.border }};background:{{ d.bg }};color:{{ d.color }}">{{ d.label }}</button>
+      </sc-for>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:800;margin-bottom:6px"><span>Price</span><span style="color:#0D8A72">{{ priceLabel }}</span></div>
+    <input type="range" min="0" max="5000" step="100" value="{{ maxPrice }}" onChange="{{ onPrice }}" style="width:100%;margin-bottom:20px">
+
+    <div style="font-size:13px;font-weight:800;margin-bottom:10px">Event size</div>
+    <div style="display:flex;gap:7px;margin-bottom:20px">
+      <sc-for list="{{ sizeChips }}" as="s" hint-placeholder-count="3">
+        <button onClick="{{ s.onPick }}" style="flex:1;font:inherit;font-size:12px;font-weight:700;padding:8px 4px;border-radius:10px;cursor:pointer;border:1.5px solid {{ s.border }};background:{{ s.bg }};color:{{ s.color }};line-height:1.3">{{ s.label }}<br><span style="font-weight:500;font-size:10.5px;opacity:.75">{{ s.sub }}</span></button>
+      </sc-for>
+    </div>
+
+    <div style="font-size:13px;font-weight:800;margin-bottom:8px">Language</div>
+    <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:20px">
+      <sc-for list="{{ langChips }}" as="l" hint-placeholder-count="4">
+        <button onClick="{{ l.onToggle }}" style="font:inherit;font-size:12.5px;font-weight:600;padding:6px 13px;border-radius:999px;cursor:pointer;border:1.5px solid {{ l.border }};background:{{ l.bg }};color:{{ l.color }}">{{ l.label }}</button>
+      </sc-for>
+    </div>
+
+    <div style="font-size:13px;font-weight:800;margin-bottom:8px">Locality</div>
+    <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:20px">
+      <sc-for list="{{ locChips }}" as="l" hint-placeholder-count="6">
+        <button onClick="{{ l.onToggle }}" style="font:inherit;font-size:12.5px;font-weight:600;padding:6px 13px;border-radius:999px;cursor:pointer;border:1.5px solid {{ l.border }};background:{{ l.bg }};color:{{ l.color }}">{{ l.label }}</button>
+      </sc-for>
+    </div>
+
+    <button onClick="{{ toggleNearMe }}" style="width:100%;display:flex;justify-content:space-between;align-items:center;font:inherit;font-size:13.5px;font-weight:700;background:none;border:none;padding:0;cursor:pointer;margin-bottom:12px;color:#16302B">
+      Near me
+      <span style="width:38px;height:22px;border-radius:999px;background:{{ nearBg }};position:relative;transition:background .15s"><span style="position:absolute;top:2px;left:{{ nearKnob }};width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .15s"></span></span>
+    </button>
+    <sc-if value="{{ nearMe }}" hint-placeholder-val="{{ false }}">
+      <div style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;color:#5C6B68;margin-bottom:4px"><span>Radius</span><span style="color:#0D8A72">{{ radiusLabel }}</span></div>
+        <input type="range" min="1" max="25" value="{{ radius }}" onChange="{{ onRadius }}" style="width:100%">
+      </div>
+    </sc-if>
+
+    <div style="font-size:13px;font-weight:800;margin:8px 0 10px">Amenities</div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px">
+      <sc-for list="{{ amenityChips }}" as="a" hint-placeholder-count="4">
+        <button onClick="{{ a.onToggle }}" style="display:flex;align-items:center;gap:9px;font:inherit;font-size:13.5px;font-weight:600;color:#16302B;background:none;border:none;padding:0;cursor:pointer;text-align:left">
+          <span style="width:18px;height:18px;border-radius:5px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;border:1.5px solid {{ a.boxBorder }};background:{{ a.boxBg }}">
+            <sc-if value="{{ a.on }}" hint-placeholder-val="{{ false }}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4"><path d="m4 12.5 5.5 5.5L20 6.5"></path></svg></sc-if>
+          </span>
+          {{ a.label }}
+        </button>
+      </sc-for>
+    </div>
+
+    <button onClick="{{ toggleVerified }}" style="width:100%;display:flex;justify-content:space-between;align-items:center;font:inherit;font-size:13.5px;font-weight:700;background:none;border:none;padding:0;cursor:pointer;color:#16302B">
+      Verified organizers only
+      <span style="width:38px;height:22px;border-radius:999px;background:{{ verifiedBg }};position:relative;transition:background .15s"><span style="position:absolute;top:2px;left:{{ verifiedKnob }};width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .15s"></span></span>
+    </button>
+  </div>
+
+  <!-- Results -->
+  <div style="flex:1;min-width:0" data-screen-label="Results">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+      <span style="font-size:14.5px;color:#5C6B68;font-weight:600">Showing <b style="color:#16302B">{{ shownCount }}</b> of <b style="color:#16302B">312</b> events in Ahmedabad</span>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="display:flex;background:#fff;border:1.5px solid #E3EBE8;border-radius:11px;overflow:hidden">
+          <sc-for list="{{ viewBtns }}" as="v" hint-placeholder-count="3">
+            <button onClick="{{ v.onPick }}" style="font:inherit;font-size:13px;font-weight:700;padding:8px 16px;border:none;cursor:pointer;background:{{ v.bg }};color:{{ v.color }}">{{ v.label }}</button>
+          </sc-for>
+        </div>
+        <select style="padding:9px 12px;border:1.5px solid #E3EBE8;border-radius:11px;font:inherit;font-size:13px;font-weight:600;background:#fff;color:#16302B">
+          <option>Sort: Trending</option><option>Date</option><option>Price ↑</option><option>Price ↓</option><option>Rating</option><option>Distance</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- GRID VIEW -->
+    <sc-if value="{{ isGrid }}" hint-placeholder-val="{{ true }}">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px">
+        <sc-for list="{{ results }}" as="ev" hint-placeholder-count="9">
+          <a href="Shiv-Events-Event.dc.html" style="background:#fff;border-radius:20px;overflow:hidden;border:1px solid #E3EBE8;display:flex;flex-direction:column;transition:transform .18s,box-shadow .18s" style-hover="transform:translateY(-4px);box-shadow:0 16px 40px rgba(22,48,43,.14)">
+            <span style="position:relative;display:block;height:160px;background:{{ ev.grad }}">
+              <image-slot id="{{ ev.slot }}" shape="rect" placeholder="{{ ev.title }}"></image-slot>
+              <span style="position:absolute;top:12px;left:12px;background:#F5B301;color:#16302B;font-size:12px;font-weight:800;padding:5px 11px;border-radius:9px;pointer-events:none">{{ ev.date }}</span>
+              <sc-if value="{{ ev.ribbon }}" hint-placeholder-val="{{ false }}">
+                <span style="position:absolute;bottom:12px;left:12px;background:{{ ev.ribbonBg }};color:#fff;font-size:11px;font-weight:800;padding:4px 10px;border-radius:999px;pointer-events:none">{{ ev.ribbon }}</span>
+              </sc-if>
+              <span style="position:absolute;top:12px;right:12px;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F04438" stroke-width="2.4"><path d="M12 21s-8-5.2-8-11a4.6 4.6 0 0 1 8-3 4.6 4.6 0 0 1 8 3c0 5.8-8 11-8 11Z"></path></svg></span>
+            </span>
+            <span style="display:flex;flex-direction:column;gap:6px;padding:14px 16px 16px">
+              <span style="display:flex;justify-content:space-between;align-items:center">
+                <span style="font-size:11px;font-weight:800;color:#0D8A72;background:#E6F4F1;padding:3px 9px;border-radius:999px">{{ ev.cat }}</span>
+                <span style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:700"><svg width="12" height="12" viewBox="0 0 24 24" fill="#F5B301"><path d="m12 2 3 6.6 7 .8-5.2 4.8 1.4 7L12 17.7 5.8 21.2l1.4-7L2 9.4l7-.8Z"></path></svg>{{ ev.rating }} <span style="color:#5C6B68;font-weight:600">({{ ev.reviews }})</span></span>
+              </span>
+              <span style="font-size:15.5px;font-weight:800;color:#16302B;line-height:1.3">{{ ev.title }}</span>
+              <span style="display:flex;align-items:center;gap:5px;font-size:12px;color:#5C6B68;font-weight:600">{{ ev.org }} <sc-if value="{{ ev.verified }}" hint-placeholder-val="{{ true }}"><svg width="12" height="12" viewBox="0 0 24 24" fill="#0D8A72"><path d="M12 1.8 14.5 4l3.3-.5 1 3.2 3 1.5-1.2 3.1 1.2 3.1-3 1.5-1 3.2-3.3-.5L12 22l-2.5-2.2-3.3.5-1-3.2-3-1.5 1.2-3.1L2.2 9.4l3-1.5 1-3.2 3.3.5Z"></path><path d="m8.8 12 2.2 2.2 4.2-4.4" stroke="#fff" stroke-width="2" fill="none"></path></svg></sc-if></span>
+              <span style="display:flex;align-items:center;gap:5px;font-size:12px;color:#5C6B68"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#5C6B68" stroke-width="2.2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg>{{ ev.loc }} · {{ ev.dist }} km</span>
+              <span style="display:flex;justify-content:space-between;align-items:center;margin-top:2px">
+                <span style="font-size:15px;font-weight:800;color:#0D8A72">{{ ev.priceLabel }}</span>
+                <span style="font-size:11px;color:#5C6B68;font-weight:600">{{ ev.soldLabel }}</span>
+              </span>
+              <span style="height:5px;border-radius:3px;background:#E6F4F1;overflow:hidden;display:block"><span style="display:block;height:100%;border-radius:3px;background:{{ ev.barColor }};width:{{ ev.soldPct }}"></span></span>
+            </span>
+          </a>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <!-- LIST VIEW -->
+    <sc-if value="{{ isList }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <sc-for list="{{ results }}" as="ev" hint-placeholder-count="6">
+          <a href="Shiv-Events-Event.dc.html" style="background:#fff;border-radius:18px;border:1px solid #E3EBE8;display:flex;overflow:hidden;transition:box-shadow .18s" style-hover="box-shadow:0 12px 32px rgba(22,48,43,.12)">
+            <span style="position:relative;flex:0 0 250px;display:block;background:{{ ev.grad }}">
+              <image-slot id="{{ ev.slotL }}" shape="rect" placeholder="{{ ev.title }}"></image-slot>
+              <span style="position:absolute;top:12px;left:12px;background:#F5B301;color:#16302B;font-size:12px;font-weight:800;padding:5px 11px;border-radius:9px;pointer-events:none">{{ ev.date }}</span>
+            </span>
+            <span style="flex:1;display:flex;flex-direction:column;gap:6px;padding:18px 22px">
+              <span style="display:flex;gap:8px;align-items:center">
+                <span style="font-size:11px;font-weight:800;color:#0D8A72;background:#E6F4F1;padding:3px 9px;border-radius:999px">{{ ev.cat }}</span>
+                <sc-if value="{{ ev.ribbon }}" hint-placeholder-val="{{ false }}"><span style="background:{{ ev.ribbonBg }};color:#fff;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px">{{ ev.ribbon }}</span></sc-if>
+                <span style="margin-left:auto;display:flex;align-items:center;gap:4px;font-size:12.5px;font-weight:700"><svg width="12" height="12" viewBox="0 0 24 24" fill="#F5B301"><path d="m12 2 3 6.6 7 .8-5.2 4.8 1.4 7L12 17.7 5.8 21.2l1.4-7L2 9.4l7-.8Z"></path></svg>{{ ev.rating }} ({{ ev.reviews }})</span>
+              </span>
+              <span style="font-size:18px;font-weight:800;color:#16302B">{{ ev.title }}</span>
+              <span style="font-size:13px;color:#5C6B68;font-weight:600">{{ ev.org }} · {{ ev.loc }} · {{ ev.dist }} km away</span>
+              <span style="font-size:13px;color:#5C6B68;line-height:1.5">{{ ev.blurb }}</span>
+              <span style="display:flex;justify-content:space-between;align-items:center;margin-top:auto">
+                <span style="font-size:16px;font-weight:800;color:#0D8A72">{{ ev.priceLabel }}</span>
+                <span style="background:#0D8A72;color:#fff;font-size:13px;font-weight:700;padding:9px 22px;border-radius:999px">Book Now</span>
+              </span>
+            </span>
+          </a>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <!-- MAP VIEW -->
+    <sc-if value="{{ isMap }}" hint-placeholder-val="{{ false }}">
+      <div style="position:relative;height:640px;border-radius:20px;overflow:hidden;border:1px solid #E3EBE8;background:#EDF1EF">
+        <div style="position:absolute;inset:0;background:
+          linear-gradient(90deg,transparent 118px,#fff 118px,#fff 126px,transparent 126px),
+          linear-gradient(0deg,transparent 218px,#fff 218px,#fff 226px,transparent 226px),
+          linear-gradient(35deg,transparent 48%,#fff 48%,#fff 49.2%,transparent 49.2%),
+          linear-gradient(-25deg,transparent 63%,#fff 63%,#fff 64%,transparent 64%),
+          radial-gradient(circle at 82% 18%,#DBEAE2 0 90px,transparent 90px),
+          radial-gradient(circle at 12% 78%,#DBEAE2 0 110px,transparent 110px),
+          radial-gradient(circle at 60% 90%,#D5E4F0 0 70px,transparent 70px)"></div>
+        <sc-if value="{{ nearMe }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:420px;height:420px;border-radius:50%;background:rgba(13,138,114,.12);border:2px solid #0D8A72"></div>
+          <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:18px;height:18px;border-radius:50%;background:#0D8A72;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.3)"></div>
+        </sc-if>
+        <sc-for list="{{ mapPins }}" as="p" hint-placeholder-count="9">
+          <button onClick="{{ p.onPick }}" style="position:absolute;left:{{ p.x }};top:{{ p.y }};transform:translate(-50%,-100%);font:inherit;font-size:12.5px;font-weight:800;padding:7px 13px;border-radius:999px;cursor:pointer;border:2px solid #fff;box-shadow:0 4px 14px rgba(22,48,43,.28);background:{{ p.bg }};color:{{ p.color }};z-index:{{ p.z }}">{{ p.price }}</button>
+        </sc-for>
+        <sc-if value="{{ mapCard }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;left:20px;bottom:20px;width:360px;background:#fff;border-radius:18px;box-shadow:0 20px 50px rgba(22,48,43,.3);overflow:hidden">
+            <div style="position:relative;height:130px;background:{{ mapCard.grad }}">
+              <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:14px;text-shadow:0 1px 8px rgba(0,0,0,.4);padding:0 20px;text-align:center">{{ mapCard.title }}</div>
+              <span style="position:absolute;top:10px;left:10px;background:#F5B301;color:#16302B;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:8px">{{ mapCard.date }}</span>
+            </div>
+            <div style="padding:14px 18px;display:flex;flex-direction:column;gap:6px">
+              <span style="font-size:15.5px;font-weight:800">{{ mapCard.title }}</span>
+              <span style="font-size:12.5px;color:#5C6B68;font-weight:600">{{ mapCard.loc }} · {{ mapCard.dist }} km · ⭐ {{ mapCard.rating }} ({{ mapCard.reviews }})</span>
+              <span style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+                <span style="font-size:15px;font-weight:800;color:#0D8A72">{{ mapCard.priceLabel }}</span>
+                <a href="Shiv-Events-Event.dc.html" style="background:#0D8A72;color:#fff;font-size:12.5px;font-weight:700;padding:8px 18px;border-radius:999px" style-hover="background:#0A6B59;color:#fff">View details</a>
+              </span>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <!-- Pagination -->
+    <div style="display:flex;justify-content:center;gap:8px;margin-top:28px">
+      <sc-for list="{{ pages }}" as="pg" hint-placeholder-count="6">
+        <span style="min-width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13.5px;font-weight:700;cursor:pointer;background:{{ pg.bg }};color:{{ pg.color }};border:1.5px solid {{ pg.border }}">{{ pg.label }}</span>
+      </sc-for>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<div style="background:#16302B;color:#fff;padding:26px 48px;display:flex;justify-content:space-between;align-items:center;margin-top:20px">
+  <span style="display:flex;align-items:center;gap:8px"><span style="width:26px;height:26px;border-radius:8px;background:#0D8A72;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px">S</span><span style="font-weight:800;font-size:16px">shiv events<span style="color:#F5B301">.</span></span></span>
+  <span style="font-size:12.5px;opacity:.65">Events in Ahmedabad · Surat · Vadodara · Rajkot · Gandhinagar</span>
+  <span style="font-size:12.5px;opacity:.65">© 2026 Shiv Events Pvt. Ltd. · Terms · Privacy</span>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+class Component extends DCLogic {
+  state = { view: 'Grid', cats: [], date: 'Any date', maxPrice: 5000, size: 'Any', langs: [], locs: [], amenities: [], nearMe: false, radius: 8, verified: false, pin: 0 };
+  events = [
+    { slot: 'ls-garba', title: 'Rangilo Re Garba Mahotsav 2026', cat: 'Garba', date: '12–20 Oct', org: 'Rangmanch Events', loc: 'Vastrapur', dist: 4.2, rating: '4.8', reviews: '1,240', price: 499, sold: 78, ribbon: 'Filling Fast', size: 'Big', lang: 'Gujarati', verified: true, x: '46%', y: '38%', grad: 'linear-gradient(135deg,#F97316,#E9358F)', blurb: 'Nine nights of dandiya and raas with live orchestra, food stalls and prize rounds at GMDC Ground.' },
+    { slot: 'ls-sufi', title: 'Sufi Night under the Stars', cat: 'Concerts', date: '19 Sep', org: 'Aatish Entertainment', loc: 'Riverfront', dist: 6.1, rating: '4.6', reviews: '312', price: 299, sold: 44, ribbon: '', size: 'Small', lang: 'Hindi', verified: true, x: '62%', y: '55%', grad: 'linear-gradient(135deg,#1E3A5F,#7C3AED)', blurb: 'An intimate open-air qawwali evening on the Sabarmati Riverfront lawns, limited to 180 seats.' },
+    { slot: 'ls-comedy', title: 'Gujju Comedy Nights', cat: 'Comedy', date: '20 Sep', org: 'Hasya Manch', loc: 'Thaltej', dist: 2.8, rating: '4.5', reviews: '188', price: 349, sold: 62, ribbon: '', size: 'Small', lang: 'Gujarati', verified: false, x: '30%', y: '30%', grad: 'linear-gradient(135deg,#0A6B59,#F5B301)', blurb: 'Stand-up in Gujarati and Hindi with four headliners — strictly 18+, dinner add-on available.' },
+    { slot: 'ls-food', title: 'Ahmedabad Food Truck Fest', cat: 'Food Fests', date: '26–27 Sep', org: 'Khaana Khazana Fests', loc: 'SG Highway', dist: 5.4, rating: '4.4', reviews: '426', price: 99, sold: 38, ribbon: '', size: 'Medium', lang: 'Hindi', verified: true, x: '22%', y: '58%', grad: 'linear-gradient(135deg,#B45309,#F04438)', blurb: '40+ food trucks, live music and a kids zone — entry pass redeemable against your first order.' },
+    { slot: 'ls-diwali', title: 'Diwali Mela at Kankaria', cat: 'Melas', date: '6–8 Nov', org: 'Shree Events', loc: 'Maninagar', dist: 8.9, rating: '4.7', reviews: '980', price: 149, sold: 55, ribbon: '', size: 'Big', lang: 'Gujarati', verified: true, x: '72%', y: '72%', grad: 'linear-gradient(135deg,#4C1D95,#F5B301)', blurb: 'Lakeside mela with diya bazaars, rangoli contests, fireworks and 200+ craft stalls.' },
+    { slot: 'ls-holi', title: 'Holi Rang Utsav 2027', cat: 'Holi', date: '22 Mar', org: 'Rangmanch Events', loc: 'Bopal', dist: 7.2, rating: '4.6', reviews: '540', price: 599, sold: 91, ribbon: 'Few Left', size: 'Big', lang: 'Hindi', verified: true, x: '18%', y: '42%', grad: 'linear-gradient(135deg,#0D8A72,#E9358F,#F5B301)', blurb: 'Organic-colour holi party with rain dance, DJ lineup and thandai bar at Club O7.' },
+    { slot: 'ls-kite', title: 'Uttarayan Rooftop Fest', cat: 'Uttarayan', date: '14 Jan', org: 'Patang Collective', loc: 'Navrangpura', dist: 3.5, rating: '4.3', reviews: '150', price: 249, sold: 30, ribbon: '', size: 'Small', lang: 'Gujarati', verified: false, x: '52%', y: '22%', grad: 'linear-gradient(135deg,#0EA5E9,#F97316)', blurb: 'Kites, manja, undhiyu lunch and chikki — a classic Amdavadi terrace Uttarayan for families.' },
+    { slot: 'ls-nye', title: 'NYE Countdown Carnival', cat: 'NYE', date: '31 Dec', org: 'Aatish Entertainment', loc: 'SG Highway', dist: 6.8, rating: '4.5', reviews: '720', price: 999, sold: 68, ribbon: 'Filling Fast', size: 'Big', lang: 'English', verified: true, x: '38%', y: '66%', grad: 'linear-gradient(135deg,#B91C1C,#14532D)', blurb: 'Two stages, Bollywood + EDM, gourmet street food and a midnight confetti countdown.' },
+    { slot: 'ls-kids', title: 'Kankaria Kids Carnival', cat: 'Kids & Family', date: '12 Oct', org: 'Shree Events', loc: 'Maninagar', dist: 8.7, rating: '4.2', reviews: '96', price: 0, sold: 20, ribbon: '', size: 'Medium', lang: 'Gujarati', verified: true, x: '80%', y: '40%', grad: 'linear-gradient(135deg,#0369A1,#22C55E)', blurb: 'Free-entry family day: puppet shows, balloon artists, toy train rides and nagarvel food court.' }
+  ];
+  componentDidMount() {
+    const p = new URLSearchParams(window.location.search);
+    if (p.get('view') === 'map') this.setState({ view: 'Map', nearMe: true });
+    else if (p.get('near') === '1') this.setState({ nearMe: true });
+  }
+  toggle(key, val) { this.setState(s => ({ [key]: s[key].includes(val) ? s[key].filter(x => x !== val) : [...s[key], val] })); }
+  renderVals() {
+    const st = this.state;
+    const chip = on => ({ bg: on ? '#0D8A72' : '#fff', color: on ? '#fff' : '#16302B', border: on ? '#0D8A72' : '#E3EBE8' });
+    const box = on => ({ on, boxBg: on ? '#0D8A72' : '#fff', boxBorder: on ? '#0D8A72' : '#C8D6D1' });
+    let results = this.events.filter(e =>
+      (!st.cats.length || st.cats.includes(e.cat)) &&
+      e.price <= st.maxPrice &&
+      (st.size === 'Any' || e.size === st.size) &&
+      (!st.langs.length || st.langs.includes(e.lang)) &&
+      (!st.locs.length || st.locs.includes(e.loc)) &&
+      (!st.nearMe || e.dist <= st.radius) &&
+      (!st.verified || e.verified)
+    ).map(e => ({
+      ...e, slotL: e.slot + '-l', dist: e.dist.toFixed(1),
+      priceLabel: e.price === 0 ? 'Free entry' : 'From ₹' + e.price.toLocaleString('en-IN'),
+      soldPct: e.sold + '%', soldLabel: e.sold + '% sold',
+      ribbonBg: e.sold > 85 ? '#F04438' : '#E9358F',
+      barColor: e.sold > 85 ? '#F04438' : '#0D8A72'
+    }));
+    const catNames = [['Garba', 84], ['Melas', 46], ['Concerts', 58], ['Comedy', 31], ['Food Fests', 27], ['Holi', 12], ['Uttarayan', 18], ['NYE', 22], ['Kids & Family', 14]];
+    const active = this.state.pin < results.length ? results[this.state.pin] : results[0];
+    return {
+      catFilters: catNames.map(([name, count]) => ({ name, count, ...box(st.cats.includes(name)), onToggle: () => this.toggle('cats', name) })),
+      dateChips: ['Any date', 'Today', 'Tomorrow', 'This weekend'].map(label => ({ label, ...chip(st.date === label), onPick: () => this.setState({ date: label }) })),
+      maxPrice: st.maxPrice, priceLabel: st.maxPrice >= 5000 ? 'Free – ₹5,000+' : 'Free – ₹' + st.maxPrice.toLocaleString('en-IN'),
+      onPrice: e => this.setState({ maxPrice: +e.target.value }),
+      sizeChips: [['Any', 'all sizes'], ['Small', '< 200'], ['Medium', '200–1000'], ['Big', '1000+']].slice(0, 4).map(([label, sub]) => ({ label, sub, ...chip(st.size === label), onPick: () => this.setState({ size: label }) })),
+      langChips: ['Gujarati', 'Hindi', 'English', 'Punjabi'].map(label => ({ label, ...chip(st.langs.includes(label)), onToggle: () => this.toggle('langs', label) })),
+      locChips: ['Vastrapur', 'Bopal', 'Thaltej', 'SG Highway', 'Navrangpura', 'Maninagar', 'Riverfront'].map(label => ({ label, ...chip(st.locs.includes(label)), onToggle: () => this.toggle('locs', label) })),
+      amenityChips: ['Parking', 'Food stalls', 'Wheelchair access', 'Kids zone'].map(label => ({ label, ...box(st.amenities.includes(label)), onToggle: () => this.toggle('amenities', label) })),
+      nearMe: st.nearMe, toggleNearMe: () => this.setState(s => ({ nearMe: !s.nearMe })),
+      nearBg: st.nearMe ? '#0D8A72' : '#C8D6D1', nearKnob: st.nearMe ? '18px' : '2px',
+      radius: st.radius, radiusLabel: st.radius + ' km', onRadius: e => this.setState({ radius: +e.target.value }),
+      verified: st.verified, toggleVerified: () => this.setState(s => ({ verified: !s.verified })),
+      verifiedBg: st.verified ? '#0D8A72' : '#C8D6D1', verifiedKnob: st.verified ? '18px' : '2px',
+      resetFilters: () => this.setState({ cats: [], date: 'Any date', maxPrice: 5000, size: 'Any', langs: [], locs: [], amenities: [], nearMe: false, radius: 8, verified: false }),
+      viewBtns: ['Grid', 'List', 'Map'].map(label => ({ label, onPick: () => this.setState({ view: label }), bg: st.view === label ? '#0D8A72' : '#fff', color: st.view === label ? '#fff' : '#16302B' })),
+      isGrid: st.view === 'Grid', isList: st.view === 'List', isMap: st.view === 'Map',
+      shownCount: results.length, results,
+      mapPins: results.map((e, i) => ({ price: e.price === 0 ? 'Free' : '₹' + e.price, x: e.x, y: e.y, onPick: () => this.setState({ pin: i }), bg: i === st.pin ? '#0D8A72' : '#fff', color: i === st.pin ? '#fff' : '#16302B', z: i === st.pin ? 10 : 5 })),
+      mapCard: active || false,
+      pages: [{ label: '‹' }, { label: '1', on: true }, { label: '2' }, { label: '3' }, { label: '…' }, { label: '16' }, { label: '›' }].map(p => ({ ...p, bg: p.on ? '#0D8A72' : '#fff', color: p.on ? '#fff' : '#16302B', border: p.on ? '#0D8A72' : '#E3EBE8' }))
+    };
+  }
+}
+</script>
+</body>
+</html>

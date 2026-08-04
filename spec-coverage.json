@@ -1,0 +1,1075 @@
+{
+  "note": [
+    "Machine-checkable transcription of the System Logic Specification.",
+    "",
+    "The spec itself was supplied as a chat prompt and exists nowhere else, so",
+    "THIS FILE IS ITS DURABLE FORM. Treat it as source material, not as generated",
+    "output: do not delete a clause because it is inconvenient, and do not mark one",
+    "covered without a real reference.",
+    "",
+    "  kind=invariant|behaviour  -> needs BOTH impl and test to count as covered",
+    "  kind=ui|data|job          -> impl alone counts",
+    "",
+    "`impl` and `test` are repo-relative paths, optionally with :line. `npm run audit`",
+    "verifies every referenced path exists and reports the completion percentage.",
+    "Update this file in the same commit as the code that satisfies a clause."
+  ],
+  "clauses": [
+    {
+      "id": "A1.1",
+      "part": "A",
+      "kind": "behaviour",
+      "rule": "Visitor may browse everything public but cannot book without phone verification",
+      "impl": "src/app/booking/new/page.tsx",
+      "test": null
+    },
+    {
+      "id": "A1.3",
+      "part": "A",
+      "kind": "data",
+      "rule": "Organizer is a User with an approved OrganizerProfile",
+      "impl": "prisma/schema.prisma",
+      "test": null
+    },
+    {
+      "id": "A1.4",
+      "part": "A",
+      "kind": "behaviour",
+      "rule": "Scanner Staff is a User with scan-only permission scoped per event and gate",
+      "impl": "src/lib/queries/scan.ts",
+      "test": null
+    },
+    {
+      "id": "A1.5",
+      "part": "A",
+      "kind": "behaviour",
+      "rule": "Sub-Admin holds a permission subset: APPROVALS / FINANCE / SUPPORT / CONTENT",
+      "impl": "src/lib/auth/rbac.ts",
+      "test": "tests/portal/isolation.test.ts"
+    },
+    {
+      "id": "A1.7",
+      "part": "A",
+      "kind": "behaviour",
+      "rule": "Every system action writes an AuditLog row with actor = SYSTEM",
+      "impl": "src/lib/audit.ts",
+      "test": "src/lib/audit.test.ts"
+    },
+    {
+      "id": "I1",
+      "part": "A",
+      "kind": "invariant",
+      "rule": "tickets_sold + tickets_held <= tickets_total per tier, under any concurrency",
+      "impl": "src/lib/booking/inventory.ts",
+      "test": "tests/invariants/hold.test.ts"
+    },
+    {
+      "id": "I2",
+      "part": "A",
+      "kind": "invariant",
+      "rule": "A ticket transitions to SCANNED at most once, ever",
+      "impl": "src/lib/scan/engine.ts",
+      "test": "tests/invariants/scan.test.ts"
+    },
+    {
+      "id": "I3",
+      "part": "A",
+      "kind": "invariant",
+      "rule": "sum(LedgerEntries per booking) = 0 after the full lifecycle",
+      "impl": "src/lib/money.ts",
+      "test": "src/lib/money.test.ts"
+    },
+    {
+      "id": "I4",
+      "part": "A",
+      "kind": "invariant",
+      "rule": "Client-submitted prices are never trusted; the server recomputes everything",
+      "impl": "src/app/booking/new/page.tsx",
+      "test": null
+    },
+    {
+      "id": "I5",
+      "part": "A",
+      "kind": "behaviour",
+      "rule": "No state transition happens outside the defined state machines",
+      "impl": "src/lib/state-machines.ts",
+      "test": "src/lib/state-machines.test.ts"
+    },
+    {
+      "id": "I6",
+      "part": "A",
+      "kind": "invariant",
+      "rule": "Every Admin or Organizer mutation writes an AuditLog row with before/after JSON",
+      "impl": "src/lib/audit.ts",
+      "test": "src/lib/audit.test.ts"
+    },
+    {
+      "id": "I7",
+      "part": "A",
+      "kind": "invariant",
+      "rule": "Timestamps stored UTC; all business logic evaluated in Asia/Kolkata",
+      "impl": "src/lib/ist.ts",
+      "test": "src/lib/ist.test.ts"
+    },
+    {
+      "id": "A3.hold",
+      "part": "A",
+      "kind": "data",
+      "rule": "BOOKING_HOLD_MINUTES = 8, admin-editable",
+      "impl": "src/lib/config.ts",
+      "test": null
+    },
+    {
+      "id": "A3.commission",
+      "part": "A",
+      "kind": "data",
+      "rule": "PLATFORM_COMMISSION_PCT = 8 with per-organizer override",
+      "impl": "src/lib/config.ts",
+      "test": "src/lib/money.test.ts"
+    },
+    {
+      "id": "A3.fee",
+      "part": "A",
+      "kind": "behaviour",
+      "rule": "Booking fee 3.5% of subtotal, min Rs15, max Rs99 per booking, charged to the user",
+      "impl": "src/lib/money.ts",
+      "test": "src/lib/money.test.ts"
+    },
+    {
+      "id": "A3.gst",
+      "part": "A",
+      "kind": "behaviour",
+      "rule": "GST 18% on the booking fee and on the platform commission invoice",
+      "impl": "src/lib/money.ts",
+      "test": "src/lib/money.test.ts"
+    },
+    {
+      "id": "A3.payoutDelay",
+      "part": "A",
+      "kind": "data",
+      "rule": "PAYOUT_DELAY_DAYS = 3 after the last session of an event",
+      "impl": "src/lib/config.ts",
+      "test": null
+    },
+    {
+      "id": "A3.plans",
+      "part": "A",
+      "kind": "data",
+      "rule": "Basic Rs4,999/yr capped at 5 live events; Pro Rs14,999/yr unlimited + featured eligibility",
+      "impl": "src/lib/config.ts",
+      "test": null
+    },
+    {
+      "id": "A3.otp",
+      "part": "A",
+      "kind": "behaviour",
+      "rule": "OTP 6 digits, 5 min validity, max 3 sends/10min/phone, max 5 verify attempts then a 30-min lock",
+      "impl": "src/lib/auth/otp.ts",
+      "test": null
+    },
+    {
+      "id": "A3.refundPolicies",
+      "part": "A",
+      "kind": "behaviour",
+      "rule": "Refund policies NO_REFUND / FLEXIBLE_72H / CUSTOM ordered tiers",
+      "impl": null,
+      "test": null
+    },
+    {
+      "id": "A3.reviewWindow",
+      "part": "A",
+      "kind": "behaviour",
+      "rule": "Reviews open 14 days after event end, only to users whose ticket status is SCANNED",
+      "impl": null,
+      "test": null
+    },
+    {
+      "id": "A3.referral",
+      "part": "A",
+      "kind": "behaviour",
+      "rule": "Referrer gets Rs100 wallet credit when referee completes a first CONFIRMED booking >= Rs499; referee gets Rs50 off",
+      "impl": null,
+      "test": null
+    },
+    {
+      "id": "A3.wallet",
+      "part": "A",
+      "kind": "behaviour",
+      "rule": "Wallet usable up to 100% of an order, non-withdrawable; wallet refunds instant, source refunds follow gateway timelines",
+      "impl": "src/lib/money.ts",
+      "test": "src/lib/money.test.ts"
+    },
+    {
+      "id": "B1.states",
+      "part": "B",
+      "kind": "behaviour",
+      "rule": "Event: DRAFT -> IN_REVIEW -> LIVE -> COMPLETED, with REJECTED, PAUSED and CANCELLED branches",
+      "impl": "src/lib/state-machines.ts",
+      "test": "src/lib/state-machines.test.ts"
+    },
+    {
+      "id": "B1.completed",
+      "part": "B",
+      "kind": "behaviour",
+      "rule": "Event auto-COMPLETED when now > last session end + 6h; triggers the settlement countdown",
+      "impl": "src/lib/ist.ts",
+      "test": "src/lib/ist.test.ts"
+    },
+    {
+      "id": "B1.paused",
+      "part": "B",
+      "kind": "behaviour",
+      "rule": "PAUSED hides the event from listings; existing tickets stay valid; no new sales",
+      "impl": "src/lib/queries/marketplace.ts",
+      "test": null
+    },
+    {
+      "id": "B1.cancelled",
+      "part": "B",
+      "kind": "behaviour",
+      "rule": "Event CANCELLED triggers the bulk refund process automatically and is irreversible",
+      "impl": "src/lib/refunds.ts",
+      "test": null
+    },
+    {
+      "id": "B1.editFree",
+      "part": "B",
+      "kind": "behaviour",
+      "rule": "On LIVE, these edits need no re-review: description, gallery, FAQ, adding tiers, increasing quantity, extending sale window, price DECREASE",
+      "impl": "src/app/organizer/(portal)/actions.ts",
+      "test": null
+    },
+    {
+      "id": "B1.editReview",
+      "part": "B",
+      "kind": "behaviour",
+      "rule": "Date/time/venue change or price INCREASE flips the event to IN_REVIEW but it STAYS BOOKABLE at the old values until approved",
+      "impl": "src/app/organizer/(portal)/actions.ts",
+      "test": null
+    },
+    {
+      "id": "B1.editBlast",
+      "part": "B",
+      "kind": "behaviour",
+      "rule": "On approval of a date/venue change: mandatory blast to booked users + a 72h free-cancellation window regardless of refund policy",
+      "impl": "src/app/admin/actions.ts",
+      "test": null
+    },
+    {
+      "id": "B2.states",
+      "part": "B",
+      "kind": "behaviour",
+      "rule": "Booking: PENDING_PAYMENT -> CONFIRMED -> cancelled variants -> REFUNDED; plus EXPIRED and FAILED",
+      "impl": "src/lib/state-machines.ts",
+      "test": "src/lib/state-machines.test.ts"
+    },
+    {
+      "id": "B2.noRefundEnd",
+      "part": "B",
+      "kind": "behaviour",
+      "rule": "A NO_REFUND cancellation ends at CANCELLED_BY_USER and never reaches REFUNDED",
+      "impl": null,
+      "test": null
+    },
+    {
+      "id": "B3.states",
+      "part": "B",
+      "kind": "behaviour",
+      "rule": "Ticket: ACTIVE -> SCANNED (terminal) | CANCELLED | EXPIRED | TRANSFERRED->ACTIVE with a new qrTokenId",
+      "impl": "src/lib/state-machines.ts",
+      "test": "src/lib/state-machines.test.ts"
+    },
+    {
+      "id": "B4.webhookDriven",
+      "part": "B",
+      "kind": "behaviour",
+      "rule": "Payment transitions are driven by webhooks; UI callbacks are advisory only",
+      "impl": "src/app/api/webhooks/payments/route.ts",
+      "test": "tests/invariants/hold.test.ts"
+    },
+    {
+      "id": "B5.states",
+      "part": "B",
+      "kind": "behaviour",
+      "rule": "OrganizerProfile: SIGNUP -> DETAILS_SUBMITTED -> FEE_PAID -> KYC_IN_REVIEW -> VERIFIED | KYC_REJECTED",
+      "impl": "src/lib/state-machines.ts",
+      "test": "src/lib/state-machines.test.ts"
+    },
+    {
+      "id": "B5.suspended",
+      "part": "B",
+      "kind": "behaviour",
+      "rule": "SUSPENDED auto-PAUSES all LIVE events, FREEZES payouts, and leaves login read-only",
+      "impl": "src/app/admin/actions.ts",
+      "test": null
+    },
+    {
+      "id": "B6.payout",
+      "part": "B",
+      "kind": "behaviour",
+      "rule": "Payout: ACCRUING -> SCHEDULED -> PROCESSING -> PAID | FAILED; any state -> FROZEN on dispute and back on resolution",
+      "impl": "src/lib/state-machines.ts",
+      "test": "src/lib/state-machines.test.ts"
+    },
+    {
+      "id": "C1.1",
+      "part": "C",
+      "kind": "behaviour",
+      "rule": "Phone entry validated as a 10-digit Indian mobile",
+      "impl": "src/lib/auth/otp.ts",
+      "test": null
+    },
+    {
+      "id": "C1.2",
+      "part": "C",
+      "kind": "behaviour",
+      "rule": "OTP hashed with expiry in Redis, sent via the SMS provider, rate limits applied",
+      "impl": "src/lib/auth/otp.ts",
+      "test": null
+    },
+    {
+      "id": "C1.3",
+      "part": "C",
+      "kind": "behaviour",
+      "rule": "On verify: find-or-create User, issue an httpOnly JWT session with 30-day rolling expiry",
+      "impl": "src/lib/auth/session.ts",
+      "test": null
+    },
+    {
+      "id": "C1.4",
+      "part": "C",
+      "kind": "behaviour",
+      "rule": "Failure paths: wrong OTP shows remaining attempts, expired offers resend, locked shows a cooldown",
+      "impl": "src/app/auth/actions.ts",
+      "test": null
+    },
+    {
+      "id": "C1.5",
+      "part": "C",
+      "kind": "behaviour",
+      "rule": "Google/email auth still requires phone verification before the first booking",
+      "impl": null,
+      "test": null
+    },
+    {
+      "id": "C2.1",
+      "part": "C",
+      "kind": "ui",
+      "rule": "First visit IP-geo guesses the city and offers a confirm/change banner; the choice persists",
+      "impl": null,
+      "test": null
+    },
+    {
+      "id": "C2.2",
+      "part": "C",
+      "kind": "behaviour",
+      "rule": "All marketplace queries filter by cityId; changing city rewrites the URL prefix and clears locality filters",
+      "impl": "src/components/marketplace/city-picker.tsx",
+      "test": null
+    },
+    {
+      "id": "C2.3",
+      "part": "C",
+      "kind": "behaviour",
+      "rule": "Near Me uses browser geolocation stored in session only, never the database; denial falls back to the locality picker",
+      "impl": "src/components/marketplace/filter-sidebar.tsx",
+      "test": null
+    },
+    {
+      "id": "C3.1",
+      "part": "C",
+      "kind": "behaviour",
+      "rule": "Listing composes from URL params; every filter change updates the URL without a reload and preserves scroll",
+      "impl": "src/lib/queries/listing.ts",
+      "test": null
+    },
+    {
+      "id": "C3.2",
+      "part": "C",
+      "kind": "behaviour",
+      "rule": "Availability chips: >=0.9 Few Left, >=0.7 Filling Fast, all sold or window over Sold Out, event today Today",
+      "impl": "src/lib/availability.ts",
+      "test": "src/lib/availability.test.ts"
+    },
+    {
+      "id": "C3.3",
+      "part": "C",
+      "kind": "behaviour",
+      "rule": "Trending = 0.6*normalized(sales_72h) + 0.4*normalized(views_72h), recomputed hourly; views deduped per user/IP per hour",
+      "impl": "src/lib/availability.ts",
+      "test": "src/lib/availability.test.ts"
+    },
+    {
+      "id": "C3.4",
+      "part": "C",
+      "kind": "behaviour",
+      "rule": "Multi-session events default to the nearest upcoming session; sold-out sessions greyed; Season Pass bypasses the session picker",
+      "impl": "src/components/marketplace/ticket-picker.tsx",
+      "test": null
+    },
+    {
+      "id": "C4.1",
+      "part": "C",
+      "kind": "ui",
+      "rule": "Select step shows a live estimate that is explicitly not authoritative",
+      "impl": "src/components/marketplace/ticket-picker.tsx",
+      "test": null
+    },
+    {
+      "id": "C4.2a",
+      "part": "C",
+      "kind": "behaviour",
+      "rule": "Validate event LIVE, session future, tier active and in its sale window, and qty <= perUserLimit minus the user's prior confirmed qty for that tier",
+      "impl": "src/lib/booking/create.ts",
+      "test": "tests/invariants/hold.test.ts"
+    },
+    {
+      "id": "C4.2b",
+      "part": "C",
+      "kind": "invariant",
+      "rule": "Atomic per-tier hold; if any tier's guarded UPDATE touches 0 rows the whole transaction rolls back and per-tier availability is returned",
+      "impl": "src/lib/booking/inventory.ts",
+      "test": "tests/invariants/hold.test.ts"
+    },
+    {
+      "id": "C4.2c",
+      "part": "C",
+      "kind": "behaviour",
+      "rule": "Create Booking PENDING_PAYMENT with expiresAt = now + hold minutes, schedule the release job, return a server countdown timestamp",
+      "impl": "src/lib/booking/create.ts",
+      "test": "tests/invariants/hold.test.ts"
+    },
+    {
+      "id": "C4.3",
+      "part": "C",
+      "kind": "ui",
+      "rule": "Attendee name per ticket, editable until payment; buyer phone and email captured",
+      "impl": null,
+      "test": null
+    },
+    {
+      "id": "C4.4",
+      "part": "C",
+      "kind": "behaviour",
+      "rule": "Promo validated on window, minAmount, usageLimit and perUserLimit; discount computed server-side; usedCount incremented only at capture",
+      "impl": "src/lib/booking/create.ts",
+      "test": "tests/invariants/hold.test.ts"
+    },
+    {
+      "id": "C4.5",
+      "part": "C",
+      "kind": "behaviour",
+      "rule": "Wallet applies min(balance, total); covering 100% skips the gateway entirely with method WALLET",
+      "impl": "src/lib/money.ts",
+      "test": "src/lib/money.test.ts"
+    },
+    {
+      "id": "C4.6",
+      "part": "C",
+      "kind": "behaviour",
+      "rule": "Gateway order created in paise with the booking number as receipt; UPI intent offered first",
+      "impl": "src/app/api/bookings/route.ts",
+      "test": "tests/invariants/hold.test.ts"
+    },
+    {
+      "id": "C4.7a",
+      "part": "C",
+      "kind": "behaviour",
+      "rule": "payment.captured is idempotent by gateway event id and performs capture in one transaction",
+      "impl": "src/lib/booking/capture.ts",
+      "test": "tests/invariants/hold.test.ts"
+    },
+    {
+      "id": "C4.7b",
+      "part": "C",
+      "kind": "behaviour",
+      "rule": "payment.failed releases holds immediately and offers retry as a NEW booking attempt",
+      "impl": "src/lib/booking/capture.ts",
+      "test": "tests/invariants/hold.test.ts"
+    },
+    {
+      "id": "C4.7c",
+      "part": "C",
+      "kind": "behaviour",
+      "rule": "Capture arriving after hold expiry re-acquires inventory atomically, or auto-refunds in full and leaves the booking EXPIRED",
+      "impl": "src/lib/booking/capture.ts",
+      "test": "tests/invariants/hold.test.ts"
+    },
+    {
+      "id": "C4.8",
+      "part": "C",
+      "kind": "ui",
+      "rule": "Confirmation shows QR tickets, a calendar file, share and an invite nudge",
+      "impl": null,
+      "test": null
+    },
+    {
+      "id": "C4.9",
+      "part": "C",
+      "kind": "job",
+      "rule": "Reconciliation every 10 min settles Payments in CREATED older than 15 min against the gateway",
+      "impl": null,
+      "test": null
+    },
+    {
+      "id": "C5.1",
+      "part": "C",
+      "kind": "behaviour",
+      "rule": "Transfer allowed only on ACTIVE tickets, when the event permits it, and more than 2h before the session",
+      "impl": "src/lib/ist.ts",
+      "test": "src/lib/ist.test.ts"
+    },
+    {
+      "id": "C5.2",
+      "part": "C",
+      "kind": "behaviour",
+      "rule": "On acceptance the old qrTokenId is invalidated, a new one issued, ownership reassigned, and a TransferRecord written; one transfer per ticket",
+      "impl": null,
+      "test": null
+    },
+    {
+      "id": "C6.1",
+      "part": "C",
+      "kind": "behaviour",
+      "rule": "Cancellation previews the refundable percentage, the mode choice, and the non-refundable breakdown before confirming",
+      "impl": null,
+      "test": null
+    },
+    {
+      "id": "C6.2",
+      "part": "C",
+      "kind": "behaviour",
+      "rule": "On cancel: tickets CANCELLED, inventory restored ONLY if more than 6h before the session, Refund row created, ledger reversed",
+      "impl": "src/lib/ist.ts",
+      "test": "src/lib/ist.test.ts"
+    },
+    {
+      "id": "C6.3",
+      "part": "C",
+      "kind": "behaviour",
+      "rule": "Refund webhook completes the Refund; failure retries three times then escalates to the FINANCE queue",
+      "impl": null,
+      "test": null
+    },
+    {
+      "id": "C7.reminders",
+      "part": "C",
+      "kind": "job",
+      "rule": "T-24h and T-2h reminders with gate time, venue map link and a QR deep link",
+      "impl": null,
+      "test": null
+    },
+    {
+      "id": "C7.offlineQr",
+      "part": "C",
+      "kind": "behaviour",
+      "rule": "Ticket QR is cached client-side after first load so it works without network at the venue",
+      "impl": null,
+      "test": null
+    },
+    {
+      "id": "C7.seasonPass",
+      "part": "C",
+      "kind": "behaviour",
+      "rule": "Season pass scanning writes a SessionScan child row unique on (ticketId, sessionId); status flips to SCANNED only after the final session",
+      "impl": "src/lib/scan/engine.ts",
+      "test": "tests/invariants/scan.test.ts"
+    },
+    {
+      "id": "C8.expiry",
+      "part": "C",
+      "kind": "job",
+      "rule": "Nightly job marks unscanned ACTIVE tickets of ended sessions EXPIRED and completes events",
+      "impl": null,
+      "test": null
+    },
+    {
+      "id": "C8.reviews",
+      "part": "C",
+      "kind": "behaviour",
+      "rule": "Review invite at T+18h to SCANNED attendees; organizer may reply once; admin may hide with an audited reason; organizer rating recomputed on publish",
+      "impl": null,
+      "test": null
+    },
+    {
+      "id": "D1.ledger",
+      "part": "D",
+      "kind": "invariant",
+      "rule": "Capture writes TICKET_SALE, COMMISSION, GST_COMMISSION, BOOKING_FEE and GST_BOOKING_FEE rows; the worked example nets organizer Rs815.04 and platform Rs126.26",
+      "impl": "src/lib/money.ts",
+      "test": "src/lib/money.test.ts"
+    },
+    {
+      "id": "D1.persist",
+      "part": "D",
+      "kind": "behaviour",
+      "rule": "Ledger rows are persisted to the database at capture, not merely computed",
+      "impl": "src/lib/ledger.ts",
+      "test": "tests/invariants/hold.test.ts"
+    },
+    {
+      "id": "D1.refund",
+      "part": "D",
+      "kind": "behaviour",
+      "rule": "Full refund mirror-reverses every row and returns the booking fee only on organizer/admin fault; a partial refund reverses only the sale and commission rows",
+      "impl": "src/lib/money.ts",
+      "test": "src/lib/money.test.ts"
+    },
+    {
+      "id": "D2.select",
+      "part": "D",
+      "kind": "job",
+      "rule": "Daily 02:00 IST payout run selects COMPLETED events past the payout delay, excluding suspended organizers and events with an open dispute",
+      "impl": null,
+      "test": null
+    },
+    {
+      "id": "D2.approve",
+      "part": "D",
+      "kind": "behaviour",
+      "rule": "Payouts are FINANCE-approved in batches, or auto-approved under the configured ceiling, then PAID with a ledger debit and a generated GST invoice",
+      "impl": "src/app/admin/actions.ts",
+      "test": null
+    },
+    {
+      "id": "D2.negative",
+      "part": "D",
+      "kind": "behaviour",
+      "rule": "A negative balance carries forward to the next event; 60 days inactive with a negative balance goes to the FINANCE collection queue",
+      "impl": null,
+      "test": null
+    },
+    {
+      "id": "D3.onboardingFee",
+      "part": "D",
+      "kind": "behaviour",
+      "rule": "Plan checkout on capture records onboardingFeePaidAt, stores the plan, writes an ONBOARDING_FEE ledger row and unlocks KYC",
+      "impl": null,
+      "test": null
+    },
+    {
+      "id": "D3.renewal",
+      "part": "D",
+      "kind": "behaviour",
+      "rule": "Renewal reminders at T-30/7/1; a lapsed plan blocks creating or publishing new events but leaves LIVE events unaffected",
+      "impl": null,
+      "test": null
+    },
+    {
+      "id": "E1.gates",
+      "part": "E",
+      "kind": "behaviour",
+      "rule": "Onboarding gates run in order and cannot be skipped: details, fee, KYC docs (PAN mandatory), bank proof, admin review",
+      "impl": null,
+      "test": null
+    },
+    {
+      "id": "E1.sla",
+      "part": "E",
+      "kind": "behaviour",
+      "rule": "KYC review SLA is 48h; overdue items are highlighted in the admin queue",
+      "impl": null,
+      "test": null
+    },
+    {
+      "id": "E2.wizard",
+      "part": "E",
+      "kind": "behaviour",
+      "rule": "Event wizard autosaves DRAFT per step; final submit validates >=1 future session, >=1 tier, sale windows within the session start, cover image, geocoded venue, refund policy and T&C",
+      "impl": "src/app/organizer/(portal)/events/new/page.tsx",
+      "test": null
+    },
+    {
+      "id": "E2.review",
+      "part": "E",
+      "kind": "behaviour",
+      "rule": "Admin review shows a rendered preview, raw fields and organizer history; rejection carries a reason; resubmission shows a diff",
+      "impl": "src/app/admin/approvals/page.tsx",
+      "test": null
+    },
+    {
+      "id": "E2.autoApprove",
+      "part": "E",
+      "kind": "behaviour",
+      "rule": "Admin-toggleable auto-approval for VERIFIED organizers with >=3 past events, rating >=4.2 and zero disputes, flagged for post-hoc check",
+      "impl": null,
+      "test": null
+    },
+    {
+      "id": "E3.dashboard",
+      "part": "E",
+      "kind": "behaviour",
+      "rule": "Dashboard numbers are 60s cached aggregates, switching to 10s polling on event day",
+      "impl": "src/lib/queries/organizer/dashboard.ts",
+      "test": null
+    },
+    {
+      "id": "E3.priceChange",
+      "part": "E",
+      "kind": "behaviour",
+      "rule": "Quantity increase and price decrease apply instantly; a price increase requires re-review",
+      "impl": "src/app/organizer/(portal)/actions.ts",
+      "test": "tests/portal/isolation.test.ts"
+    },
+    {
+      "id": "E3.announcements",
+      "part": "E",
+      "kind": "behaviour",
+      "rule": "Announcement blasts are queued and throttled to 10/s, capped at 3 per event per week; cancellation and reschedule templates bypass the cap",
+      "impl": "src/app/organizer/(portal)/actions.ts",
+      "test": null
+    },
+    {
+      "id": "E4.staffCheckin",
+      "part": "E",
+      "kind": "behaviour",
+      "rule": "Staff pick from today's assigned events only, then a gate; the session is selected automatically by time",
+      "impl": "src/lib/queries/scan.ts",
+      "test": null
+    },
+    {
+      "id": "E4.opsBoard",
+      "part": "E",
+      "kind": "ui",
+      "rule": "Live ops board shows entered vs expected overall, per gate and per tier, with a scan-rate sparkline",
+      "impl": "src/app/organizer/(portal)/events/[id]/live/page.tsx",
+      "test": null
+    },
+    {
+      "id": "E4.fraudAlert",
+      "part": "E",
+      "kind": "behaviour",
+      "rule": "More than 5 INVALID scans per minute at one gate alerts the organizer and admin as possible fraud",
+      "impl": null,
+      "test": null
+    },
+    {
+      "id": "E4.gatesClosed",
+      "part": "E",
+      "kind": "behaviour",
+      "rule": "Organizer can mark Gates Closed; the scanner then rejects with GATES_CLOSED, overridable only by the organizer-owner login",
+      "impl": "src/lib/scan/engine.ts",
+      "test": "tests/invariants/scan.test.ts"
+    },
+    {
+      "id": "F1.order",
+      "part": "F",
+      "kind": "behaviour",
+      "rule": "Scan checks run in order, first failure wins: NOT_AUTHORIZED, WRONG_SESSION, GATES_CLOSED, CANCELLED, EXPIRED, season-pass path, then the atomic claim",
+      "impl": "src/lib/scan/engine.ts",
+      "test": "tests/invariants/scan.test.ts"
+    },
+    {
+      "id": "F1.claim",
+      "part": "F",
+      "kind": "invariant",
+      "rule": "The claim is an atomic guarded UPDATE; zero rows affected means ALREADY_SCANNED, returned with the time, gate and staff name",
+      "impl": "src/lib/scan/engine.ts",
+      "test": "tests/invariants/scan.test.ts"
+    },
+    {
+      "id": "F1.log",
+      "part": "F",
+      "kind": "behaviour",
+      "rule": "A ScanLog row is written for every attempt including failures; the result flash auto-dismisses after 2s",
+      "impl": "src/lib/scan/engine.ts",
+      "test": "tests/invariants/scan.test.ts"
+    },
+    {
+      "id": "F2.manifest",
+      "part": "F",
+      "kind": "behaviour",
+      "rule": "At gate-open minus 30 min the device downloads an encrypted event-scoped manifest, delta-synced every 60s while online",
+      "impl": "src/lib/ist.ts",
+      "test": "src/lib/ist.test.ts"
+    },
+    {
+      "id": "F2.queue",
+      "part": "F",
+      "kind": "behaviour",
+      "rule": "Offline claims validate against the manifest and queue in IndexedDB with a device timestamp; same-device duplicates are caught, cross-gate duplicates explicitly are not",
+      "impl": "src/lib/scan/offline-queue.ts",
+      "test": null
+    },
+    {
+      "id": "F2.replay",
+      "part": "F",
+      "kind": "behaviour",
+      "rule": "On reconnect the queue replays in device-timestamp order; conflicts return a reconciliation summary and raise a ScanConflict for organizer review",
+      "impl": "src/app/api/scan/batch/route.ts",
+      "test": null
+    },
+    {
+      "id": "G1.lifecycle",
+      "part": "G",
+      "kind": "behaviour",
+      "rule": "Dispute: OPEN -> INVESTIGATING -> RESOLVED_REFUND | RESOLVED_REJECT | RESOLVED_PARTIAL",
+      "impl": "src/app/admin/actions.ts",
+      "test": "src/lib/state-machines.test.ts"
+    },
+    {
+      "id": "G1.freeze",
+      "part": "G",
+      "kind": "behaviour",
+      "rule": "Opening a dispute on an event auto-freezes that event's payout portion",
+      "impl": "src/app/admin/actions.ts",
+      "test": null
+    },
+    {
+      "id": "G1.resolve",
+      "part": "G",
+      "kind": "behaviour",
+      "rule": "Resolution actions execute atomically with the resolution record; user and organizer are both notified with the outcome note",
+      "impl": "src/app/admin/actions.ts",
+      "test": null
+    },
+    {
+      "id": "G2.softDelete",
+      "part": "G",
+      "kind": "behaviour",
+      "rule": "Category, festival, city and locality edits deactivate and never delete, because events reference them",
+      "impl": "src/app/admin/actions.ts",
+      "test": null
+    },
+    {
+      "id": "G2.cms",
+      "part": "G",
+      "kind": "behaviour",
+      "rule": "Banners are city-scoped with start/end datetimes and sort order; curation lists are ordered event ids validated LIVE-only at render",
+      "impl": "src/lib/queries/marketplace.ts",
+      "test": null
+    },
+    {
+      "id": "G2.commissionChange",
+      "part": "G",
+      "kind": "behaviour",
+      "rule": "A commission change applies only to bookings after the change timestamp; ledger rows store the pct used",
+      "impl": "src/lib/money.ts",
+      "test": "src/lib/money.test.ts"
+    },
+    {
+      "id": "G3.rbac",
+      "part": "G",
+      "kind": "invariant",
+      "rule": "Sub-admin permissions are enforced server-side per route; every grant and revoke is audited",
+      "impl": "src/lib/auth/rbac.ts",
+      "test": "tests/portal/isolation.test.ts"
+    },
+    {
+      "id": "G3.supportCap",
+      "part": "G",
+      "kind": "behaviour",
+      "rule": "SUPPORT may credit a wallet up to Rs500; anything larger needs FINANCE",
+      "impl": null,
+      "test": null
+    },
+    {
+      "id": "H.holdRelease",
+      "part": "H",
+      "kind": "job",
+      "rule": "hold-release: per-booking delayed job releasing expired holds, with a 1-minute Redis TTL backstop sweep",
+      "impl": "src/lib/jobs/hold-release.ts",
+      "test": null
+    },
+    {
+      "id": "H.paymentReconcile",
+      "part": "H",
+      "kind": "job",
+      "rule": "payment-reconcile: every 10 minutes, settle stale CREATED payments",
+      "impl": null,
+      "test": null
+    },
+    {
+      "id": "H.reminders",
+      "part": "H",
+      "kind": "job",
+      "rule": "reminders: hourly, T-24h and T-2h event reminders",
+      "impl": null,
+      "test": null
+    },
+    {
+      "id": "H.ticketExpiry",
+      "part": "H",
+      "kind": "job",
+      "rule": "ticket-expiry: 03:00 IST, ACTIVE to EXPIRED for ended sessions and events to COMPLETED",
+      "impl": null,
+      "test": null
+    },
+    {
+      "id": "H.trending",
+      "part": "H",
+      "kind": "job",
+      "rule": "trending-recompute: hourly trending scores",
+      "impl": null,
+      "test": null
+    },
+    {
+      "id": "H.payoutRun",
+      "part": "H",
+      "kind": "job",
+      "rule": "payout-run: 02:00 IST daily settlement",
+      "impl": null,
+      "test": null
+    },
+    {
+      "id": "H.reviewInvites",
+      "part": "H",
+      "kind": "job",
+      "rule": "review-invites: 04:00 IST",
+      "impl": null,
+      "test": null
+    },
+    {
+      "id": "H.refundRetry",
+      "part": "H",
+      "kind": "job",
+      "rule": "refund-retry: every 30 minutes, retry failed gateway refunds three times then escalate",
+      "impl": null,
+      "test": null
+    },
+    {
+      "id": "H.kycReminders",
+      "part": "H",
+      "kind": "job",
+      "rule": "kyc/plan reminders: daily SLA nudges and renewal notices",
+      "impl": null,
+      "test": null
+    },
+    {
+      "id": "H.manifestRefresh",
+      "part": "H",
+      "kind": "job",
+      "rule": "manifest-refresh: every minute on event day, the scanner delta-sync source",
+      "impl": null,
+      "test": null
+    },
+    {
+      "id": "H.digest",
+      "part": "H",
+      "kind": "job",
+      "rule": "digest: Monday 09:00, organizer weekly and admin platform digests",
+      "impl": null,
+      "test": null
+    },
+    {
+      "id": "I.e1",
+      "part": "I",
+      "kind": "invariant",
+      "rule": "Two users race for the last ticket: exactly one CONFIRMED",
+      "impl": null,
+      "test": null
+    },
+    {
+      "id": "I.e2",
+      "part": "I",
+      "kind": "invariant",
+      "rule": "The same QR scanned simultaneously at two gates online: exactly one VALID",
+      "impl": "src/lib/scan/engine.ts",
+      "test": "tests/invariants/scan.test.ts"
+    },
+    {
+      "id": "I.e3",
+      "part": "I",
+      "kind": "behaviour",
+      "rule": "Webhook delivered twice or out of order: idempotent by gateway event id, CAPTURED is terminal over FAILED",
+      "impl": null,
+      "test": null
+    },
+    {
+      "id": "I.e4",
+      "part": "I",
+      "kind": "behaviour",
+      "rule": "User closes the tab mid-payment but pays in the UPI app anyway: the late-capture path completes the booking",
+      "impl": null,
+      "test": null
+    },
+    {
+      "id": "I.e5",
+      "part": "I",
+      "kind": "behaviour",
+      "rule": "Hold expires while the user is on the gateway page: re-acquire, or refund in full",
+      "impl": null,
+      "test": null
+    },
+    {
+      "id": "I.e6",
+      "part": "I",
+      "kind": "behaviour",
+      "rule": "Organizer cancels an event with 4,000 bookings: batched refunds of 500, progress visible to admin, one blast sent",
+      "impl": null,
+      "test": null
+    },
+    {
+      "id": "I.e7",
+      "part": "I",
+      "kind": "behaviour",
+      "rule": "Promo race at the usage limit: consumption is reserved at order creation like inventory and released on failure or expiry",
+      "impl": null,
+      "test": null
+    },
+    {
+      "id": "I.e8",
+      "part": "I",
+      "kind": "behaviour",
+      "rule": "A midnight-spanning session belongs to its start date and the scanner accepts until session end, not until the date changes",
+      "impl": "src/lib/ist.ts",
+      "test": "tests/invariants/scan.test.ts"
+    },
+    {
+      "id": "I.e9",
+      "part": "I",
+      "kind": "behaviour",
+      "rule": "Ticket transferred after a reminder was sent: the recipient gets a fresh message and the old QR reads INVALID",
+      "impl": null,
+      "test": null
+    },
+    {
+      "id": "I.e10",
+      "part": "I",
+      "kind": "behaviour",
+      "rule": "Wallet-only booking: no gateway order, capture runs synchronously inside the booking transaction",
+      "impl": "src/lib/money.ts",
+      "test": "src/lib/money.test.ts"
+    },
+    {
+      "id": "I.e11",
+      "part": "I",
+      "kind": "behaviour",
+      "rule": "Organizer suspended mid-event-day: scanning continues, payouts freeze, new sales stop",
+      "impl": null,
+      "test": null
+    },
+    {
+      "id": "I.e12",
+      "part": "I",
+      "kind": "behaviour",
+      "rule": "Refund requested at the 72h boundary plus or minus a minute: policy evaluated at the submission timestamp, server-side, in IST",
+      "impl": "src/lib/ist.ts",
+      "test": "src/lib/ist.test.ts"
+    },
+    {
+      "id": "I.e13",
+      "part": "I",
+      "kind": "behaviour",
+      "rule": "Account deletion with future ACTIVE tickets is blocked; allowed after cancel or transfer; soft-delete retains ledger and audit",
+      "impl": null,
+      "test": null
+    },
+    {
+      "id": "I.e14",
+      "part": "I",
+      "kind": "behaviour",
+      "rule": "Duplicate signup via Google and phone merges into the existing account behind an explicit consent screen",
+      "impl": null,
+      "test": null
+    },
+    {
+      "id": "I.e15",
+      "part": "I",
+      "kind": "ui",
+      "rule": "A locality with zero events shows a festive empty state with nearby suggestions, never a dead page",
+      "impl": "src/app/(marketplace)/[city]/events/page.tsx",
+      "test": null
+    }
+  ]
+}

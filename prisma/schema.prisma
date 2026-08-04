@@ -1,0 +1,1331 @@
+// Shiv Events — domain schema
+//
+// Conventions
+//   * Money is an integer number of **paise** (see src/lib/money.ts, D-011).
+//     Per-transaction amounts are Int; only Payout aggregates are BigInt,
+//     because a single settlement can exceed Int's ₹2.14 crore ceiling.
+//   * Every timestamp is UTC. All business comparisons go through
+//     src/lib/ist.ts (invariant I7).
+//   * Catalog rows deactivate, never delete — events reference them (spec G2).
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+// Prisma 7: the connection URL lives in prisma.config.ts, and the runtime
+// client is constructed with a driver adapter (see src/lib/db.ts).
+datasource db {
+  provider = "postgresql"
+}
+
+// ===========================================================================
+// Enums — the authoritative state machines (spec Part B)
+// ===========================================================================
+
+/// Spec B1
+enum EventStatus {
+  DRAFT
+  IN_REVIEW
+  REJECTED
+  LIVE
+  PAUSED
+  COMPLETED
+  CANCELLED
+}
+
+/// Spec B2
+enum BookingStatus {
+  PENDING_PAYMENT
+  CONFIRMED
+  EXPIRED
+  FAILED
+  CANCELLED_BY_USER
+  CANCELLED_BY_ORGANIZER
+  CANCELLED_BY_ADMIN
+  REFUNDED
+}
+
+/// Spec B3
+enum TicketStatus {
+  ACTIVE
+  SCANNED
+  CANCELLED
+  EXPIRED
+  TRANSFERRED
+}
+
+/// Spec B4
+enum PaymentStatus {
+  CREATED
+  CAPTURED
+  FAILED
+  PARTIALLY_REFUNDED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  UPI
+  CARD
+  NETBANKING
+  WALLET
+}
+
+/// Spec B5
+enum OrganizerStatus {
+  SIGNUP
+  DETAILS_SUBMITTED
+  FEE_PAID
+  KYC_IN_REVIEW
+  VERIFIED
+  KYC_REJECTED
+  SUSPENDED
+}
+
+/// Spec B6
+enum PayoutStatus {
+  ACCRUING
+  SCHEDULED
+  PROCESSING
+  PAID
+  FAILED
+  FROZEN
+}
+
+enum RefundStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum RefundMode {
+  WALLET // instant
+  SOURCE // gateway timelines, 5–7 days
+}
+
+/// Spec A3 REFUND_POLICIES
+enum RefundPolicyType {
+  NO_REFUND
+  FLEXIBLE_72H
+  CUSTOM
+}
+
+enum PlanTier {
+  BASIC
+  PRO
+}
+
+enum EventSize {
+  SMALL
+  MEDIUM
+  BIG
+}
+
+enum LedgerAccount {
+  EXTERNAL
+  ORGANIZER
+  PLATFORM
+}
+
+enum LedgerEntryType {
+  PAYMENT_IN
+  WALLET_REDEEM
+  TICKET_SALE
+  COMMISSION
+  GST_COMMISSION
+  BOOKING_FEE
+  GST_BOOKING_FEE
+  REFUND_BOOKING_FEE
+  PAYOUT
+  ONBOARDING_FEE
+}
+
+/// Spec G3 — enforced server-side per route
+enum AdminPermission {
+  APPROVALS
+  FINANCE
+  SUPPORT
+  CONTENT
+  SUPER
+}
+
+/// Spec G1
+enum DisputeStatus {
+  OPEN
+  INVESTIGATING
+  RESOLVED_REFUND
+  RESOLVED_REJECT
+  RESOLVED_PARTIAL
+}
+
+/// Spec F1.3 — the ordered failure reasons, first match wins
+enum ScanResult {
+  VALID
+  ALREADY_SCANNED
+  INVALID
+  NOT_AUTHORIZED
+  WRONG_SESSION
+  GATES_CLOSED
+  CANCELLED
+  EXPIRED
+}
+
+enum BannerStatus {
+  LIVE
+  SCHEDULED
+  DRAFT
+}
+
+enum WalletTxnType {
+  REFUND_CREDIT
+  REFERRAL_CREDIT
+  SUPPORT_CREDIT
+  BOOKING_REDEEM
+  REVERSAL
+}
+
+// ===========================================================================
+// Identity
+// ===========================================================================
+
+model User {
+  id          String    @id @default(cuid())
+  /// E.164 without the plus, e.g. "919876543210". Nullable because a Google
+  /// signup exists before phone verification — but booking requires it (C1.5).
+  phone       String?   @unique
+  phoneVerifiedAt DateTime?
+  email       String?   @unique
+  emailVerifiedAt DateTime?
+  /// scrypt hash, `salt:key` hex. Null for phone-only accounts, which is the
+  /// normal case — email+password exists so a demo reviewer can sign in
+  /// without an SMS provider (D-025).
+  passwordHash String?
+  name        String?
+  avatarUrl   String?
+  /// Wallet is non-withdrawable and usable up to 100% of an order (spec A3).
+  /// Authoritative balance; WalletTxn is the audit trail.
+  walletBalancePaise Int  @default(0)
+  locale      String    @default("en") // en | hi | gu
+  cityId      String?
+  /// Soft delete — ledger and audit rows must survive account deletion (I13).
+  deletedAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  city              City?             @relation(fields: [cityId], references: [id])
+  sessions          Session[]
+  organizerProfile  OrganizerProfile?
+  adminRole         AdminRole?
+  staffAssignments  StaffAssignment[]
+  bookings          Booking[]
+  tickets           Ticket[]
+  ticketsScanned    Ticket[]          @relation("ScannedBy")
+  walletTxns        WalletTxn[]
+  reviews           Review[]
+  follows           Follow[]
+  wishlist          WishlistItem[]
+  notifications     Notification[]
+  interests         UserInterest[]
+  referralsMade     Referral[]        @relation("Referrer")
+  referralReceived  Referral?         @relation("Referee")
+  scansPerformed    ScanLog[]
+  auditEntries      AuditLog[]
+  disputesRaised    Dispute[]         @relation("DisputeRaiser")
+  promoRedemptions  PromoRedemption[]
+  transfersSent     TransferRecord[]  @relation("TransferFrom")
+  transfersReceived TransferRecord[]  @relation("TransferTo")
+
+  @@index([cityId])
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  /// SHA-256 of the JWT id, so a leaked DB dump cannot resurrect sessions.
+  tokenHash String   @unique
+  userAgent String?
+  ip        String?
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model UserInterest {
+  userId     String
+  categoryId String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  @@id([userId, categoryId])
+  @@map("user_interests")
+}
+
+model AdminRole {
+  id          String            @id @default(cuid())
+  userId      String            @unique
+  permissions AdminPermission[]
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("admin_roles")
+}
+
+/// Scanner staff, scoped per event + gate (spec A1.4, E4).
+model StaffAssignment {
+  id        String   @id @default(cuid())
+  userId    String
+  eventId   String
+  gateId    String?
+  canOverride Boolean @default(false)
+  createdAt DateTime @default(now())
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  gate  Gate?  @relation(fields: [gateId], references: [id])
+
+  @@unique([userId, eventId, gateId])
+  @@index([eventId])
+  @@map("staff_assignments")
+}
+
+// ===========================================================================
+// Organizer
+// ===========================================================================
+
+model OrganizerProfile {
+  id          String          @id @default(cuid())
+  userId      String          @unique
+  slug        String          @unique
+  name        String
+  status      OrganizerStatus @default(SIGNUP)
+  bio         String?
+  logoUrl     String?
+  bannerUrl   String?
+  cityId      String?
+  verified    Boolean         @default(false)
+
+  // Business details (onboarding gate 1)
+  legalName     String?
+  businessType  String?
+  addressLine   String?
+  pincode       String?
+  contactPhone  String?
+  contactEmail  String?
+
+  // KYC (gate 3)
+  panNumber      String?
+  gstNumber      String?
+  panDocUrl      String?
+  gstDocUrl      String?
+  bankProofUrl   String?
+  bankAccountNumber String?
+  bankIfsc          String?
+  bankAccountName   String?
+  /// Penny-drop verification result
+  bankVerifiedAt DateTime?
+  kycSubmittedAt DateTime?
+  kycReviewedAt  DateTime?
+  kycReviewedBy  String?
+  kycRejectionReason String?
+
+  // Plan (gate 2)
+  plan               PlanTier?
+  onboardingFeePaidAt DateTime?
+  planExpiresAt      DateTime?
+
+  /// Per-organizer override of PLATFORM_COMMISSION_PCT. Assigning the Pro plan
+  /// writes 6 here, which is how the design's "Pro 6% / Basic 8%" promise is
+  /// honoured through the spec's flat-8%-plus-override mechanism (D-007).
+  commissionPctOverride Decimal? @db.Decimal(5, 2)
+
+  ratingAvg    Decimal @default(0) @db.Decimal(3, 2)
+  ratingCount  Int     @default(0)
+  followerCount Int    @default(0)
+
+  suspendedAt     DateTime?
+  suspendedReason String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  city      City?     @relation(fields: [cityId], references: [id])
+  events    Event[]
+  payouts   Payout[]
+  ledger    LedgerEntry[]
+  follows   Follow[]
+  reviewReplies ReviewReply[]
+  announcements Announcement[]
+  promos    Promo[]
+
+  @@index([status])
+  @@map("organizer_profiles")
+}
+
+// ===========================================================================
+// Catalog
+// ===========================================================================
+
+model City {
+  id        String   @id @default(cuid())
+  /// URL prefix — /ahmedabad/… (spec C2.2)
+  slug      String   @unique
+  name      String
+  state     String
+  lat       Decimal  @db.Decimal(9, 6)
+  lng       Decimal  @db.Decimal(9, 6)
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  localities Locality[]
+  venues     Venue[]
+  events     Event[]
+  users      User[]
+  organizers OrganizerProfile[]
+  banners    Banner[]
+  featured   FeaturedSlot[]
+
+  @@map("cities")
+}
+
+model Locality {
+  id       String  @id @default(cuid())
+  cityId   String
+  slug     String
+  name     String
+  lat      Decimal @db.Decimal(9, 6)
+  lng      Decimal @db.Decimal(9, 6)
+  isActive Boolean @default(true)
+
+  city   City    @relation(fields: [cityId], references: [id])
+  venues Venue[]
+
+  @@unique([cityId, slug])
+  @@map("localities")
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  name      String
+  /// CSS gradient token name, e.g. "navratri" -> var(--gradient-navratri)
+  gradient  String   @default("navratri")
+  icon      String?
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+
+  events    Event[]
+  interests UserInterest[]
+
+  @@map("categories")
+}
+
+model Festival {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  /// SEO landing copy — "Navratri in Ahmedabad"
+  tagline     String?
+  description String?
+  startsAt    DateTime
+  endsAt      DateTime
+  gradient    String   @default("navratri")
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+
+  events Event[]
+
+  @@map("festivals")
+}
+
+model Venue {
+  id         String  @id @default(cuid())
+  name       String
+  cityId     String
+  localityId String?
+  addressLine String
+  pincode    String?
+  lat        Decimal @db.Decimal(9, 6)
+  lng        Decimal @db.Decimal(9, 6)
+  /// Directions panel on the event page (car / metro / bus / auto)
+  directions Json?
+  mapUrl     String?
+
+  city     City      @relation(fields: [cityId], references: [id])
+  locality Locality? @relation(fields: [localityId], references: [id])
+  events   Event[]
+
+  @@index([cityId])
+  @@map("venues")
+}
+
+model Event {
+  id          String      @id @default(cuid())
+  slug        String      @unique
+  title       String
+  /// Short code used in ticket numbers — EN-{GRB}-0412 (D-001, D-017)
+  shortCode   String
+  /// Monotonic per-event ticket counter. Incremented by a guarded UPDATE that
+  /// reserves a whole block at once and RETURNs it, so two concurrent captures
+  /// can never mint the same ticket number (D-021).
+  ticketSeq   Int         @default(0)
+  status      EventStatus @default(DRAFT)
+  organizerId String
+  categoryId  String
+  festivalId  String?
+  cityId      String
+  venueId     String
+
+  summary     String?
+  description String?
+  coverImageUrl String?
+  size        EventSize @default(MEDIUM)
+  languages   String[]  @default(["Gujarati"])
+
+  refundPolicy      RefundPolicyType @default(FLEXIBLE_72H)
+  /// CUSTOM only: ordered tiers, e.g. [{minHours:168,pct:90},{minHours:72,pct:50}]
+  refundPolicyTiers Json?
+
+  transfersAllowed           Boolean @default(true)
+  partialCancellationAllowed Boolean @default(false)
+
+  /// Denormalised for listing sort/filter; recomputed hourly (spec C3.3).
+  trendingScore Decimal @default(0) @db.Decimal(10, 4)
+  viewCount     Int     @default(0)
+  ratingAvg     Decimal @default(0) @db.Decimal(3, 2)
+  ratingCount   Int     @default(0)
+
+  /// Spec E4 — organizer marks gates closed; scanner then returns GATES_CLOSED.
+  gatesClosedAt DateTime?
+
+  submittedAt   DateTime?
+  approvedAt    DateTime?
+  approvedBy    String?
+  rejectionNote String?
+  publishedAt   DateTime?
+  completedAt   DateTime?
+  cancelledAt   DateTime?
+  cancelReason  String?
+  pausedAt      DateTime?
+
+  /// Set when a LIVE event is edited in a way that needs re-review. The event
+  /// stays bookable at the OLD values until approval (spec B1).
+  pendingChanges Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organizer OrganizerProfile @relation(fields: [organizerId], references: [id])
+  category  Category         @relation(fields: [categoryId], references: [id])
+  festival  Festival?        @relation(fields: [festivalId], references: [id])
+  city      City             @relation(fields: [cityId], references: [id])
+  venue     Venue            @relation(fields: [venueId], references: [id])
+
+  sessions     EventSession[]
+  tiers        TicketTier[]
+  images       EventImage[]
+  faqs         EventFaq[]
+  schedule     ScheduleItem[]
+  gates        Gate[]
+  bookings     Booking[]
+  tickets      Ticket[]
+  reviews      Review[]
+  wishlistedBy WishlistItem[]
+  staff        StaffAssignment[]
+  announcements Announcement[]
+  disputes     Dispute[]
+  scanConflicts ScanConflict[]
+  promos       Promo[]
+  payoutItems  PayoutItem[]
+
+  @@index([cityId, status])
+  @@index([status, trendingScore])
+  @@index([organizerId])
+  @@index([festivalId])
+  @@map("events")
+}
+
+/// One night of a multi-night event. Garba runs 9 of these.
+model EventSession {
+  id        String   @id @default(cuid())
+  eventId   String
+  /// 1-based night number for the day picker / night navigator.
+  sequence  Int
+  name      String?
+  /// A session running 8 PM–1 AM is filed under its START date and stays
+  /// scannable until endsAt, not until midnight (spec I8, D-012).
+  startsAt  DateTime
+  endsAt    DateTime
+  gatesOpenAt DateTime?
+  isActive  Boolean  @default(true)
+
+  event        Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  bookingItems BookingItem[]
+  tickets      Ticket[]
+  sessionScans SessionScan[]
+
+  @@unique([eventId, sequence])
+  @@index([startsAt])
+  @@map("event_sessions")
+}
+
+model TicketTier {
+  id          String  @id @default(cuid())
+  eventId     String
+  name        String
+  description String?
+  tag         String?
+  pricePaise  Int
+
+  // --- Inventory. Invariant I1: sold + held <= total, always. -------------
+  quantityTotal Int
+  quantitySold  Int @default(0)
+  quantityHeld  Int @default(0)
+
+  /// Cap per user across ALL their confirmed bookings, not per booking —
+  /// otherwise the limit is trivially evaded by booking twice (spec C4.2a).
+  perUserLimit Int @default(10)
+
+  /// A Season Pass is session-agnostic: scanning writes a SessionScan child
+  /// row rather than flipping the ticket to SCANNED (spec C7).
+  isSeasonPass Boolean @default(false)
+
+  saleStartsAt DateTime?
+  saleEndsAt   DateTime?
+  isActive     Boolean  @default(true)
+  sortOrder    Int      @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  event        Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  bookingItems BookingItem[]
+  tickets      Ticket[]
+
+  @@index([eventId])
+  @@map("ticket_tiers")
+}
+
+model EventImage {
+  id        String @id @default(cuid())
+  eventId   String
+  url       String
+  alt       String?
+  sortOrder Int    @default(0)
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@map("event_images")
+}
+
+model EventFaq {
+  id        String @id @default(cuid())
+  eventId   String
+  question  String
+  answer    String
+  sortOrder Int    @default(0)
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@map("event_faqs")
+}
+
+model ScheduleItem {
+  id        String @id @default(cuid())
+  eventId   String
+  timeLabel String // "6:30 – 7:30 PM"
+  what      String
+  sortOrder Int    @default(0)
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@map("schedule_items")
+}
+
+model Gate {
+  id      String @id @default(cuid())
+  eventId String
+  name    String // "Gate 2 — General & female ring"
+  code    String
+
+  event      Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  tickets    Ticket[]
+  scanLogs   ScanLog[]
+  staff      StaffAssignment[]
+  sessionScans SessionScan[]
+
+  @@unique([eventId, code])
+  @@map("gates")
+}
+
+// ===========================================================================
+// Commerce
+// ===========================================================================
+
+model Booking {
+  id            String        @id @default(cuid())
+  /// EN + 6 digits (D-001, D-017). Gateway receipt reference.
+  bookingNumber String        @unique
+  status        BookingStatus @default(PENDING_PAYMENT)
+  userId        String
+  eventId       String
+
+  // Money, all paise. Recomputed server-side; never trusted from the client (I4).
+  subtotalPaise   Int
+  discountPaise   Int @default(0)
+  bookingFeePaise Int
+  gstOnFeePaise   Int
+  totalPaise      Int
+  walletAppliedPaise Int @default(0)
+  gatewayPayablePaise Int
+
+  /// Snapshotted so a later commission change cannot rewrite this booking (G2).
+  commissionPctUsed Decimal @db.Decimal(5, 2)
+
+  promoId       String?
+  buyerName     String?
+  buyerPhone    String?
+  buyerEmail    String?
+
+  /// now + BOOKING_HOLD_MINUTES. The countdown the UI renders is derived from
+  /// this server value, never from a client-side clock (spec C4.2c).
+  expiresAt     DateTime?
+  confirmedAt   DateTime?
+  cancelledAt   DateTime?
+  cancelReason  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User          @relation(fields: [userId], references: [id])
+  event     Event         @relation(fields: [eventId], references: [id])
+  promo     Promo?        @relation(fields: [promoId], references: [id])
+  items     BookingItem[]
+  attendees Attendee[]
+  tickets   Ticket[]
+  payments  Payment[]
+  refunds   Refund[]
+  ledger    LedgerEntry[]
+  disputes  Dispute[]
+  walletTxns WalletTxn[]
+  promoRedemptions PromoRedemption[]
+
+  @@index([userId, status])
+  @@index([eventId, status])
+  @@index([status, expiresAt])
+  @@map("bookings")
+}
+
+model BookingItem {
+  id         String @id @default(cuid())
+  bookingId  String
+  tierId     String
+  sessionId  String?
+  quantity   Int
+  /// Price at booking time. Later tier price changes must not alter history.
+  unitPricePaise Int
+
+  booking Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  tier    TicketTier    @relation(fields: [tierId], references: [id])
+  session EventSession? @relation(fields: [sessionId], references: [id])
+
+  @@index([bookingId])
+  @@map("booking_items")
+}
+
+model Attendee {
+  id        String @id @default(cuid())
+  bookingId String
+  name      String
+  phone     String?
+
+  booking Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  tickets Ticket[]
+
+  @@index([bookingId])
+  @@map("attendees")
+}
+
+model Ticket {
+  id           String       @id @default(cuid())
+  /// EN-{eventShort}-{seq}, e.g. EN-GRB-0412 (D-001, D-017)
+  ticketNumber String       @unique
+  /// The only thing the QR payload carries. Rotated on transfer, which kills
+  /// the old QR (spec C5.2, edge case I9).
+  qrTokenId    String       @unique @default(cuid())
+  status       TicketStatus @default(ACTIVE)
+
+  bookingId  String
+  userId     String
+  eventId    String
+  tierId     String
+  sessionId  String?
+  attendeeId String?
+
+  attendeeName String
+
+  // Scan outcome. Invariant I2: this transition happens at most once, ever.
+  scannedAt    DateTime?
+  scannedGateId String?
+  scannedByUserId String?
+
+  cancelledAt  DateTime?
+  expiredAt    DateTime?
+  transferredAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  booking      Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  user         User          @relation(fields: [userId], references: [id])
+  event        Event         @relation(fields: [eventId], references: [id])
+  tier         TicketTier    @relation(fields: [tierId], references: [id])
+  session      EventSession? @relation(fields: [sessionId], references: [id])
+  attendee     Attendee?     @relation(fields: [attendeeId], references: [id])
+  scannedGate  Gate?         @relation(fields: [scannedGateId], references: [id])
+  scannedBy    User?         @relation(fields: [scannedByUserId], references: [id], name: "ScannedBy")
+  sessionScans SessionScan[]
+  scanLogs     ScanLog[]
+  transfers    TransferRecord[]
+  conflicts    ScanConflict[]
+
+  @@index([userId, status])
+  @@index([eventId, status])
+  @@index([bookingId])
+  @@map("tickets")
+}
+
+/// Season-pass scans. Uniqueness on (ticketId, sessionId) is what makes a pass
+/// single-use *per night* while staying valid for the remaining nights (C7).
+model SessionScan {
+  id        String   @id @default(cuid())
+  ticketId  String
+  sessionId String
+  gateId    String?
+  scannedAt DateTime @default(now())
+  scannedByUserId String?
+
+  ticket  Ticket       @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  session EventSession @relation(fields: [sessionId], references: [id])
+  gate    Gate?        @relation(fields: [gateId], references: [id])
+
+  @@unique([ticketId, sessionId])
+  @@index([sessionId])
+  @@map("session_scans")
+}
+
+model Payment {
+  id        String        @id @default(cuid())
+  bookingId String
+  status    PaymentStatus @default(CREATED)
+  method    PaymentMethod?
+  amountPaise Int
+
+  gatewayOrderId   String?  @unique
+  gatewayPaymentId String?  @unique
+  gatewaySignature String?
+  /// UPI VPA when the method is a collect request.
+  vpa              String?
+  failureReason    String?
+
+  capturedAt DateTime?
+  failedAt   DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  booking Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  refunds Refund[]
+
+  @@index([bookingId])
+  @@index([status, createdAt])
+  @@map("payments")
+}
+
+/// Gateway webhook de-duplication. Insert-with-ON-CONFLICT-DO-NOTHING is what
+/// makes replayed and out-of-order webhooks safe (edge case I3).
+model WebhookEvent {
+  id             String   @id @default(cuid())
+  gatewayEventId String   @unique
+  eventType      String
+  payload        Json
+  processedAt    DateTime?
+  error          String?
+  createdAt      DateTime @default(now())
+
+  @@map("webhook_events")
+}
+
+model Refund {
+  id        String       @id @default(cuid())
+  bookingId String
+  paymentId String?
+  status    RefundStatus @default(PENDING)
+  mode      RefundMode
+  amountPaise Int
+  /// Proportion of the sale reversed; drives buildRefundLedger.
+  fraction  Decimal      @db.Decimal(5, 4)
+  /// Fee is returned only on organizer/admin-fault cancellations (spec D1).
+  bookingFeeRefunded Boolean @default(false)
+  reason    String?
+
+  gatewayRefundId String?
+  attemptCount    Int      @default(0)
+  lastAttemptAt   DateTime?
+  escalatedAt     DateTime?
+  completedAt     DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  booking Booking  @relation(fields: [bookingId], references: [id])
+  payment Payment? @relation(fields: [paymentId], references: [id])
+
+  @@index([status])
+  @@map("refunds")
+}
+
+model Promo {
+  id          String  @id @default(cuid())
+  code        String  @unique
+  description String?
+  eventId     String?
+  organizerId String?
+
+  /// Exactly one of these is set.
+  discountFlatPaise Int?
+  discountPct       Decimal? @db.Decimal(5, 2)
+  maxDiscountPaise  Int?
+  minAmountPaise    Int      @default(0)
+
+  usageLimit   Int?
+  /// Consumed at capture (spec C4.4).
+  usedCount     Int @default(0)
+  /// Held at order-creation, released on failure/expiry (edge case I7, D-005).
+  reservedCount Int @default(0)
+  perUserLimit  Int @default(1)
+
+  startsAt DateTime?
+  endsAt   DateTime?
+  isActive Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  event       Event?            @relation(fields: [eventId], references: [id])
+  organizer   OrganizerProfile? @relation(fields: [organizerId], references: [id])
+  bookings    Booking[]
+  redemptions PromoRedemption[]
+
+  @@map("promos")
+}
+
+model PromoRedemption {
+  id        String   @id @default(cuid())
+  promoId   String
+  userId    String
+  bookingId String
+  amountPaise Int
+  createdAt DateTime @default(now())
+
+  promo   Promo   @relation(fields: [promoId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@unique([promoId, bookingId])
+  @@index([promoId, userId])
+  @@map("promo_redemptions")
+}
+
+model WalletTxn {
+  id          String        @id @default(cuid())
+  userId      String
+  type        WalletTxnType
+  /// Signed: credit positive, redemption negative.
+  amountPaise Int
+  balanceAfterPaise Int
+  bookingId   String?
+  description String
+  createdAt   DateTime      @default(now())
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  booking Booking? @relation(fields: [bookingId], references: [id])
+
+  @@index([userId, createdAt])
+  @@map("wallet_txns")
+}
+
+// ===========================================================================
+// Money — ledger & payouts (spec Part D)
+// ===========================================================================
+
+/// Double-entry. Invariant I3: rows for one booking sum to exactly 0 across
+/// its full lifecycle — which holds because we emit the PAYMENT_IN leg that
+/// spec D1's table omits (D-004).
+model LedgerEntry {
+  id          String          @id @default(cuid())
+  bookingId   String?
+  organizerId String?
+  type        LedgerEntryType
+  account     LedgerAccount
+  /// Signed. Positive credits the account, negative debits it.
+  amountPaise Int
+  commissionPctUsed Decimal? @db.Decimal(5, 2)
+  memo        String?
+
+  /// Set once the row has been swept into a Payout, so the payout run only
+  /// ever considers unsettled rows.
+  payoutId  String?
+  createdAt DateTime @default(now())
+
+  booking   Booking?          @relation(fields: [bookingId], references: [id])
+  organizer OrganizerProfile? @relation(fields: [organizerId], references: [id])
+  payout    Payout?           @relation(fields: [payoutId], references: [id])
+
+  @@index([bookingId])
+  @@index([organizerId, payoutId])
+  @@map("ledger_entries")
+}
+
+model Payout {
+  id          String       @id @default(cuid())
+  organizerId String
+  status      PayoutStatus @default(SCHEDULED)
+  /// BigInt: a single settlement can exceed Int's ₹2.14 crore ceiling.
+  amountPaise BigInt
+  periodStart DateTime
+  periodEnd   DateTime
+
+  approvedBy  String?
+  approvedAt  DateTime?
+  processedAt DateTime?
+  paidAt      DateTime?
+  utr         String?
+  failureReason String?
+  attemptCount Int      @default(0)
+  frozenReason String?
+  /// Where to return when a dispute freeze is lifted (spec B6).
+  statusBeforeFreeze PayoutStatus?
+
+  invoiceUrl String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  organizer OrganizerProfile @relation(fields: [organizerId], references: [id])
+  entries   LedgerEntry[]
+  items     PayoutItem[]
+
+  @@index([organizerId, status])
+  @@map("payouts")
+}
+
+model PayoutItem {
+  id       String @id @default(cuid())
+  payoutId String
+  eventId  String
+  grossPaise BigInt
+  netPaise   BigInt
+
+  payout Payout @relation(fields: [payoutId], references: [id], onDelete: Cascade)
+  event  Event  @relation(fields: [eventId], references: [id])
+
+  @@unique([payoutId, eventId])
+  @@map("payout_items")
+}
+
+// ===========================================================================
+// Scanning (spec Part F)
+// ===========================================================================
+
+/// Every scan attempt, including failures — the audit trail behind the
+/// organizer's live ops board and the INVALID-spike fraud alert (spec E4).
+model ScanLog {
+  id        String     @id @default(cuid())
+  ticketId  String?
+  eventId   String
+  sessionId String?
+  gateId    String?
+  staffUserId String?
+  result    ScanResult
+  /// True when this arrived via /scan/batch after an offline period.
+  wasOffline Boolean   @default(false)
+  /// Device clock at scan time; the replay is ordered by this (spec F2.3).
+  deviceScannedAt DateTime?
+  rawToken  String?
+  createdAt DateTime   @default(now())
+
+  ticket Ticket? @relation(fields: [ticketId], references: [id])
+  gate   Gate?   @relation(fields: [gateId], references: [id])
+  staff  User?   @relation(fields: [staffUserId], references: [id])
+
+  @@index([eventId, createdAt])
+  @@index([result, createdAt])
+  @@map("scan_logs")
+}
+
+/// Raised when an offline queue replay finds a token already scanned elsewhere.
+/// Cross-gate duplicates are explicitly not catchable offline (spec F2.2) —
+/// this is how that accepted risk surfaces for organizer review.
+model ScanConflict {
+  id         String   @id @default(cuid())
+  ticketId   String
+  eventId    String
+  winningGateId String?
+  losingGateId  String?
+  winningScanAt DateTime
+  losingScanAt  DateTime
+  resolvedAt DateTime?
+  resolvedBy String?
+  note       String?
+  createdAt  DateTime @default(now())
+
+  ticket Ticket @relation(fields: [ticketId], references: [id])
+  event  Event  @relation(fields: [eventId], references: [id])
+
+  @@index([eventId, resolvedAt])
+  @@map("scan_conflicts")
+}
+
+// ===========================================================================
+// Engagement
+// ===========================================================================
+
+model Review {
+  id        String  @id @default(cuid())
+  eventId   String
+  userId    String
+  rating    Int
+  body      String?
+  /// Admin can hide with a reason; the action is audited (spec C8).
+  hiddenAt     DateTime?
+  hiddenReason String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  event Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User         @relation(fields: [userId], references: [id])
+  reply ReviewReply?
+
+  @@unique([eventId, userId])
+  @@index([eventId, hiddenAt])
+  @@map("reviews")
+}
+
+/// One reply per review (spec C8).
+model ReviewReply {
+  id          String   @id @default(cuid())
+  reviewId    String   @unique
+  organizerId String
+  body        String
+  createdAt   DateTime @default(now())
+
+  review    Review           @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  organizer OrganizerProfile @relation(fields: [organizerId], references: [id])
+
+  @@map("review_replies")
+}
+
+model Follow {
+  userId      String
+  organizerId String
+  createdAt   DateTime @default(now())
+
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organizer OrganizerProfile @relation(fields: [organizerId], references: [id], onDelete: Cascade)
+
+  @@id([userId, organizerId])
+  @@map("follows")
+}
+
+model WishlistItem {
+  userId    String
+  eventId   String
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@id([userId, eventId])
+  @@map("wishlist_items")
+}
+
+model Referral {
+  id         String   @id @default(cuid())
+  referrerId String
+  refereeId  String   @unique
+  code       String
+  /// Credited when the referee completes their first CONFIRMED booking of
+  /// >= ₹499 (spec A3).
+  qualifiedAt DateTime?
+  referrerCreditPaise Int @default(0)
+  refereeCreditPaise  Int @default(0)
+  createdAt  DateTime @default(now())
+
+  referrer User @relation("Referrer", fields: [referrerId], references: [id])
+  referee  User @relation("Referee", fields: [refereeId], references: [id])
+
+  @@index([referrerId])
+  @@map("referrals")
+}
+
+model TransferRecord {
+  id         String   @id @default(cuid())
+  ticketId   String
+  fromUserId String
+  toUserId   String
+  /// Kept for forensics; this token is dead the moment the transfer commits.
+  oldQrTokenId String
+  newQrTokenId String
+  createdAt  DateTime @default(now())
+
+  ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  fromUser User   @relation("TransferFrom", fields: [fromUserId], references: [id])
+  toUser   User   @relation("TransferTo", fields: [toUserId], references: [id])
+
+  @@index([ticketId])
+  @@map("transfer_records")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  kind      String
+  title     String
+  body      String
+  href      String?
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@map("notifications")
+}
+
+model Announcement {
+  id          String   @id @default(cuid())
+  eventId     String
+  organizerId String
+  subject     String
+  body        String
+  audienceCount Int    @default(0)
+  /// Cancellation / reschedule templates bypass the 3-per-week cap (spec E3).
+  bypassesCap Boolean  @default(false)
+  sentAt      DateTime?
+  createdAt   DateTime @default(now())
+
+  event     Event            @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  organizer OrganizerProfile @relation(fields: [organizerId], references: [id])
+
+  @@index([eventId, createdAt])
+  @@map("announcements")
+}
+
+// ===========================================================================
+// Admin & ops
+// ===========================================================================
+
+model Dispute {
+  id        String        @id @default(cuid())
+  status    DisputeStatus @default(OPEN)
+  bookingId String?
+  eventId   String?
+  raisedById String?
+  kind      String
+  summary   String
+  detail    String?
+
+  resolutionNote String?
+  refundPct      Decimal? @db.Decimal(5, 2)
+  resolvedAt     DateTime?
+  resolvedBy     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  booking  Booking? @relation(fields: [bookingId], references: [id])
+  event    Event?   @relation(fields: [eventId], references: [id])
+  raisedBy User?    @relation("DisputeRaiser", fields: [raisedById], references: [id])
+
+  @@index([status])
+  @@index([eventId, status])
+  @@map("disputes")
+}
+
+/// Invariant I6: every admin or organizer mutation writes one of these, with
+/// before/after JSON. System actions use actorId = null and actorType SYSTEM.
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actorType  String   @default("USER") // USER | ADMIN | ORGANIZER | SYSTEM
+  action     String
+  entityType String
+  entityId   String
+  before     Json?
+  after      Json?
+  ip         String?
+  createdAt  DateTime @default(now())
+
+  actor User? @relation(fields: [actorId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([actorId, createdAt])
+  @@map("audit_logs")
+}
+
+model Banner {
+  id        String       @id @default(cuid())
+  cityId    String?
+  title     String
+  subtitle  String?
+  imageUrl  String?
+  gradient  String?
+  href      String?
+  status    BannerStatus @default(DRAFT)
+  startsAt  DateTime?
+  endsAt    DateTime?
+  sortOrder Int          @default(0)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  city City? @relation(fields: [cityId], references: [id])
+
+  @@index([cityId, status])
+  @@map("banners")
+}
+
+/// Homepage curation — ordered event ids per city, validated LIVE-only at
+/// render time (spec G2).
+model FeaturedSlot {
+  id        String   @id @default(cuid())
+  cityId    String
+  eventId   String
+  position  Int
+  pinned    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  city City @relation(fields: [cityId], references: [id])
+
+  @@unique([cityId, position])
+  @@map("featured_slots")
+}
+
+/// Admin-editable business constants (spec A3). Read through a cached accessor
+/// so the defaults in src/lib/money.ts are only ever a fallback.
+model ConfigSetting {
+  key         String   @id
+  value       Json
+  description String?
+  updatedBy   String?
+  updatedAt   DateTime @updatedAt
+
+  @@map("config_settings")
+}

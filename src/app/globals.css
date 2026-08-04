@@ -1,0 +1,458 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   Shiv Events — design tokens
+   Values are transcribed literally from design_handoff_shiv_events/README.md.
+   Three coordinated palettes live behind ONE set of variable names, swapped by
+   the `data-theme` attribute that each route-group layout sets. Components
+   reference the semantic name only, never a hex, so a single component set
+   serves the marketplace, both dashboards and the scanner.
+   ========================================================================== */
+
+@theme {
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+
+  /* Radii — cards 16–22 · inputs 11–13 · pills 999 · thumbs 8–14 */
+  --radius-thumb: 10px;
+  --radius-input: 12px;
+  --radius-card: 18px;
+  --radius-card-lg: 22px;
+  --radius-pill: 999px;
+
+  /* Shadows. Navy-tinted rather than neutral grey — a grey shadow over a
+     cool background reads as dirt; the ink colour reads as depth. */
+  --shadow-e1: 0 1px 2px rgba(14, 26, 56, 0.06), 0 1px 3px rgba(14, 26, 56, 0.05);
+  --shadow-e2: 0 2px 4px rgba(14, 26, 56, 0.05), 0 6px 16px rgba(14, 26, 56, 0.08);
+  --shadow-e3: 0 4px 8px rgba(14, 26, 56, 0.06), 0 14px 32px rgba(14, 26, 56, 0.11);
+  --shadow-e4: 0 8px 16px rgba(14, 26, 56, 0.08), 0 28px 60px rgba(14, 26, 56, 0.18);
+  --shadow-card-hover: 0 8px 16px rgba(14, 26, 56, 0.08), 0 24px 48px rgba(14, 26, 56, 0.16);
+  --shadow-cta: 0 8px 20px rgba(237, 44, 99, 0.32);
+  --shadow-modal: 0 24px 60px rgba(14, 26, 56, 0.32);
+
+  /* Type scale (desktop) — README "Type scale" row */
+  --text-meta: 11.5px;
+  --text-meta-lg: 12.5px;
+  --text-body: 13px;
+  --text-body-lg: 14px;
+  --text-card-title: 15px;
+  --text-card-title-lg: 16.5px;
+  --text-page-title: 24px;
+  --text-section: 22px;
+  --text-hero: 44px;
+
+  /* Breakpoints — 1440 desktop · 768 tablet · 390 mobile */
+  --breakpoint-mob: 390px;
+  --breakpoint-tab: 768px;
+  --breakpoint-desk: 1440px;
+}
+
+/* --------------------------------------------------------------------------
+   Entry Now brand constants.
+
+   Taken from the logo: a deep navy ticket, an orange-to-magenta gradient
+   across its torn half, white counter-space. Navy carries the structure;
+   the gradient is reserved for action — CTAs, price pins, active states and
+   the ticket foil — so it never stops feeling like an event.
+
+   These are literal, NOT themed: the logo must not turn a different colour
+   inside the dashboards or the scanner.
+   -------------------------------------------------------------------------- */
+:root {
+  --brand-navy: #16264c;
+  --brand-navy-deep: #0e1a38;
+  --brand-navy-soft: #24365f;
+  --brand-orange: #ff6b2b;
+  --brand-rose: #ed2c63;
+
+  --brand-gradient: linear-gradient(100deg, #ff7a1f 0%, #f2454e 52%, #ed2c63 100%);
+  --brand-gradient-rev: linear-gradient(280deg, #ff7a1f 0%, #f2454e 52%, #ed2c63 100%);
+  /* For large fills, where the full-strength gradient would shout. */
+  --brand-gradient-soft: linear-gradient(100deg, #fff1e8 0%, #ffe9f0 100%);
+  /* Hero and section backdrops — navy with the gradient bleeding through. */
+  --brand-mesh:
+    radial-gradient(circle at 12% 18%, rgba(255, 107, 43, 0.34), transparent 46%),
+    radial-gradient(circle at 88% 12%, rgba(237, 44, 99, 0.34), transparent 44%),
+    radial-gradient(circle at 62% 96%, rgba(124, 58, 237, 0.26), transparent 52%),
+    linear-gradient(160deg, #16264c 0%, #0e1a38 100%);
+
+  /* Elevation. A layered pair per step — a single blurred shadow reads flat
+     at these radii, and depth is the point of this design system. */
+  --shadow-1: 0 1px 2px rgba(14, 26, 56, 0.06), 0 1px 3px rgba(14, 26, 56, 0.05);
+  --shadow-2: 0 2px 4px rgba(14, 26, 56, 0.05), 0 6px 16px rgba(14, 26, 56, 0.08);
+  --shadow-3: 0 4px 8px rgba(14, 26, 56, 0.06), 0 14px 32px rgba(14, 26, 56, 0.11);
+  --shadow-4: 0 8px 16px rgba(14, 26, 56, 0.08), 0 28px 60px rgba(14, 26, 56, 0.18);
+  /* Ticket stubs sit on a warm shadow so the foil edge reads as printed. */
+  --shadow-ticket:
+    0 2px 4px rgba(14, 26, 56, 0.06), 0 12px 28px rgba(14, 26, 56, 0.14),
+    0 1px 0 rgba(255, 255, 255, 0.7) inset;
+
+  /* Category gradients. ONLY for banners, category tiles and event image
+     slots — never core UI.
+     Deliberately NOT inside `@theme`: Tailwind v4 prunes theme variables whose
+     names it cannot find in the source, and these are composed at runtime from
+     a category's `gradient` column (`var(--gradient-${slug})`). Declared here
+     as ordinary custom properties, they are always emitted. */
+  --gradient-navratri: linear-gradient(115deg, #ff7a1f, #ed2c63);
+  --gradient-diwali: linear-gradient(135deg, #16264c, #f5b301);
+  --gradient-holi: linear-gradient(120deg, #ed2c63, #7c3aed, #f5b301);
+  --gradient-concert: linear-gradient(135deg, #16264c, #7c3aed);
+  --gradient-food: linear-gradient(135deg, #c2410c, #ff6b2b);
+  --gradient-comedy: linear-gradient(135deg, #24365f, #ff6b2b);
+  --gradient-theatre: linear-gradient(135deg, #4c1d95, #ed2c63);
+  --gradient-sports: linear-gradient(135deg, #0e7490, #22c55e);
+  --gradient-party: linear-gradient(135deg, #ed2c63, #7c3aed);
+  --gradient-workshop: linear-gradient(135deg, #0f766e, #14b8a6);
+  --gradient-exhibition: linear-gradient(135deg, #b45309, #f5b301);
+  --gradient-uttarayan: linear-gradient(135deg, #0284c7, #f5b301);
+}
+
+/* --------------------------------------------------------------------------
+   Marketplace — "shopper mode" (teal). The default theme.
+   -------------------------------------------------------------------------- */
+:root,
+[data-theme="market"] {
+  --color-primary: #ed2c63;
+  --color-primary-dark: #c81f4e;
+  --color-primary-tint: #ffebf1;
+  --color-selected-bg: #fff4f7;
+  /* The logo's other half. Second-tier actions, highlights, "new" flags. */
+  --color-accent: #ff6b2b;
+  --color-accent-dark: #e0530f;
+  --color-accent-tint: #fff0e6;
+
+  --color-ink: #16264c;
+  --color-ink-muted: #6a7699;
+  --color-body-soft: #3d4a70;
+  --color-navy-accent: #16264c;
+
+  --color-bg: #f6f7fc;
+  --color-surface: #ffffff;
+  --color-border: #e4e7f3;
+  --color-border-strong: #c9cfe4;
+  --color-divider: #eef1f8;
+
+  --color-gold: #f5b301;
+  --color-danger: #f04438;
+  --color-danger-dark: #b42318;
+  --color-danger-tint: #fdebea;
+
+  /* Status chips resolve per-theme so tables look native in every surface. */
+  --color-status-confirmed-bg: #e8f6ee;
+  --color-status-confirmed-fg: #0b8a55;
+  --color-status-pending-bg: #fbf4e6;
+  --color-status-pending-fg: #92400e;
+  --color-status-cancelled-bg: #f1f1f4;
+  --color-status-cancelled-fg: #7a7f9e;
+  --color-status-success-bg: #e8f6ee;
+  --color-status-success-fg: #0b8a55;
+  --color-status-warning-bg: #fbf4e6;
+  --color-status-warning-fg: #92400e;
+  --color-status-danger-bg: #fdebea;
+  --color-status-danger-fg: #b42318;
+
+  --color-sidebar: #ffffff;
+  --color-sidebar-ink: #16264c;
+
+  --shadow-cta-themed: 0 8px 20px rgba(237, 44, 99, 0.32);
+}
+
+/* --------------------------------------------------------------------------
+   Dashboards — "business mode".
+
+   Organizer takes the logo's orange, admin its navy. Deliberately NOT the
+   marketplace rose: an operator with both open in adjacent tabs must be able
+   to tell at a glance which one they are about to click in.
+   -------------------------------------------------------------------------- */
+[data-theme="dash-organizer"],
+[data-theme="dash-admin"] {
+  --color-primary: #ff6b2b;
+  --color-primary-dark: #e0530f;
+  --color-primary-tint: #fff0e6;
+  --color-selected-bg: #fff6f0;
+  --color-accent: #ed2c63;
+  --color-accent-dark: #c81f4e;
+  --color-accent-tint: #ffebf1;
+
+  --color-ink: #16264c;
+  --color-ink-muted: #7b87a9;
+  --color-body-soft: #47547a;
+  --color-navy-accent: #16264c;
+
+  --color-bg: #f2f4fb;
+  --color-surface: #ffffff;
+  --color-border: #e2e6f2;
+  --color-border-strong: #ccd3e6;
+  --color-divider: #f0f3fa;
+
+  --color-gold: #f5b301;
+  --color-danger: #f04438;
+  --color-danger-dark: #b42318;
+  --color-danger-tint: #fdebea;
+
+  /* Dashboard status palette */
+  --color-status-confirmed-bg: #fff0e6;
+  --color-status-confirmed-fg: #c2410c;
+  --color-status-pending-bg: #eef1f8;
+  --color-status-pending-fg: #16264c;
+  --color-status-cancelled-bg: #f1f1f4;
+  --color-status-cancelled-fg: #7a7f9e;
+  --color-status-success-bg: #e8f6ee;
+  --color-status-success-fg: #0b8a55;
+  --color-status-warning-bg: #fbf4e6;
+  --color-status-warning-fg: #92400e;
+  --color-status-danger-bg: #fdebea;
+  --color-status-danger-fg: #b42318;
+
+  --color-sidebar: #ffffff;
+  --color-sidebar-ink: #16264c;
+
+  --shadow-cta-themed: 0 8px 20px rgba(255, 107, 43, 0.32);
+}
+
+/* Admin flips to the logo's navy — the platform's own surface, not a
+   tenant's. Its sidebar is the deep navy from the mark. */
+[data-theme="dash-admin"] {
+  --color-primary: #16264c;
+  --color-primary-dark: #0e1a38;
+  --color-primary-tint: #eaeefa;
+  --color-selected-bg: #f1f4fc;
+  --color-accent: #ff6b2b;
+  --color-accent-dark: #e0530f;
+  --color-accent-tint: #fff0e6;
+
+  --color-sidebar: #0e1a38;
+  --color-sidebar-ink: #ffffff;
+
+  --shadow-cta-themed: 0 8px 20px rgba(22, 38, 76, 0.34);
+}
+
+/* --------------------------------------------------------------------------
+   Scanner — dark gate PWA.
+   -------------------------------------------------------------------------- */
+[data-theme="scanner"] {
+  --color-primary: #2bd4a7;
+  --color-primary-dark: #21b38c;
+  --color-primary-tint: #10203c;
+  --color-selected-bg: #16294a;
+  --color-accent: #ff6b2b;
+  --color-accent-dark: #e0530f;
+  --color-accent-tint: #2a1a10;
+
+  --color-ink: #ffffff;
+  --color-ink-muted: #7f8dad;
+  --color-body-soft: #b8c3da;
+  --color-navy-accent: #2bd4a7;
+
+  /* The gate is dark navy, not black — it is the same brand at 2 a.m. Green
+     stays the VALID colour: at a gate, "go" must never be a brand decision. */
+  --color-bg: #0a1226;
+  --color-surface: #10203c;
+  --color-border: #1e2f50;
+  --color-border-strong: #2c4067;
+  --color-divider: #1e2f50;
+
+  --color-gold: #f5c94a;
+  --color-danger: #ff6b5e;
+  --color-danger-dark: #e5483c;
+  --color-danger-tint: #2a1512;
+
+  --color-status-confirmed-bg: #12301f;
+  --color-status-confirmed-fg: #2bd4a7;
+  --color-status-pending-bg: #2c2510;
+  --color-status-pending-fg: #f5c94a;
+  --color-status-cancelled-bg: #221a19;
+  --color-status-cancelled-fg: #ff6b5e;
+  --color-status-success-bg: #12301f;
+  --color-status-success-fg: #2bd4a7;
+  --color-status-warning-bg: #2c2510;
+  --color-status-warning-fg: #f5c94a;
+  --color-status-danger-bg: #2a1512;
+  --color-status-danger-fg: #ff6b5e;
+
+  --color-sidebar: #10203c;
+  --color-sidebar-ink: #ffffff;
+
+  /* Full-screen scan result flashes (README "Scanner (dark)") */
+  --flash-valid: rgba(11, 138, 85, 0.94);
+  --flash-duplicate: rgba(180, 120, 10, 0.95);
+  --flash-invalid: rgba(190, 40, 30, 0.95);
+
+  --shadow-cta-themed: 0 8px 20px rgba(43, 212, 167, 0.3);
+}
+
+/* Expose the themed variables to Tailwind's utility generator so
+   `bg-surface`, `text-ink-muted`, `border-border` etc. all work. */
+@theme inline {
+  --color-primary: var(--color-primary);
+  --color-primary-dark: var(--color-primary-dark);
+  --color-primary-tint: var(--color-primary-tint);
+  --color-selected-bg: var(--color-selected-bg);
+  --color-accent: var(--color-accent);
+  --color-accent-dark: var(--color-accent-dark);
+  --color-accent-tint: var(--color-accent-tint);
+  --color-ink: var(--color-ink);
+  --color-ink-muted: var(--color-ink-muted);
+  --color-body-soft: var(--color-body-soft);
+  --color-navy-accent: var(--color-navy-accent);
+  --color-bg: var(--color-bg);
+  --color-surface: var(--color-surface);
+  --color-border: var(--color-border);
+  --color-border-strong: var(--color-border-strong);
+  --color-divider: var(--color-divider);
+  --color-gold: var(--color-gold);
+  --color-danger: var(--color-danger);
+  --color-danger-dark: var(--color-danger-dark);
+  --color-danger-tint: var(--color-danger-tint);
+  --color-sidebar: var(--color-sidebar);
+  --color-sidebar-ink: var(--color-sidebar-ink);
+  --color-status-confirmed-bg: var(--color-status-confirmed-bg);
+  --color-status-confirmed-fg: var(--color-status-confirmed-fg);
+  --color-status-pending-bg: var(--color-status-pending-bg);
+  --color-status-pending-fg: var(--color-status-pending-fg);
+  --color-status-cancelled-bg: var(--color-status-cancelled-bg);
+  --color-status-cancelled-fg: var(--color-status-cancelled-fg);
+  --color-status-success-bg: var(--color-status-success-bg);
+  --color-status-success-fg: var(--color-status-success-fg);
+  --color-status-warning-bg: var(--color-status-warning-bg);
+  --color-status-warning-fg: var(--color-status-warning-fg);
+  --color-status-danger-bg: var(--color-status-danger-bg);
+  --color-status-danger-fg: var(--color-status-danger-fg);
+}
+
+/* ==========================================================================
+   Base element styles.
+   These MUST live in `@layer base`. Unlayered CSS wins over anything inside a
+   cascade layer regardless of specificity, so an unlayered `a { color }` would
+   silently beat every Tailwind `text-*` utility — rendering, for example, a
+   white-on-teal button as teal-on-teal.
+   ========================================================================== */
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    background: var(--color-bg);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: var(--text-body-lg);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Headings are 800 and sentence case throughout (README "Shared"). */
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin: 0;
+  }
+
+  a {
+    color: var(--color-primary);
+    text-decoration: none;
+  }
+  a:hover {
+    color: var(--color-primary-dark);
+  }
+
+  /* Every interactive target is >= 44px on touch (README type scale note). */
+  @media (pointer: coarse) {
+    button,
+    a[role="button"],
+    [data-hit] {
+      min-height: 44px;
+      min-width: 44px;
+    }
+  }
+}
+
+@layer components {
+  /* Indian digit grouping is rendered by lib/money.ts; tables need the digits
+     to line up under it. */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
+
+  /* Horizontal strips that must scroll but must not show a scrollbar sitting
+     across the content — the dashboard tab strip and the category rail. The
+     element still scrolls with a wheel, a trackpad and a keyboard; only the
+     painted bar is hidden. */
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* --- Motion -------------------------------------------------------------- */
+
+@keyframes se-pop {
+  0%   { transform: scale(0.6); opacity: 0; }
+  60%  { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes se-fall {
+  0%   { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+}
+@keyframes se-scanline {
+  0%   { transform: translateY(0); }
+  50%  { transform: translateY(var(--scan-travel, 220px)); }
+  100% { transform: translateY(0); }
+}
+@keyframes se-flashin {
+  from { opacity: 0; transform: scale(1.04); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes se-spin {
+  to { transform: rotate(360deg); }
+}
+
+@layer components {
+  .se-lift {
+    transition: transform 180ms ease, box-shadow 180ms ease;
+  }
+  .se-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-card-hover);
+  }
+}
+
+/* README: "Respect prefers-reduced-motion: disable confetti, scan-line and
+   hover-lift animations." Enforced globally so no component can opt out. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .se-lift:hover {
+    transform: none;
+  }
+  [data-motion="confetti"],
+  [data-motion="scanline"] {
+    display: none !important;
+  }
+}
+
+/* The mobile dock (category rail + tab bar) is sticky and only exists below
+   the `lg` breakpoint, so the padding it needs must disappear with it —
+   otherwise every desktop page carries 110px of dead space at the bottom. */
+@layer base {
+  @media (min-width: 1024px) {
+    :root {
+      --dock-pad: 0px;
+    }
+  }
+}

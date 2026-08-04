@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>Become an Organizer — Shiv Events</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  body { margin:0; font-family:'Plus Jakarta Sans',sans-serif; background:#EEEDFB; color:#1E2249; }
+  a { color:#E935C1; text-decoration:none; } a:hover { color:#C41FA2; }
+  * { box-sizing:border-box; }
+  @keyframes pop { 0% { transform:scale(.4); opacity:0 } 70% { transform:scale(1.12) } 100% { transform:scale(1); opacity:1 } }
+</style>
+</helmet>
+
+<div style="min-height:100vh;padding-bottom:50px">
+<div style="background:#fff;display:flex;align-items:center;justify-content:space-between;padding:14px 48px;border-bottom:1px solid #E4E2F5">
+  <a href="Shiv-Events-Home.dc.html" style="display:flex;align-items:center;gap:9px">
+    <span style="width:34px;height:34px;border-radius:10px;background:#E935C1;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:18px">S</span>
+    <span style="font-size:22px;font-weight:800;color:#1E2249;letter-spacing:-.5px">shiv events<span style="color:#E935C1"> organizers</span></span>
+  </a>
+  <a href="Shiv-Events-Organizer.dc.html" style="font-size:13.5px;font-weight:700;color:#5A5F87">Already onboarded? Open portal →</a>
+</div>
+
+<!-- Stepper -->
+<div style="display:flex;justify-content:center;padding:30px 48px 10px" data-screen-label="Onboarding stepper">
+  <sc-for list="{{ steps }}" as="s" hint-placeholder-count="5">
+    <span style="display:flex;align-items:center">
+      <span style="display:flex;align-items:center;gap:9px">
+        <span style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;background:{{ s.bg }};color:{{ s.color }};border:2px solid {{ s.border }}">{{ s.mark }}</span>
+        <span style="font-size:13px;font-weight:800;color:{{ s.labelColor }}">{{ s.label }}</span>
+      </span>
+      <sc-if value="{{ s.notLast }}" hint-placeholder-val="{{ true }}"><span style="width:54px;height:2px;background:{{ s.lineBg }};margin:0 12px"></span></sc-if>
+    </span>
+  </sc-for>
+</div>
+
+<div style="max-width:860px;margin:20px auto 0;padding:0 24px">
+  <!-- STEP 1: BUSINESS -->
+  <sc-if value="{{ is1 }}" hint-placeholder-val="{{ true }}">
+    <div style="background:#fff;border-radius:20px;padding:28px 32px" data-screen-label="Business details">
+      <div style="font-size:20px;font-weight:800">Business details</div>
+      <div style="font-size:13px;color:#8A8FB5;margin:4px 0 20px">Tell us who's organizing — this appears on your public profile after verification.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div style="grid-column:1/3"><div style="font-size:12px;font-weight:800;margin-bottom:6px">Organizer / brand name</div><input value="Rangmanch Events" style="width:100%;padding:12px 16px;border:1.5px solid #E4E2F5;border-radius:12px;font:inherit;font-size:14px;outline-color:#E935C1"></div>
+        <div><div style="font-size:12px;font-weight:800;margin-bottom:6px">Legal entity type</div><select style="width:100%;padding:12px;border:1.5px solid #E4E2F5;border-radius:12px;font:inherit;font-size:13.5px;background:#fff"><option>LLP</option><option>Pvt. Ltd.</option><option>Proprietorship</option><option>Trust / society</option><option>Individual</option></select></div>
+        <div><div style="font-size:12px;font-weight:800;margin-bottom:6px">City of operation</div><select style="width:100%;padding:12px;border:1.5px solid #E4E2F5;border-radius:12px;font:inherit;font-size:13.5px;background:#fff"><option>Ahmedabad</option><option>Surat</option><option>Vadodara</option><option>Rajkot</option></select></div>
+        <div><div style="font-size:12px;font-weight:800;margin-bottom:6px">Contact phone</div><input value="+91 98250 44210" style="width:100%;padding:12px 16px;border:1.5px solid #E4E2F5;border-radius:12px;font:inherit;font-size:14px;outline-color:#E935C1"></div>
+        <div><div style="font-size:12px;font-weight:800;margin-bottom:6px">Email</div><input value="hello@rangmanch.events" style="width:100%;padding:12px 16px;border:1.5px solid #E4E2F5;border-radius:12px;font:inherit;font-size:14px;outline-color:#E935C1"></div>
+        <div style="grid-column:1/3"><div style="font-size:12px;font-weight:800;margin-bottom:6px">What kind of events do you run?</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px">
+            <span style="font-size:12.5px;font-weight:700;background:#FDEBF7;color:#C41FA2;border-radius:999px;padding:8px 16px">✓ Garba &amp; Navratri</span>
+            <span style="font-size:12.5px;font-weight:700;background:#FDEBF7;color:#C41FA2;border-radius:999px;padding:8px 16px">✓ Melas</span>
+            <span style="font-size:12.5px;font-weight:700;background:#fff;border:1.5px solid #E4E2F5;color:#5A5F87;border-radius:999px;padding:8px 16px">Concerts</span>
+            <span style="font-size:12.5px;font-weight:700;background:#fff;border:1.5px solid #E4E2F5;color:#5A5F87;border-radius:999px;padding:8px 16px">Comedy</span>
+            <span style="font-size:12.5px;font-weight:700;background:#fff;border:1.5px solid #E4E2F5;color:#5A5F87;border-radius:999px;padding:8px 16px">Food fests</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- STEP 2: KYC -->
+  <sc-if value="{{ is2 }}" hint-placeholder-val="{{ false }}">
+    <div style="background:#fff;border-radius:20px;padding:28px 32px" data-screen-label="KYC documents">
+      <div style="font-size:20px;font-weight:800">KYC documents</div>
+      <div style="font-size:13px;color:#8A8FB5;margin:4px 0 20px">Required by RBI settlement rules — reviewed by our team within 24 hrs.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div style="border:2px dashed #D9D6F2;border-radius:16px;padding:22px;text-align:center;background:#FBFAFF">
+          <div style="font-size:13.5px;font-weight:800">PAN card</div>
+          <div style="font-size:11.5px;color:#0B8A55;font-weight:800;margin-top:6px">✓ Uploaded — AAJFR1234K.pdf</div>
+        </div>
+        <div style="border:2px dashed #D9D6F2;border-radius:16px;padding:22px;text-align:center;background:#FBFAFF">
+          <div style="font-size:13.5px;font-weight:800">GST certificate <span style="color:#8A8FB5;font-weight:600">(if registered)</span></div>
+          <div style="font-size:11.5px;color:#0B8A55;font-weight:800;margin-top:6px">✓ Uploaded — 24AAACS1234F1Z1.pdf</div>
+        </div>
+        <div style="border:2px dashed #E935C1;border-radius:16px;padding:22px;text-align:center;background:#FDEBF7">
+          <div style="font-size:13.5px;font-weight:800">Aadhaar of authorised signatory</div>
+          <div style="font-size:11.5px;color:#C41FA2;font-weight:800;margin-top:6px">Drag &amp; drop or <u style="cursor:pointer">browse</u></div>
+        </div>
+        <div style="border:2px dashed #D9D6F2;border-radius:16px;padding:22px;text-align:center;background:#FBFAFF">
+          <div style="font-size:13.5px;font-weight:800">Past event permission letter <span style="color:#8A8FB5;font-weight:600">(optional)</span></div>
+          <div style="font-size:11.5px;color:#8A8FB5;font-weight:700;margin-top:6px">Speeds up first-event approval</div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- STEP 3: BANK -->
+  <sc-if value="{{ is3 }}" hint-placeholder-val="{{ false }}">
+    <div style="background:#fff;border-radius:20px;padding:28px 32px" data-screen-label="Bank details">
+      <div style="font-size:20px;font-weight:800">Payout bank account</div>
+      <div style="font-size:13px;color:#8A8FB5;margin:4px 0 20px">Weekly settlements land here every Friday. A ₹1 penny-drop verifies the account instantly.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div><div style="font-size:12px;font-weight:800;margin-bottom:6px">Account holder name</div><input value="Rangmanch Events LLP" style="width:100%;padding:12px 16px;border:1.5px solid #E4E2F5;border-radius:12px;font:inherit;font-size:14px;outline-color:#E935C1"></div>
+        <div><div style="font-size:12px;font-weight:800;margin-bottom:6px">Bank</div><select style="width:100%;padding:12px;border:1.5px solid #E4E2F5;border-radius:12px;font:inherit;font-size:13.5px;background:#fff"><option>HDFC Bank</option><option>SBI</option><option>ICICI</option><option>Axis</option><option>Kotak</option></select></div>
+        <div><div style="font-size:12px;font-weight:800;margin-bottom:6px">Account number</div><input value="50200048214821" style="width:100%;padding:12px 16px;border:1.5px solid #E4E2F5;border-radius:12px;font:inherit;font-size:14px;font-variant-numeric:tabular-nums;outline-color:#E935C1"></div>
+        <div><div style="font-size:12px;font-weight:800;margin-bottom:6px">IFSC</div><div style="display:flex;gap:8px"><input value="HDFC0000123" style="flex:1;padding:12px 16px;border:1.5px solid #0B8A55;border-radius:12px;font:inherit;font-size:14px;background:#E8F6EE"><span style="display:flex;align-items:center;color:#0B8A55;font-size:12px;font-weight:800">✓ Verified</span></div></div>
+      </div>
+      <div style="margin-top:16px;background:#E8F6EE;border:1px dashed #0B8A55;border-radius:12px;padding:10px 14px;font-size:12px;font-weight:700;color:#0B8A55">✓ Penny-drop successful — account matches "Rangmanch Events LLP"</div>
+    </div>
+  </sc-if>
+
+  <!-- STEP 4: PLAN & FEE -->
+  <sc-if value="{{ is4 }}" hint-placeholder-val="{{ false }}">
+    <div style="background:#fff;border-radius:20px;padding:28px 32px" data-screen-label="Plan selection">
+      <div style="font-size:20px;font-weight:800">Choose your plan</div>
+      <div style="font-size:13px;color:#8A8FB5;margin:4px 0 20px">One-time yearly onboarding fee — pay now to submit your account for review.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <sc-for list="{{ plans }}" as="p" hint-placeholder-count="2">
+          <button onClick="{{ p.onPick }}" style="font:inherit;text-align:left;border:2px solid {{ p.border }};background:{{ p.bg }};border-radius:18px;padding:22px 24px;cursor:pointer;position:relative;display:block">
+            <sc-if value="{{ p.popular }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:-11px;left:22px;background:#E935C1;color:#fff;font-size:10.5px;font-weight:800;border-radius:999px;padding:4px 12px">MOST POPULAR</span></sc-if>
+            <span style="font-size:16px;font-weight:800;color:#1E2249">{{ p.name }}</span>
+            <span style="display:block;font-size:26px;font-weight:800;color:#1E2249;margin-top:4px">{{ p.price }}<span style="font-size:12.5px;color:#8A8FB5;font-weight:700"> / year</span></span>
+            <span style="display:block;margin-top:12px">
+              <sc-for list="{{ p.perks }}" as="perk" hint-placeholder-count="4">
+                <span style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:#5A5F87;padding:3px 0"><span style="color:#0B8A55;font-weight:800">✓</span>{{ perk }}</span>
+              </sc-for>
+            </span>
+          </button>
+        </sc-for>
+      </div>
+      <div style="margin-top:18px;background:#EEEDFB;border-radius:14px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:13px;font-weight:700;color:#5A5F87">{{ planName }} plan · fee + 18% GST</span>
+        <span style="font-size:18px;font-weight:800">{{ planTotal }}</span>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px;font-size:11.5px;font-weight:700;color:#8A8FB5"><span style="background:#fff;border:1px solid #E4E2F5;border-radius:7px;padding:5px 10px">UPI</span><span style="background:#fff;border:1px solid #E4E2F5;border-radius:7px;padding:5px 10px">Card</span><span style="background:#fff;border:1px solid #E4E2F5;border-radius:7px;padding:5px 10px">Netbanking</span></div>
+    </div>
+  </sc-if>
+
+  <!-- STEP 5: UNDER REVIEW -->
+  <sc-if value="{{ is5 }}" hint-placeholder-val="{{ false }}">
+    <div style="background:#fff;border-radius:20px;padding:44px;text-align:center" data-screen-label="Under review">
+      <div style="width:84px;height:84px;border-radius:50%;background:#FDEBF7;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;animation:pop .5s ease-out both">
+        <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#E935C1" stroke-width="2.4"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3.5 2"></path></svg>
+      </div>
+      <div style="font-size:24px;font-weight:800;letter-spacing:-.4px">Application under review</div>
+      <div style="font-size:14px;color:#8A8FB5;margin-top:8px;line-height:1.7">Payment of <b style="color:#1E2249">{{ planTotal }}</b> received — receipt sent to hello@rangmanch.events.<br>Our team verifies KYC within <b style="color:#1E2249">24 hours</b>. You'll get WhatsApp + email confirmation.</div>
+      <div style="display:flex;justify-content:center;gap:26px;margin:24px 0;font-size:12.5px;font-weight:800">
+        <span style="color:#0B8A55">✓ Business details</span><span style="color:#0B8A55">✓ KYC uploaded</span><span style="color:#0B8A55">✓ Bank verified</span><span style="color:#0B8A55">✓ Fee paid</span><span style="color:#C41FA2">● Admin review</span>
+      </div>
+      <a href="Shiv-Events-Organizer.dc.html" style="display:inline-block;background:#E935C1;color:#fff;font-size:14px;font-weight:800;border-radius:999px;padding:14px 36px" style-hover="background:#C41FA2;color:#fff">Preview your portal →</a>
+    </div>
+  </sc-if>
+
+  <!-- Nav -->
+  <sc-if value="{{ showNav }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex;justify-content:space-between;margin-top:20px">
+      <button onClick="{{ onBack }}" style="font:inherit;font-size:14px;font-weight:700;color:#5A5F87;background:#fff;border:1.5px solid #E4E2F5;border-radius:999px;padding:13px 28px;cursor:pointer;visibility:{{ backVis }}" style-hover="border-color:#E935C1;color:#E935C1">← Back</button>
+      <button onClick="{{ onNext }}" style="font:inherit;font-size:15px;font-weight:800;color:#fff;background:#E935C1;border:none;border-radius:999px;padding:14px 40px;cursor:pointer;box-shadow:0 8px 20px rgba(233,53,193,.3)" style-hover="background:#C41FA2">{{ nextLabel }}</button>
+    </div>
+  </sc-if>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+class Component extends DCLogic {
+  state = { step: 1, plan: 'Pro' };
+  planData = {
+    Basic: { price: 10000, perks: ['Up to 6 events / year', '8% commission per ticket', 'Standard listing placement', 'Email support'] },
+    Pro: { price: 25000, perks: ['Unlimited events', '6% commission per ticket', 'Featured placement + festival pages', 'Priority support + dedicated manager'] }
+  };
+  renderVals() {
+    const { step, plan } = this.state;
+    const labels = ['Business', 'KYC', 'Bank', 'Plan & fee', 'Review'];
+    const inr = n => '₹' + n.toLocaleString('en-IN');
+    const total = Math.round(this.planData[plan].price * 1.18);
+    return {
+      steps: labels.map((label, i) => {
+        const n = i + 1, done = step > n, active = step === n;
+        return { label, notLast: n < 5, mark: done ? '✓' : String(n),
+          bg: done || active ? '#E935C1' : '#fff', color: done || active ? '#fff' : '#8A8FB5',
+          border: done || active ? '#E935C1' : '#D9D6F2', labelColor: active ? '#1E2249' : '#8A8FB5',
+          lineBg: done ? '#E935C1' : '#D9D6F2' };
+      }),
+      is1: step === 1, is2: step === 2, is3: step === 3, is4: step === 4, is5: step === 5,
+      showNav: step < 5, backVis: step > 1 ? 'visible' : 'hidden',
+      onBack: () => this.setState(s => ({ step: Math.max(1, s.step - 1) })),
+      onNext: () => this.setState(s => ({ step: Math.min(5, s.step + 1) })),
+      nextLabel: step === 4 ? 'Pay ' + inr(total) + ' & submit' : 'Continue →',
+      plans: ['Basic', 'Pro'].map(name => ({
+        name, price: inr(this.planData[name].price), perks: this.planData[name].perks,
+        popular: name === 'Pro', onPick: () => this.setState({ plan: name }),
+        border: plan === name ? '#E935C1' : '#E4E2F5', bg: plan === name ? '#FDF5FB' : '#fff'
+      })),
+      planName: plan, planTotal: inr(total)
+    };
+  }
+}
+</script>
+</body>
+</html>

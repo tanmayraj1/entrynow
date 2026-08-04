@@ -1,0 +1,670 @@
+# Decisions
+
+Required by System Logic Specification **Part J**:
+
+> Any behavior not covered here: choose the option that protects (in order)
+> attendee money → organizer trust → platform revenue, record it in
+> DECISIONS.md, continue.
+
+Every entry states the conflict or gap, the decision, and why. Append; do not
+rewrite history.
+
+## Source documents
+
+| Ref | Document | Authority |
+|---|---|---|
+| **DESIGN** | `design_handoff_shiv_events/README.md` + 16 `.dc.html` prototypes | Visual intent: tokens, layout, copy, interaction states |
+| **SPEC** | System Logic Specification ("Prompt 3") | Behaviour. Wins on conflict, by its own terms |
+
+A "Prompt 2" is referenced by SPEC (stack, and a §6 atomic-claim snippet) but
+was never supplied. Its stack role is filled by D-002; its §6 content is
+re-specified inline by SPEC C4.2b. Revisit if it surfaces.
+
+---
+
+## D-001 — Product name is "Shiv Events"
+
+**Conflict.** DESIGN brands the product *Shiv Events* (`SHV-2610-4821`). SPEC
+calls it *Utsav* (`UTS-GRB-0412`).
+
+**Decision.** *Shiv Events*. Confirmed by the product owner: Utsav was the
+earlier working name.
+
+**Consequence.** ID formats take the better structure from SPEC with the current
+brand's prefix:
+
+- Ticket: `SHV-{eventShort}-{seq}` — e.g. `SHV-GRB-0412`
+- Booking: `SHV` + 6 digits — e.g. `SHV482100`
+
+SPEC's `{eventShort}` grouping is retained because it makes a ticket number
+legible at a gate without a lookup, which the design's flat `SHV-2610-4821`
+does not.
+
+## D-002 — Stack: Next.js full-stack
+
+**Gap.** The stack document was never supplied.
+
+**Decision.** Next.js (App Router) + TypeScript strict + Tailwind v4 +
+PostgreSQL/Prisma + Redis + BullMQ, one deployable. Chosen with the product
+owner.
+
+**Why.** SPEC assumes server-authoritative transactions, webhooks and scheduled
+jobs; DESIGN assumes SEO landing pages (Festival, Event). One Next.js app
+serves both without a second service.
+
+## D-003 — Booking fee is charged on the pre-discount subtotal
+
+**Conflict.** DESIGN: "fee = 3.5% of **discounted** subtotal". SPEC A3: "3.5% of
+subtotal, min ₹15, max ₹99".
+
+**Decision.** 3.5% of the **pre-discount** subtotal, clamped to [₹15, ₹99].
+
+**Why.** SPEC's D1 worked example is decisive and unambiguous: a ₹1,000 subtotal
+with a ₹100 promo produces a ₹35 fee. 3.5% × 1000 = 35; 3.5% × 900 = 31.50.
+Implemented in `src/lib/money.ts:bookingFee`, asserted in `money.test.ts`.
+
+## D-004 — Ledger gains a `PAYMENT_IN` leg
+
+**Defect in SPEC.** Invariant I3 requires `sum(LedgerEntries per booking) = 0`.
+The five rows listed in D1 sum to **+941.30** — exactly what the user paid. The
+user/gateway side of the double entry is missing, so I3 cannot hold as written.
+
+**Decision.** Add a `PAYMENT_IN` row on an `EXTERNAL` account for the gateway
+portion, and `WALLET_REDEEM` (also `EXTERNAL`) for any wallet portion. Both
+negative: money entering the booking from outside it.
+
+**Result.** D1 now balances exactly — organizer ₹815.04, platform ₹126.26,
+sum 0. Every other figure in D1 is unchanged. Asserted in `money.test.ts`.
+
+**Why `EXTERNAL` for wallet.** Wallet balance is authoritatively tracked in
+`WalletTxn`; within a *booking's* ledger the redeemed amount is still
+user-provided funds. Keeping it on `EXTERNAL` preserves I3 without duplicating
+the wallet's own accounting.
+
+## D-005 — Promos need two counters
+
+**Conflict inside SPEC.** C4.4 says `usedCount` increments only at capture,
+"prevents burn by abandoners". Edge case I7 says promo consumption is
+*reserved* at order-creation, "like inventory, released on failure/expiry".
+
+**Decision.** Both. Schema carries `used_count` **and** `reserved_count`. The
+guarded reservation is:
+
+```sql
+UPDATE promos SET reserved_count = reserved_count + 1
+WHERE id = $1 AND used_count + reserved_count < usage_limit;
+```
+
+At capture: `reserved_count − 1, used_count + 1`. On expiry/failure:
+`reserved_count − 1`.
+
+**Why.** They solve different problems — reservation stops the oversell race at
+the limit boundary, deferred `usedCount` stops abandoners burning the code.
+Neither alone satisfies both requirements.
+
+## D-006 — Refund balancing leg is derived, not recomputed
+
+**Gap.** SPEC D1 describes partial refunds as "reverse 50% of sale/commission
+rows only" but does not say how the outbound user leg is derived.
+
+**Decision.** The `EXTERNAL` refund row is the exact negation of the sum of all
+other rows in that refund, rather than being recomputed from the organizer's
+net.
+
+**Why.** Under a fractional refund, rounding each reversed row independently can
+leave a paise of drift. Deriving the balancing leg from the actual sum makes I3
+hold by construction at any fraction. Protects attendee money (Part J order).
+
+## D-007 — Plan prices and commission
+
+**Conflict.** DESIGN renders Basic ₹10k / Pro ₹25k and "Pro 6% / Basic 8%" and
+"weekly Friday settlements". SPEC A3 sets Basic ₹4,999 (5 live events) / Pro
+₹14,999 (unlimited + featured), `PLATFORM_COMMISSION_PCT = 8` with per-organizer
+override, and D2 a daily 02:00 IST payout run with `PAYOUT_DELAY_DAYS = 3`.
+
+**Decision.** SPEC's numbers throughout. DESIGN's rendered copy is updated to
+match. The design's *Pro 6%* promise is honoured through SPEC's own mechanism:
+assigning the Pro plan writes a 6% per-organizer commission override.
+
+**Why.** SPEC wins by its own terms; the lower plan prices and the faster,
+predictable payout cadence both favour organizer trust over platform revenue,
+matching Part J's ordering. "Weekly Friday settlements" is removed from
+organizer-facing copy — leaving it would be a false promise.
+
+## D-008 — Integrations are adapters with sandbox drivers
+
+**Gap.** SPEC names Razorpay Route, an SMS provider and WhatsApp delivery but
+assumes accounts exist.
+
+**Decision.** Payments, SMS, WhatsApp, geocoding and storage each sit behind a
+typed interface resolved by env var, with a fully functional `sandbox` driver.
+The sandbox emits real webhooks (with latency and a configurable failure rate),
+so idempotency, the late-capture path and the reconciliation job are all
+exercised without a vendor account.
+
+**Why.** The hardest, highest-risk logic in SPEC is the payment lifecycle.
+Mocking it away would leave it untested; blocking on vendor KYC would stall
+every other phase.
+
+## D-009 — Booking fee clamp is method-independent
+
+**Gap.** SPEC does not say whether the ₹15/₹99 clamp applies before or after a
+wallet offset.
+
+**Decision.** The clamp applies to the gross fee, computed from the subtotal
+alone, before any wallet or promo consideration.
+
+**Why.** The fee prices the platform's service, which does not vary by how the
+user chose to pay. Making it method-dependent would let a user shrink the fee by
+splitting payment.
+
+## D-010 — Basic plan cap breach blocks publish
+
+**Gap.** SPEC A3 caps Basic at 5 live events but does not define what happens on
+the sixth.
+
+**Decision.** Block the publish action with an inline upgrade CTA. Existing LIVE
+events are never affected; DRAFT creation stays allowed.
+
+**Why.** Protects attendee money and organizer trust — silently unpublishing or
+auto-charging an upgrade would do the opposite. Mirrors SPEC D3's treatment of a
+lapsed plan ("cannot create/publish new events; LIVE events unaffected").
+
+## D-011 — All money is integer paise
+
+**Gap.** SPEC states amounts in rupees with two decimals (₹12.96, ₹941.30).
+
+**Decision.** Every stored and computed amount is an integer number of paise.
+Rupees exist only at the formatting boundary (`inr()`) and at parse time.
+
+**Why.** I3 demands exact equality to zero. Floating-point rupees cannot
+guarantee it. Rounding is half-away-from-zero so refund reversals stay sign-
+symmetric with the captures they mirror.
+
+## D-014 — No inventory hold until payment exists
+
+**Gap.** SPEC C4.2c takes an 8-minute hold the moment checkout starts, and a
+hold-release job returns the seats on expiry. The release job is part of the
+booking-engine work; the checkout entry point landed earlier, to remove the
+dead `/booking/new` link.
+
+**Decision.** `/booking/new` validates the request and computes the totals
+server-side, but takes **no hold**, and says so plainly on the page. The hold
+starts when payment does.
+
+**Why.** A hold with no release leaks inventory permanently — every abandoned
+checkout would burn seats that nobody can buy and nobody can free. Protecting
+attendee access to seats beats showing a more complete-looking flow. Reverted
+by the booking-engine iteration, which adds the hold and its release together.
+
+## D-015 — The language switcher is removed until i18n ships
+
+**Conflict.** DESIGN shows an `EN · हिंदी · ગુજરાતી` switcher in the utility bar
+and footer. It was rendered as plain text with no behaviour.
+
+**Decision.** Removed from both. The ~15% width headroom for Devanagari and
+Gujarati stays in the layouts, so the control can return without a redesign.
+
+**Why.** A control that looks interactive and does nothing is worse than its
+absence: it tells a Gujarati-speaking user the product supports their language
+and then silently refuses. The footer slot now links to the privacy policy,
+which is a real destination.
+
+## D-013 — Time thresholds compare exact fractions, never truncated hours
+
+**Gap.** SPEC states thresholds in whole hours ("more than 6h before the
+session", "72h before session start", ">2h before session") without saying how
+partial hours resolve.
+
+**Decision.** All threshold comparisons use exact fractional hours.
+`hoursUntil()` computes from milliseconds rather than using
+`differenceInHours`, which truncates toward zero.
+
+**Why.** Truncation silently moves every boundary against the attendee. A
+cancellation 6h30m before a session reads as "6" and fails a `> 6` check, so the
+seats are burned and not restored — the user loses their refundable inventory
+because of a rounding artefact. Caught by `ist.test.ts`. Protects attendee money
+(Part J order).
+
+## D-012 — Session "today" is an instant comparison, never a date comparison
+
+**Clarification of SPEC I8.** A Garba session running 8 PM–1 AM belongs to its
+start date, and the scanner must accept until the session *ends*.
+
+**Decision.** Gate validity is `now ∈ [startsAt, endsAt + grace]`, a pure
+instant comparison. The IST calendar date is used only for *filing* a session
+(which day it appears under) and for the `WRONG_SESSION` message. All of it goes
+through `src/lib/ist.ts`; no business code may read the server's local zone.
+
+**Why.** A date-key comparison would reject a valid attendee at 00:01 IST.
+
+## D-016 — The map is hand-rolled on raster tiles, not a mapping library
+
+**Gap.** Neither document specifies how the map view is drawn. DESIGN shows
+price pins over a stylised ground; SPEC C2.3 only requires "near me" and a
+radius.
+
+**Decision.** A ~200-line slippy map: Web Mercator in `src/lib/geo.ts`, tiles as
+plain `<img>`, pins as ordinary DOM buttons. Zoom is integer-only. The tile
+template is `NEXT_PUBLIC_MAP_TILE_URL`, defaulting to OpenStreetMap.
+
+**Why.** The projection is the same eleven lines the server already needs for
+bbox queries, so a library would introduce a *second* source of truth for
+coordinates that must agree with the API's `north/south/east/west`. Pins as DOM
+inherit the design tokens and stay keyboard-reachable, which a canvas layer does
+not. Cost: ~150 kB of JS and a vendor CSS reset avoided.
+
+**Consequence.** OSM's public tile endpoint is rate-limited and forbids heavy
+use — before launch this must point at a paid provider or a self-hosted proxy,
+and `NEXT_PUBLIC_MAP_ATTRIBUTION` must carry that provider's required notice.
+
+## D-017 — Product name is "Entry Now"; ID prefixes become EN
+
+**Supersedes the branding half of D-001.** The product owner renamed the
+platform to *Entry Now* and supplied a logo: a navy ticket torn against an
+orange-to-magenta gradient.
+
+**Decision.** *Entry Now*. ID formats keep SPEC's structure with the new prefix:
+
+- Ticket: `EN-{eventShort}-{seq}` — e.g. `EN-GRB-0412`
+- Booking: `EN` + 6 digits — e.g. `EN482100`
+
+**Why now.** Nothing writes `Booking` or `Ticket` yet, so the prefix change
+costs one sed. After the booking engine ships it would need a migration and a
+dual-format parser at the gate scanner, which is exactly the kind of debt that
+outlives the rename.
+
+**Consequence.** The palette moves from teal to navy-led with the gradient
+reserved for action (CTAs, price pins, active states, ticket foil). Organizer
+dashboards take the logo's orange and admin its navy, so an operator with both
+open can tell the tabs apart. Green stays the scanner's VALID colour: at a gate,
+"go" is not a brand decision.
+
+## D-018 — Reference creatives are art direction, not assets
+
+**Gap.** Seven reference images were supplied "to use" on the site.
+
+**Decision.** They inform the visual language — bold display type, deep
+saturated grounds, marigold ornament, layered ticket stubs — and none of them
+ship. Every illustration in `src/components/brand/` is drawn for this codebase.
+
+**Why.** The supplied files carry a competitor's logo (BookMyShow), other
+companies' marks, licensed characters and identifiable performers with no
+release. Shipping them would put a competitor's brand on our own homepage and
+create a copyright and likeness exposure that survives any later redesign.
+Confirmed with the product owner before proceeding.
+
+## D-019 — Gradients are reserved for action; categories get three flat colours
+
+**Reversal of an earlier call in this session.** The first rebrand pass gave
+every category its own gradient, inherited from the old `Category.gradient`
+column. On a twelve-category rail that produced a paint chart, and the event
+cards below — also gradient-filled — could not compete with it.
+
+**Decision.** The brand gradient appears in exactly five places: the logo,
+primary CTAs, map price pins, the ticket foil edge, and the hero mesh.
+Everywhere else uses flat colour from a three-value set — navy `#16264C`,
+orange `#FF6B2B`, rose `#ED2C63` — assigned per category in
+`src/components/brand/category-glyph.tsx`.
+
+Category tiles are an off-white plate with a hairline border and the glyph in
+its accent; the accent fills the plate only on hover. The event-card poster
+plate is navy with an oversized low-opacity glyph, used only when the organizer
+has uploaded no cover art.
+
+**Why.** A gradient used everywhere stops signalling anything. Reserving it for
+"act on this" is what makes a CTA read as a CTA, and it lets the actual
+merchandise — the event posters — be the loudest thing on the page.
+
+**Consequence.** `Category.gradient` is now only read by the promo banners,
+which are meant to shout. The `--gradient-*` custom properties stay defined for
+that use and for organizer-uploaded banner art.
+
+## D-020 — The map never steals the page scroll
+
+**Bug, reported from a real browser.** Scrolling the page with the cursor over
+the map zoomed the map instead of scrolling past it.
+
+**Decision.** Wheel zoom requires Ctrl / ⌘. A plain wheel is not
+`preventDefault`ed and the page scrolls; a transient overlay says "Hold ⌘ and
+scroll to zoom" so the gesture stays discoverable. A trackpad pinch already
+arrives as `wheel` with `ctrlKey`, so pinch-to-zoom is unaffected.
+
+On touch the box is `touch-action: pan-y`, and a drag whose first movement is
+more vertical than horizontal is handed back to the browser as a page scroll.
+Pointer capture is claimed on the first *accepted* movement, never on
+`pointerdown`, because capturing up front steals a gesture the browser was
+about to turn into a scroll.
+
+**Why.** A locator that traps the reader is worse than no map. Zoom is
+available from the +/- buttons, the keyboard, and the modifier — losing the
+bare wheel costs nothing.
+
+## D-021 — Ticket numbers come from a per-event counter, not COUNT(*)
+
+**Gap.** D-001 fixes the *format* (`EN-{eventShort}-{seq}`) but not how `seq` is
+allocated.
+
+**Decision.** `Event.ticketSeq`, incremented by a single
+`UPDATE … SET "ticketSeq" = "ticketSeq" + n … RETURNING "ticketSeq"`, which
+reserves a whole block for one booking atomically.
+
+**Why.** The obvious implementation — `COUNT(*)` of the event's existing
+tickets, plus an index — lets two concurrent captures read the same count and
+mint the same number. The unique index would then reject the second one, which
+turns a **successful payment into a failed booking**: the worst possible place
+to discover a race, because the money has already moved. Protects attendee
+money (Part J order).
+
+## D-022 — Every scheduled job has a synchronous fallback
+
+**Gap.** Part H specifies the jobs but not what happens when the job runner is
+down.
+
+**Decision.** Inventory release has two independent triggers: the delayed
+BullMQ job, and an opportunistic sweep of that event's expired holds run at the
+top of every `createBooking`. `enqueueSafely` logs and returns false rather
+than throwing, so a Redis outage degrades the queue instead of failing a
+booking.
+
+**Why.** A queue is infrastructure, and infrastructure is down sometimes. "The
+worker wasn't running" must never mean "these seats are gone forever". The
+sweep is self-healing by construction: whoever is trying to buy the seat is, by
+definition, executing the code that reclaims it. Protects organizer trust.
+
+## D-023 — In-transaction failures throw; they never return
+
+**Bug, caught by `tests/invariants/hold.test.ts`.** A multi-tier order where
+the second tier had no stock left the FIRST tier's seats held anyway.
+
+**Cause.** Returning a value from a Prisma interactive transaction **commits**
+it. Every failure branch inside `createBooking` was returning a
+`{ ok: false }` result, so Prisma dutifully committed the holds taken before
+the failure. Only a throw rolls back.
+
+**Decision.** Every in-transaction rejection throws `BookingRejected`, which
+carries the user-facing result; the caller catches it outside the transaction
+and returns it. Same pattern for `LateCaptureSoldOut` in capture.
+
+**Why this is worth a decision entry.** The broken version type-checked, passed
+lint, and returned exactly the right JSON to the client. Nothing but a
+concurrency test against a real Postgres would have found it — which is the
+argument for those tests existing at all.
+
+## D-024 — Capture transitions the payment row, it does not insert one
+
+**Bug, caught by `scripts/e2e-booking.mts`.** The webhook 500'd with a unique
+violation on `Payment.gatewayOrderId`.
+
+**Cause.** `POST /api/bookings` inserts the payment as `CREATED` when it opens
+the gateway order. Capture then inserted a *second* row for the same order.
+
+**Decision.** Capture upserts on `gatewayOrderId`; failure updates the CREATED
+row in place. A payment is one row that moves through its state machine (spec
+B4), not one row per event about it.
+
+**Why it mattered more than it looked.** The webhook returned 500, which tells
+a real gateway to **retry** — so a single bug would have become an unbounded
+retry storm against an endpoint that could never succeed. Found only because
+the sandbox driver delivers a real HTTP webhook rather than resolving a promise
+in-process (D-008).
+
+## D-025 — Demo auth is gated, announced, and refuses to boot silently
+
+**Requirement.** The product owner asked for two sign-in options for a demo:
+phone + OTP, and email + password with **no verification**.
+
+**Decision.** Both ship, behind `DEMO_MODE=true`:
+
+- Email sign-up creates a usable account from any address, unverified.
+- Phone sign-in keeps the sandbox driver's fixed OTP.
+- Payment is a real screen driven by test cards, not an auto-confirm.
+
+Three things make that safe to build rather than dangerous to ship:
+
+1. `assertDemoModeIsIntentional()` runs from `instrumentation.ts` and **throws
+   at boot** if `DEMO_MODE=true` with `NODE_ENV=production`, unless
+   `DEMO_MODE_ALLOW_PRODUCTION=true` explicitly acknowledges it.
+2. A non-dismissible banner sits above every marketplace page.
+3. `DEMO_MODE` is deliberately not `NEXT_PUBLIC_` — a client-readable flag
+   could be flipped in devtools, and it decides whether an unverified login is
+   accepted.
+
+**Why the guard rather than trust.** With a fixed OTP, anyone can sign in as
+the seeded super-admin. That is entirely reasonable behind access control and
+catastrophic on a public URL, and the difference between the two is one
+environment variable that is easy to carry forward by accident. Failing at boot
+puts the mistake in front of whoever is watching the deploy logs.
+
+**Sign-in and sign-up share one action** so the two cannot be used to enumerate
+which addresses have accounts, and the password is verified even when no user
+exists so response timing does not leak it either.
+
+## D-026 — Event photography is Wikimedia Commons, with generated attribution
+
+**Gap.** The catalogue needed real hero photography; the earlier supplied
+reference images could not ship (D-018).
+
+**Decision.** `scripts/fetch-event-images.mts` pulls category-relevant photos
+from Wikimedia Commons, filtered to CC BY / CC BY-SA / CC0 / public domain and
+to landscape aspect, and writes `public/images/events/credits.json`.
+`/legal/image-credits` renders that manifest.
+
+**Why not a random-photo service.** Picsum and friends are keyless but return
+*unrelated* photographs. A stock landscape on a Garba night reads as filler and
+actively damages the listing. Commons is the only keyless source where the
+subject is searchable **and** the licence is machine-readable.
+
+**Why the credits page is load-bearing.** CC BY and CC BY-SA grant free
+commercial use *on condition of attribution*. Without the page these images
+would be unlicensed in practice, so it is generated from the same manifest the
+downloader writes and cannot drift from what is on disk.
+
+## D-027 — Tenant isolation is a type, a query layer, and a build check
+
+**Requirement.** Organizer A must not read or write organizer B's rows. The
+product owner asked for this to be *provable*, not intended.
+
+**Decision.** Three layers, because any one alone is escapable:
+
+1. **A branded `OrganizerId`** (`src/lib/queries/organizer/scope.ts`), minted
+   only by `organizerScope()`, called only from `src/lib/auth/rbac.ts`, only
+   from the session. An id that arrived in a URL is a plain `string` and does
+   not type-check.
+2. **Ownership-checked accessors.** Reads use `findFirst` with the organizer in
+   the `where`; writes use `updateMany`/`deleteMany` and assert `count === 1`.
+3. **Audit check A12**, severity `broken`, so a violation fails the build.
+
+**Why writes must use the plural forms.** Prisma's `update`/`delete` require a
+*unique* where-clause, and there is no `@@unique([id, organizerId])` on `Event`
+— so `update({ where: { id } })` is the only shape that compiles, and it has
+nowhere to put the ownership filter. `updateMany` takes an arbitrary filter and
+returns a count, which is the check itself. A12 flags the singular forms.
+
+**Verified it works**: a deliberately unscoped `findMany` dropped into the
+scoped directory was reported as `broken` before being deleted.
+
+## D-028 — Page guards throw; action guards return
+
+**Gap.** Next implements `notFound()` and `redirect()` by *throwing* a
+control-flow error.
+
+**Decision.** Two families in `src/lib/auth/rbac.ts`:
+`requireOrganizer` / `requireAdmin` for pages and layouts, which throw; and
+`authorizeOrganizer` / `authorizeAdmin` for server actions, which return
+`{ ok: false, error }`.
+
+**Why.** Server actions in this codebase follow the `src/app/auth/actions.ts`
+shape: wrap the work, return a typed result, never throw on user error. Such an
+action calling `notFound()` **catches Next's own control-flow throw** and turns
+a 404 into a generic error — or worse, swallows it and continues past the
+failed authorisation check.
+
+**Also decided:** an admin lacking a permission gets the same message as a
+non-admin. A distinct message tells a lower-privileged admin exactly which
+permission to target.
+
+## D-029 — Audit rows are transactional, redacted, and Decimal-safe
+
+**Decision.** `writeAudit(tx, …)` takes the transaction as its **first**
+parameter, so an audit row and the change it describes commit or roll back
+together. There is deliberately no `writeAudit(db, …)` overload — an audit row
+for a rolled-back change is then unrepresentable. A13 flags `writeAudit(db`.
+
+**Two traps found while building it**, both worth recording:
+
+- **`Prisma.Decimal` does not throw on `JSON.stringify`.** It has a `toJSON()`
+  returning a *string*, and `JSON.stringify` calls that **before** the replacer
+  sees the value — so a `toNumber` duck-type in the replacer never fires and
+  the row silently stores `"6"` (or, without `toJSON`, `{s,e,d}` internals)
+  instead of `6`. The fix is a non-arrow replacer reading `this[key]`, which is
+  the raw pre-`toJSON` value. BigInt is the loud twin: it throws outright.
+  Caught by `src/lib/audit.test.ts`, which failed on first run.
+- **KYC and banking fields are redacted.** The audit log is append-only,
+  long-lived and readable by every SUPER admin. That a bank account *changed*
+  is the auditable fact; copying the number into a second, wider-read table is
+  a liability with no investigative benefit.
+
+## D-030 — State transitions live in one table, and terminal means terminal
+
+**Decision.** `src/lib/state-machines.ts` holds Event, OrganizerProfile, Payout
+and Dispute as explicit adjacency maps (spec I5). `assertTransition` **throws**
+rather than returning false — these run inside Prisma interactive transactions,
+where returning a value commits (D-023).
+
+**Why as data.** The illegal edges become as readable as the legal ones. That
+`CANCELLED` has no outgoing edges at all is a business rule — a cancellation
+has already refunded money — that no amount of reading the admin routes would
+reveal.
+
+**Consequence for "delete a bad event"**: `canHardDeleteEvent` permits deletion
+only of a DRAFT that never published. Anything else has `Ticket`, `Payment` and
+`LedgerEntry` rows pointing at it, and those rows are the evidence of what was
+owed to whom. Pause, Cancel and Suspend are the real tools.
+
+## D-031 — Build the wallet-refund path, rather than shipping Cancel disabled
+
+**The open question.** Cancelling an event must return money to everyone who
+booked, and no refund engine existed — `db.refund` was read-only across the
+entire codebase. Either the admin Cancel button shipped disabled, or a minimal
+refund path was built alongside it.
+
+**Decision: build it.** Part J's tiebreaker is attendee money → organizer trust
+→ platform revenue, and a Cancel button that ends an event without returning
+anyone's money inverts that ordering completely. Shipping the platform's most
+destructive action as also its least honest one was not defensible.
+
+**Scope, stated plainly.** `src/lib/refunds.ts` implements the **wallet** path.
+`WALLET` mode completes inside the transaction — the balance moves, the
+`Refund` row is COMPLETED, and the attendee can spend it immediately. `SOURCE`
+mode (back to the original card or UPI handle) needs a gateway refund adapter
+that does not exist yet, so it records a PENDING `Refund` and returns
+`pendingGateway: true` rather than pretending to have paid anyone.
+
+**Three properties hold regardless of mode:**
+
+- **Idempotent.** The booking transition is a guarded `UPDATE … WHERE status =
+  'CONFIRMED'`. A retried bulk cancel, a double-clicked button and a resumed
+  job all find `rowCount === 0` and stop. Nobody is paid twice.
+- **Invariant I3 survives.** The refund rows sum to zero on their own, so the
+  booking's lifetime total stays zero. `writeLedger` asserts it before
+  inserting.
+- **Capture rows are recomputed** from the booking's snapshotted money columns,
+  not read back from `ledger_entries` — the stored rows accumulate reversals
+  from any earlier partial refund, so reading them would double-count the
+  moment partial refunds ship.
+
+**One transaction per booking, not one for the event.** A sold-out Garba night
+is thousands of bookings; a single transaction would hold locks across the
+whole event for minutes and lose all completed work if the last one failed.
+Per-booking transactions mean a crash halfway leaves the first half genuinely
+refunded, and re-running finishes the job.
+
+**Terminal status.** A refunded booking takes the `CANCELLED_BY_{ADMIN,
+ORGANIZER,USER}` status that names *who* ended it, and the `Refund` row carries
+the money. `REFUNDED` would lose the actor, and "Cancelled by organizer —
+₹941.30 refunded to your wallet" is what an attendee needs to read.
+
+**SCANNED tickets are left alone.** Someone who already walked through the gate
+attended; rewriting that would corrupt both the gate record and the attendance
+count the organizer is paid against.
+
+## D-032 — The QR is signed, which makes a documented promise true
+
+**Decision.** `src/lib/qr.ts` signs a compact JWS over `{jti: qrTokenId, ev:
+eventId}` with `QR_JWT_SECRET`.
+
+**Why it mattered.** The secret was never read anywhere in the codebase, so the
+documented property — "rotating `QR_JWT_SECRET` invalidates every ticket" — was
+simply false: the QR carried a bare `qrTokenId`, and a raw token stays valid
+forever. Signing makes that true and adds three things: a forged QR fails
+verification *before* touching the database, so `qrTokenId`s cannot be
+brute-forced at a gate; the event id is inside the signature, so a foreign
+ticket is refused with no query; and `exp` bounds a photographed screen.
+
+**Expiry is deliberately loose** — the event's last session plus seven days,
+passed in per ticket rather than a global TTL. A nine-night Garba pass and a
+one-night comedy set cannot share a window. A tight expiry would turn a paying
+attendee away over a wrong clock at a ground; the atomic single-use claim, not
+expiry, is what stops a shared screenshot.
+
+**Legacy tokens are still accepted** and logged as such. Tickets issued before
+signing existed are in people's wallets, and refusing them would strand real
+attendees at a gate. Remove that branch once every pre-signing event has
+completed.
+
+## D-033 — The gate decides locally, but is never the authority
+
+**Decision.** The scanner PWA judges scans against a cached manifest when
+offline, queues them in IndexedDB, and replays them through the **identical**
+`scanTicket` path an online scan uses. There is no "offline mode" branch in the
+engine — `wasOffline` affects only logging and conflict recording.
+
+**Why that shape.** A ground with 8,000 people has no usable mobile data by
+8:30 PM. A scanner that stops working is a scanner that gets bypassed, and a
+bypassed gate is worse than a slow one. But a device that could *decide* would
+be a device that can be lied to, so every offline admit is labelled optimistic
+and settled by the server's atomic claim on reconnect.
+
+**Consequences that follow from it:**
+
+- **The manifest opens 30 minutes before gates**, never earlier. It is a list
+  of every valid token for the night — the most sensitive artefact the platform
+  produces — and it ships `qrTokenId`s, never signed JWTs, so a leaked manifest
+  is not a stack of forgeable tickets.
+- **Replay is ordered by the device clock**, not by arrival. Two gates
+  reconnect in whatever order their signal returns, but the person who
+  physically walked through first must be the one recorded as admitted.
+- **Cross-gate duplicates become `ScanConflict` rows.** Two offline gates
+  cannot see each other — that is the risk spec F2.2 explicitly accepts. The
+  loser surfaces for organizer review rather than being silently dropped.
+- **`/api/scan` always returns 200**, even for a refused ticket. A non-2xx
+  would make the offline queue treat a legitimate ALREADY_SCANNED as a network
+  failure and retry it forever.
+- **Manual entry is two steps.** The camera path has a QR proving the holder
+  has the ticket; typing a number does not, so the operator confirms *who* the
+  ticket belongs to before it is burned. One-step manual entry means a typo
+  silently admits a stranger and marks someone else's ticket used.
+
+## D-034 — Three audit checks were wrong, and were fixed rather than worked around
+
+Found while building the portals. Each had been quietly passing over real code.
+
+- **A3 matched markup inside doc comments.** A comment reading "keeps a real
+  `<input>` in the DOM" was reported as an unlabelled control — on the very
+  components whose job is to *be* the labelled control. Now runs against
+  `stripComments`, exactly as A12 already did.
+- **A13 flagged reads, not writes.** `quantitySold` in a `select:` was reported
+  as an I1 violation. That trains people to work around the check, which is
+  worse than not having it. It now matches only Prisma `data:` payloads — a
+  write is what breaks I1, so a write is what it matches. The check also could
+  not see writes through the `updateOwned*` helpers, so **the real fix was at
+  the type level**: `NoInventory<>` in `scope.ts` removes those columns from
+  the accepted data type, making it a compile error. A grep sees the shapes it
+  was taught; a type sees them all.
+- **A6 never implemented the raw-SQL branch its own comment promised.** It
+  matched `db.foo.` only — so the concurrency-critical writes, which *cannot*
+  go through Prisma because the fluent API has nowhere to put the guard clause,
+  read as dead code. `SessionScan` and `ScanLog` were reported unwritten while
+  the gate was using them. It now also matches `INSERT INTO`/`UPDATE`/`DELETE
+  FROM` against each model's `@@map` name.

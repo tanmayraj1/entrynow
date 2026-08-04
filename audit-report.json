@@ -1,0 +1,896 @@
+{
+  "routes": [
+    "/",
+    "/[city]",
+    "/[city]/events",
+    "/[city]/events/[slug]",
+    "/[city]/festivals",
+    "/[city]/festivals/[slug]",
+    "/[city]/organizers/[slug]",
+    "/account",
+    "/account/coupons",
+    "/account/help",
+    "/account/invite",
+    "/account/notifications",
+    "/account/wallet",
+    "/account/wishlist",
+    "/admin",
+    "/admin/approvals",
+    "/admin/audit",
+    "/admin/cms",
+    "/admin/config",
+    "/admin/disputes",
+    "/admin/events",
+    "/admin/events/[id]",
+    "/admin/finance",
+    "/admin/organizers",
+    "/admin/organizers/[id]",
+    "/api/bookings",
+    "/api/demo/pay",
+    "/api/follow",
+    "/api/map/events",
+    "/api/map/places",
+    "/api/scan",
+    "/api/scan/batch",
+    "/api/scan/lookup",
+    "/api/scan/manifest",
+    "/api/search",
+    "/api/webhooks/payments",
+    "/api/wishlist",
+    "/auth",
+    "/booking/[bookingNumber]",
+    "/booking/[bookingNumber]/pay",
+    "/booking/new",
+    "/legal/image-credits",
+    "/legal/privacy",
+    "/legal/refunds",
+    "/legal/terms",
+    "/organizer",
+    "/organizer/announcements",
+    "/organizer/dashboard",
+    "/organizer/events",
+    "/organizer/events/[id]",
+    "/organizer/events/[id]/bookings",
+    "/organizer/events/[id]/live",
+    "/organizer/events/[id]/staff",
+    "/organizer/events/new",
+    "/organizer/financials",
+    "/organizer/onboarding",
+    "/organizer/pricing",
+    "/organizer/promos",
+    "/organizer/settings",
+    "/scan",
+    "/scan/[eventId]",
+    "/scan/[eventId]/manual",
+    "/scan/icon.svg",
+    "/scan/manifest.webmanifest",
+    "/scan/sync",
+    "/styleguide",
+    "/tickets",
+    "/tickets/[ticketNumber]"
+  ],
+  "completion": {
+    "pct": 43,
+    "specCovered": 57,
+    "specTotal": 132,
+    "modelsWritten": 33,
+    "modelsTotal": 47,
+    "unwrittenModels": [
+      "UserInterest",
+      "AdminRole",
+      "Locality",
+      "Venue",
+      "EventImage",
+      "EventFaq",
+      "ScheduleItem",
+      "BookingItem",
+      "PayoutItem",
+      "Review",
+      "ReviewReply",
+      "Referral",
+      "TransferRecord",
+      "FeaturedSlot"
+    ]
+  },
+  "counts": {
+    "total": 113,
+    "blocker": 0,
+    "broken": 0,
+    "control": 0,
+    "incomplete": 113,
+    "polish": 0
+  },
+  "findings": [
+    {
+      "check": "A6",
+      "severity": "incomplete",
+      "file": "prisma/schema.prisma",
+      "line": 0,
+      "detail": "model UserInterest is never written by application code"
+    },
+    {
+      "check": "A6",
+      "severity": "incomplete",
+      "file": "prisma/schema.prisma",
+      "line": 0,
+      "detail": "model AdminRole is never written by application code"
+    },
+    {
+      "check": "A6",
+      "severity": "incomplete",
+      "file": "prisma/schema.prisma",
+      "line": 0,
+      "detail": "model Locality is never written by application code"
+    },
+    {
+      "check": "A6",
+      "severity": "incomplete",
+      "file": "prisma/schema.prisma",
+      "line": 0,
+      "detail": "model Venue is never written by application code"
+    },
+    {
+      "check": "A6",
+      "severity": "incomplete",
+      "file": "prisma/schema.prisma",
+      "line": 0,
+      "detail": "model EventImage is never written by application code"
+    },
+    {
+      "check": "A6",
+      "severity": "incomplete",
+      "file": "prisma/schema.prisma",
+      "line": 0,
+      "detail": "model EventFaq is never written by application code"
+    },
+    {
+      "check": "A6",
+      "severity": "incomplete",
+      "file": "prisma/schema.prisma",
+      "line": 0,
+      "detail": "model ScheduleItem is never written by application code"
+    },
+    {
+      "check": "A6",
+      "severity": "incomplete",
+      "file": "prisma/schema.prisma",
+      "line": 0,
+      "detail": "model BookingItem is never written by application code"
+    },
+    {
+      "check": "A6",
+      "severity": "incomplete",
+      "file": "prisma/schema.prisma",
+      "line": 0,
+      "detail": "model PayoutItem is never written by application code"
+    },
+    {
+      "check": "A6",
+      "severity": "incomplete",
+      "file": "prisma/schema.prisma",
+      "line": 0,
+      "detail": "model Review is never written by application code"
+    },
+    {
+      "check": "A6",
+      "severity": "incomplete",
+      "file": "prisma/schema.prisma",
+      "line": 0,
+      "detail": "model ReviewReply is never written by application code"
+    },
+    {
+      "check": "A6",
+      "severity": "incomplete",
+      "file": "prisma/schema.prisma",
+      "line": 0,
+      "detail": "model Referral is never written by application code"
+    },
+    {
+      "check": "A6",
+      "severity": "incomplete",
+      "file": "prisma/schema.prisma",
+      "line": 0,
+      "detail": "model TransferRecord is never written by application code"
+    },
+    {
+      "check": "A6",
+      "severity": "incomplete",
+      "file": "prisma/schema.prisma",
+      "line": 0,
+      "detail": "model FeaturedSlot is never written by application code"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec A",
+      "line": 0,
+      "detail": "A1.1 untested — Visitor may browse everything public but cannot book without phone verificat"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec A",
+      "line": 0,
+      "detail": "A1.4 untested — Scanner Staff is a User with scan-only permission scoped per event and gate"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec A",
+      "line": 0,
+      "detail": "I4 untested — Client-submitted prices are never trusted; the server recomputes everything"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec A",
+      "line": 0,
+      "detail": "A3.otp untested — OTP 6 digits, 5 min validity, max 3 sends/10min/phone, max 5 verify attempts"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec A",
+      "line": 0,
+      "detail": "A3.refundPolicies unimplemented — Refund policies NO_REFUND / FLEXIBLE_72H / CUSTOM ordered tiers"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec A",
+      "line": 0,
+      "detail": "A3.reviewWindow unimplemented — Reviews open 14 days after event end, only to users whose ticket status is S"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec A",
+      "line": 0,
+      "detail": "A3.referral unimplemented — Referrer gets Rs100 wallet credit when referee completes a first CONFIRMED b"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec B",
+      "line": 0,
+      "detail": "B1.paused untested — PAUSED hides the event from listings; existing tickets stay valid; no new sa"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec B",
+      "line": 0,
+      "detail": "B1.cancelled untested — Event CANCELLED triggers the bulk refund process automatically and is irreve"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec B",
+      "line": 0,
+      "detail": "B1.editFree untested — On LIVE, these edits need no re-review: description, gallery, FAQ, adding ti"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec B",
+      "line": 0,
+      "detail": "B1.editReview untested — Date/time/venue change or price INCREASE flips the event to IN_REVIEW but it"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec B",
+      "line": 0,
+      "detail": "B1.editBlast untested — On approval of a date/venue change: mandatory blast to booked users + a 72h "
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec B",
+      "line": 0,
+      "detail": "B2.noRefundEnd unimplemented — A NO_REFUND cancellation ends at CANCELLED_BY_USER and never reaches REFUNDE"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec B",
+      "line": 0,
+      "detail": "B5.suspended untested — SUSPENDED auto-PAUSES all LIVE events, FREEZES payouts, and leaves login rea"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec C",
+      "line": 0,
+      "detail": "C1.1 untested — Phone entry validated as a 10-digit Indian mobile"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec C",
+      "line": 0,
+      "detail": "C1.2 untested — OTP hashed with expiry in Redis, sent via the SMS provider, rate limits appl"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec C",
+      "line": 0,
+      "detail": "C1.3 untested — On verify: find-or-create User, issue an httpOnly JWT session with 30-day ro"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec C",
+      "line": 0,
+      "detail": "C1.4 untested — Failure paths: wrong OTP shows remaining attempts, expired offers resend, lo"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec C",
+      "line": 0,
+      "detail": "C1.5 unimplemented — Google/email auth still requires phone verification before the first booking"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec C",
+      "line": 0,
+      "detail": "C2.1 unimplemented — First visit IP-geo guesses the city and offers a confirm/change banner; the "
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec C",
+      "line": 0,
+      "detail": "C2.2 untested — All marketplace queries filter by cityId; changing city rewrites the URL pre"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec C",
+      "line": 0,
+      "detail": "C2.3 untested — Near Me uses browser geolocation stored in session only, never the database;"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec C",
+      "line": 0,
+      "detail": "C3.1 untested — Listing composes from URL params; every filter change updates the URL withou"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec C",
+      "line": 0,
+      "detail": "C3.4 untested — Multi-session events default to the nearest upcoming session; sold-out sessi"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec C",
+      "line": 0,
+      "detail": "C4.3 unimplemented — Attendee name per ticket, editable until payment; buyer phone and email capt"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec C",
+      "line": 0,
+      "detail": "C4.8 unimplemented — Confirmation shows QR tickets, a calendar file, share and an invite nudge"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec C",
+      "line": 0,
+      "detail": "C4.9 unimplemented — Reconciliation every 10 min settles Payments in CREATED older than 15 min ag"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec C",
+      "line": 0,
+      "detail": "C5.2 unimplemented — On acceptance the old qrTokenId is invalidated, a new one issued, ownership "
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec C",
+      "line": 0,
+      "detail": "C6.1 unimplemented — Cancellation previews the refundable percentage, the mode choice, and the no"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec C",
+      "line": 0,
+      "detail": "C6.3 unimplemented — Refund webhook completes the Refund; failure retries three times then escala"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec C",
+      "line": 0,
+      "detail": "C7.reminders unimplemented — T-24h and T-2h reminders with gate time, venue map link and a QR deep link"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec C",
+      "line": 0,
+      "detail": "C7.offlineQr unimplemented — Ticket QR is cached client-side after first load so it works without network"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec C",
+      "line": 0,
+      "detail": "C8.expiry unimplemented — Nightly job marks unscanned ACTIVE tickets of ended sessions EXPIRED and com"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec C",
+      "line": 0,
+      "detail": "C8.reviews unimplemented — Review invite at T+18h to SCANNED attendees; organizer may reply once; admin"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec D",
+      "line": 0,
+      "detail": "D2.select unimplemented — Daily 02:00 IST payout run selects COMPLETED events past the payout delay, e"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec D",
+      "line": 0,
+      "detail": "D2.approve untested — Payouts are FINANCE-approved in batches, or auto-approved under the configur"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec D",
+      "line": 0,
+      "detail": "D2.negative unimplemented — A negative balance carries forward to the next event; 60 days inactive with "
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec D",
+      "line": 0,
+      "detail": "D3.onboardingFee unimplemented — Plan checkout on capture records onboardingFeePaidAt, stores the plan, write"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec D",
+      "line": 0,
+      "detail": "D3.renewal unimplemented — Renewal reminders at T-30/7/1; a lapsed plan blocks creating or publishing n"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec E",
+      "line": 0,
+      "detail": "E1.gates unimplemented — Onboarding gates run in order and cannot be skipped: details, fee, KYC docs "
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec E",
+      "line": 0,
+      "detail": "E1.sla unimplemented — KYC review SLA is 48h; overdue items are highlighted in the admin queue"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec E",
+      "line": 0,
+      "detail": "E2.wizard untested — Event wizard autosaves DRAFT per step; final submit validates >=1 future ses"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec E",
+      "line": 0,
+      "detail": "E2.review untested — Admin review shows a rendered preview, raw fields and organizer history; rej"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec E",
+      "line": 0,
+      "detail": "E2.autoApprove unimplemented — Admin-toggleable auto-approval for VERIFIED organizers with >=3 past events,"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec E",
+      "line": 0,
+      "detail": "E3.dashboard untested — Dashboard numbers are 60s cached aggregates, switching to 10s polling on eve"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec E",
+      "line": 0,
+      "detail": "E3.announcements untested — Announcement blasts are queued and throttled to 10/s, capped at 3 per event "
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec E",
+      "line": 0,
+      "detail": "E4.staffCheckin untested — Staff pick from today's assigned events only, then a gate; the session is se"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec E",
+      "line": 0,
+      "detail": "E4.fraudAlert unimplemented — More than 5 INVALID scans per minute at one gate alerts the organizer and ad"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec F",
+      "line": 0,
+      "detail": "F2.queue untested — Offline claims validate against the manifest and queue in IndexedDB with a d"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec F",
+      "line": 0,
+      "detail": "F2.replay untested — On reconnect the queue replays in device-timestamp order; conflicts return a"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec G",
+      "line": 0,
+      "detail": "G1.freeze untested — Opening a dispute on an event auto-freezes that event's payout portion"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec G",
+      "line": 0,
+      "detail": "G1.resolve untested — Resolution actions execute atomically with the resolution record; user and o"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec G",
+      "line": 0,
+      "detail": "G2.softDelete untested — Category, festival, city and locality edits deactivate and never delete, bec"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec G",
+      "line": 0,
+      "detail": "G2.cms untested — Banners are city-scoped with start/end datetimes and sort order; curation li"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec G",
+      "line": 0,
+      "detail": "G3.supportCap unimplemented — SUPPORT may credit a wallet up to Rs500; anything larger needs FINANCE"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec H",
+      "line": 0,
+      "detail": "H.paymentReconcile unimplemented — payment-reconcile: every 10 minutes, settle stale CREATED payments"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec H",
+      "line": 0,
+      "detail": "H.reminders unimplemented — reminders: hourly, T-24h and T-2h event reminders"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec H",
+      "line": 0,
+      "detail": "H.ticketExpiry unimplemented — ticket-expiry: 03:00 IST, ACTIVE to EXPIRED for ended sessions and events to"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec H",
+      "line": 0,
+      "detail": "H.trending unimplemented — trending-recompute: hourly trending scores"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec H",
+      "line": 0,
+      "detail": "H.payoutRun unimplemented — payout-run: 02:00 IST daily settlement"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec H",
+      "line": 0,
+      "detail": "H.reviewInvites unimplemented — review-invites: 04:00 IST"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec H",
+      "line": 0,
+      "detail": "H.refundRetry unimplemented — refund-retry: every 30 minutes, retry failed gateway refunds three times the"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec H",
+      "line": 0,
+      "detail": "H.kycReminders unimplemented — kyc/plan reminders: daily SLA nudges and renewal notices"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec H",
+      "line": 0,
+      "detail": "H.manifestRefresh unimplemented — manifest-refresh: every minute on event day, the scanner delta-sync source"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec H",
+      "line": 0,
+      "detail": "H.digest unimplemented — digest: Monday 09:00, organizer weekly and admin platform digests"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec I",
+      "line": 0,
+      "detail": "I.e1 unimplemented — Two users race for the last ticket: exactly one CONFIRMED"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec I",
+      "line": 0,
+      "detail": "I.e3 unimplemented — Webhook delivered twice or out of order: idempotent by gateway event id, CAP"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec I",
+      "line": 0,
+      "detail": "I.e4 unimplemented — User closes the tab mid-payment but pays in the UPI app anyway: the late-cap"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec I",
+      "line": 0,
+      "detail": "I.e5 unimplemented — Hold expires while the user is on the gateway page: re-acquire, or refund in"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec I",
+      "line": 0,
+      "detail": "I.e6 unimplemented — Organizer cancels an event with 4,000 bookings: batched refunds of 500, prog"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec I",
+      "line": 0,
+      "detail": "I.e7 unimplemented — Promo race at the usage limit: consumption is reserved at order creation lik"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec I",
+      "line": 0,
+      "detail": "I.e9 unimplemented — Ticket transferred after a reminder was sent: the recipient gets a fresh mes"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec I",
+      "line": 0,
+      "detail": "I.e11 unimplemented — Organizer suspended mid-event-day: scanning continues, payouts freeze, new s"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec I",
+      "line": 0,
+      "detail": "I.e13 unimplemented — Account deletion with future ACTIVE tickets is blocked; allowed after cancel"
+    },
+    {
+      "check": "A8",
+      "severity": "incomplete",
+      "file": "spec I",
+      "line": 0,
+      "detail": "I.e14 unimplemented — Duplicate signup via Google and phone merges into the existing account behin"
+    },
+    {
+      "check": "A9",
+      "severity": "incomplete",
+      "file": "src/lib/jobs",
+      "line": 0,
+      "detail": "job \"reminders\" is not registered"
+    },
+    {
+      "check": "A9",
+      "severity": "incomplete",
+      "file": "src/lib/jobs",
+      "line": 0,
+      "detail": "job \"ticket-expiry\" is not registered"
+    },
+    {
+      "check": "A9",
+      "severity": "incomplete",
+      "file": "src/lib/jobs",
+      "line": 0,
+      "detail": "job \"trending-recompute\" is not registered"
+    },
+    {
+      "check": "A9",
+      "severity": "incomplete",
+      "file": "src/lib/jobs",
+      "line": 0,
+      "detail": "job \"payout-run\" is not registered"
+    },
+    {
+      "check": "A9",
+      "severity": "incomplete",
+      "file": "src/lib/jobs",
+      "line": 0,
+      "detail": "job \"review-invites\" is not registered"
+    },
+    {
+      "check": "A9",
+      "severity": "incomplete",
+      "file": "src/lib/jobs",
+      "line": 0,
+      "detail": "job \"refund-retry\" is not registered"
+    },
+    {
+      "check": "A9",
+      "severity": "incomplete",
+      "file": "src/lib/jobs",
+      "line": 0,
+      "detail": "job \"kyc-reminders\" is not registered"
+    },
+    {
+      "check": "A9",
+      "severity": "incomplete",
+      "file": "src/lib/jobs",
+      "line": 0,
+      "detail": "job \"manifest-refresh\" is not registered"
+    },
+    {
+      "check": "A9",
+      "severity": "incomplete",
+      "file": "src/lib/jobs",
+      "line": 0,
+      "detail": "job \"digest\" is not registered"
+    },
+    {
+      "check": "A10",
+      "severity": "incomplete",
+      "file": ".env.example",
+      "line": 0,
+      "detail": "env key WHATSAPP_DRIVER is never read"
+    },
+    {
+      "check": "A10",
+      "severity": "incomplete",
+      "file": ".env.example",
+      "line": 0,
+      "detail": "env key RAZORPAY_KEY_ID is never read"
+    },
+    {
+      "check": "A10",
+      "severity": "incomplete",
+      "file": ".env.example",
+      "line": 0,
+      "detail": "env key RAZORPAY_KEY_SECRET is never read"
+    },
+    {
+      "check": "A10",
+      "severity": "incomplete",
+      "file": "src/lib/config.ts",
+      "line": 0,
+      "detail": "config key reviewWindowDays is never read"
+    },
+    {
+      "check": "A10",
+      "severity": "incomplete",
+      "file": "src/lib/config.ts",
+      "line": 0,
+      "detail": "config key transferCutoffHours is never read"
+    },
+    {
+      "check": "A10",
+      "severity": "incomplete",
+      "file": "src/lib/config.ts",
+      "line": 0,
+      "detail": "config key eventCompleteBufferHours is never read"
+    },
+    {
+      "check": "A10",
+      "severity": "incomplete",
+      "file": "src/lib/config.ts",
+      "line": 0,
+      "detail": "config key payoutAutoApproveCeilingPaise is never read"
+    },
+    {
+      "check": "A10",
+      "severity": "incomplete",
+      "file": "src/lib/config.ts",
+      "line": 0,
+      "detail": "config key invalidScanAlertPerMinute is never read"
+    },
+    {
+      "check": "A11",
+      "severity": "incomplete",
+      "file": "src/lib/adapters/payments.ts",
+      "line": 0,
+      "detail": "driver \"razorpay\" is declared in .env.example but not implemented"
+    },
+    {
+      "check": "A11",
+      "severity": "incomplete",
+      "file": "src/lib/adapters/sms.ts",
+      "line": 0,
+      "detail": "driver \"msg91\" is declared in .env.example but not implemented"
+    },
+    {
+      "check": "A11",
+      "severity": "incomplete",
+      "file": "src/lib/adapters/sms.ts",
+      "line": 0,
+      "detail": "driver \"twilio\" is declared in .env.example but not implemented"
+    },
+    {
+      "check": "A11",
+      "severity": "incomplete",
+      "file": "src/lib/adapters/whatsapp.ts",
+      "line": 0,
+      "detail": "no adapter for whatsapp (declares: sandbox, gupshup, meta)"
+    },
+    {
+      "check": "A11",
+      "severity": "incomplete",
+      "file": "src/lib/adapters/geocode.ts",
+      "line": 0,
+      "detail": "driver \"google\" is declared in .env.example but not implemented"
+    },
+    {
+      "check": "A11",
+      "severity": "incomplete",
+      "file": "src/lib/adapters/geocode.ts",
+      "line": 0,
+      "detail": "driver \"mapbox\" is declared in .env.example but not implemented"
+    },
+    {
+      "check": "A11",
+      "severity": "incomplete",
+      "file": "src/lib/adapters/storage.ts",
+      "line": 0,
+      "detail": "no adapter for storage (declares: local, s3)"
+    }
+  ]
+}

@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>Super Admin — Shiv Events</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  body { margin:0; font-family:'Plus Jakarta Sans',sans-serif; background:#EEEDFB; color:#1E2249; }
+  a { color:#E935C1; text-decoration:none; }
+  a:hover { color:#C41FA2; }
+  * { box-sizing:border-box; }
+</style>
+</helmet>
+
+<div style="display:flex;min-width:1280px;min-height:100vh">
+  <!-- Sidebar -->
+  <div style="flex:0 0 250px;background:#1E2249;padding:22px 14px;display:flex;flex-direction:column;gap:3px" data-screen-label="Admin sidebar">
+    <a href="Shiv-Events-Home.dc.html" style="display:flex;align-items:center;gap:9px;padding:6px 12px 18px">
+      <span style="width:32px;height:32px;border-radius:10px;background:#E935C1;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:16px">S</span>
+      <span style="font-size:18px;font-weight:800;color:#fff">shiv events<span style="color:#E935C1"> admin</span></span>
+    </a>
+    <sc-for list="{{ navItems }}" as="n" hint-placeholder-count="14">
+      <button onClick="{{ n.onPick }}" style="font:inherit;display:flex;align-items:center;gap:11px;font-size:13.5px;font-weight:700;padding:10px 14px;border-radius:11px;border:none;cursor:pointer;text-align:left;background:{{ n.bg }};color:{{ n.color }}">
+        <span style="width:18px;display:flex;align-items:center;justify-content:center">{{ n.iconEl }}</span>{{ n.label }}
+        <sc-if value="{{ n.badge }}" hint-placeholder-val="{{ false }}"><span style="margin-left:auto;background:#E935C1;color:#fff;font-size:10px;font-weight:800;border-radius:999px;padding:2px 8px">{{ n.badge }}</span></sc-if>
+      </button>
+    </sc-for>
+  </div>
+
+  <!-- Main -->
+  <div style="flex:1;min-width:0;padding:22px 28px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:22px">
+      <div>
+        <div style="font-size:12px;color:#8A8FB5;font-weight:600"><span style="color:#E935C1">Super Admin</span> / {{ viewTitle }}</div>
+        <div style="font-size:24px;font-weight:800;letter-spacing:-.4px">{{ viewTitle }}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <input placeholder="Search events, organizers, users…" style="width:280px;padding:11px 18px;border:none;border-radius:999px;font:inherit;font-size:13px;background:#fff;outline-color:#E935C1">
+        <span style="display:flex;align-items:center;gap:10px;background:#fff;border-radius:999px;padding:5px 14px 5px 5px">
+          <span style="width:32px;height:32px;border-radius:50%;background:#E935C1;color:#fff;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center">SA</span>
+          <span style="font-size:13px;font-weight:800">Shalin Acharya<span style="display:block;font-size:10.5px;color:#8A8FB5;font-weight:600">Super Admin</span></span>
+        </span>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <sc-if value="{{ isDash }}" hint-placeholder-val="{{ true }}">
+      <div data-screen-label="Admin dashboard">
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:20px">
+        <sc-for list="{{ stats }}" as="s" hint-placeholder-count="5">
+          <span style="background:{{ s.bg }};color:{{ s.color }};border-radius:18px;padding:18px 20px">
+            <span style="display:block;font-size:11px;font-weight:800;opacity:.7;letter-spacing:.04em">{{ s.label }}</span>
+            <span style="font-size:21px;font-weight:800;font-variant-numeric:tabular-nums">{{ s.value }}</span>
+            <span style="display:block;font-size:10.5px;font-weight:800;margin-top:2px;color:{{ s.deltaColor }}">{{ s.delta }}</span>
+          </span>
+        </sc-for>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 340px;gap:16px;margin-bottom:20px">
+        <div style="background:#fff;border-radius:18px;padding:20px 22px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+            <span style="font-size:15px;font-weight:800">Platform GMV — Ahmedabad</span>
+            <span style="font-size:12px;font-weight:700;color:#8A8FB5;background:#EEEDFB;border-radius:999px;padding:6px 14px">Last 8 months ▾</span>
+          </div>
+          <div style="display:flex;align-items:flex-end;gap:16px;height:180px;padding:0 6px">
+            <sc-for list="{{ gmvBars }}" as="b" hint-placeholder-count="8">
+              <span style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px">
+                <span style="font-size:10px;font-weight:800;color:#8A8FB5">{{ b.val }}</span>
+                <span style="width:100%;background:{{ b.color }};border-radius:8px 8px 0 0;height:{{ b.h }}"></span>
+                <span style="font-size:10.5px;color:#8A8FB5;font-weight:700">{{ b.label }}</span>
+              </span>
+            </sc-for>
+          </div>
+        </div>
+        <div style="background:#fff;border-radius:18px;padding:20px 22px">
+          <div style="font-size:15px;font-weight:800;margin-bottom:14px">Top categories</div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <sc-for list="{{ cats }}" as="c" hint-placeholder-count="4">
+              <span>
+                <span style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;margin-bottom:5px"><span>{{ c.name }}</span><span style="color:#8A8FB5">{{ c.count }} events</span></span>
+                <span style="display:block;height:8px;border-radius:4px;background:#EEEDFB;overflow:hidden"><span style="display:block;height:100%;border-radius:4px;background:{{ c.color }};width:{{ c.pct }}"></span></span>
+              </span>
+            </sc-for>
+          </div>
+          <div style="font-size:15px;font-weight:800;margin:18px 0 12px">Organizer leaderboard</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <sc-for list="{{ leaders }}" as="l" hint-placeholder-count="3">
+              <span style="display:flex;align-items:center;gap:10px;font-size:12.5px;font-weight:700">
+                <span style="width:22px;height:22px;border-radius:50%;background:#EEEDFB;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#37437D">{{ l.rank }}</span>
+                {{ l.name }} <span style="margin-left:auto;font-weight:800;font-variant-numeric:tabular-nums">{{ l.gmv }}</span>
+              </span>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+
+      <div style="background:#fff;border-radius:18px;padding:20px 22px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <span style="font-size:15px;font-weight:800">Needs your attention</span>
+          <button onClick="{{ goApprovals }}" style="font:inherit;font-size:12.5px;font-weight:800;color:#E935C1;background:#FDEBF7;border:none;border-radius:999px;padding:7px 16px;cursor:pointer">Open approval queue →</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+          <span style="background:#FDEBF7;border-radius:14px;padding:16px"><span style="font-size:20px;font-weight:800;color:#C41FA2">7</span><span style="display:block;font-size:12px;font-weight:700;color:#5A5F87;margin-top:2px">Events awaiting approval</span></span>
+          <span style="background:#FBF4E6;border-radius:14px;padding:16px"><span style="font-size:20px;font-weight:800;color:#92400E">4</span><span style="display:block;font-size:12px;font-weight:700;color:#5A5F87;margin-top:2px">KYC reviews pending</span></span>
+          <span style="background:#FDEBEA;border-radius:14px;padding:16px"><span style="font-size:20px;font-weight:800;color:#B42318">12</span><span style="display:block;font-size:12px;font-weight:700;color:#5A5F87;margin-top:2px">Open refund disputes</span></span>
+          <span style="background:#EEEDFB;border-radius:14px;padding:16px"><span style="font-size:20px;font-weight:800;color:#37437D">2</span><span style="display:block;font-size:12px;font-weight:700;color:#5A5F87;margin-top:2px">Payouts on hold</span></span>
+        </div>
+      </div>
+      </div>
+    </sc-if>
+
+    <!-- APPROVALS -->
+    <sc-if value="{{ isApprovals }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;gap:14px" data-screen-label="Approval queue">
+        <sc-for list="{{ approvals }}" as="a" hint-placeholder-count="4">
+          <span style="background:#fff;border-radius:18px;padding:20px 24px;display:flex;gap:18px;align-items:flex-start">
+            <span style="flex:0 0 120px;height:88px;border-radius:14px;background:{{ a.grad }}"></span>
+            <span style="flex:1;min-width:0">
+              <span style="display:flex;align-items:center;gap:10px">
+                <span style="font-size:16px;font-weight:800">{{ a.title }}</span>
+                <span style="font-size:10.5px;font-weight:800;padding:3px 10px;border-radius:999px;background:#EEEDFB;color:#37437D">{{ a.cat }}</span>
+                <sc-if value="{{ a.isEdit }}" hint-placeholder-val="{{ false }}"><span style="font-size:10.5px;font-weight:800;padding:3px 10px;border-radius:999px;background:#FBF4E6;color:#92400E">EDIT — diff view</span></sc-if>
+              </span>
+              <span style="display:block;font-size:12.5px;color:#8A8FB5;font-weight:600;margin-top:4px">{{ a.org }} · {{ a.venue }} · {{ a.dates }} · submitted {{ a.submitted }}</span>
+              <span style="display:flex;gap:14px;margin-top:10px;font-size:12px;font-weight:700;color:#5A5F87">
+                <span>Tiers: <b>{{ a.tiers }}</b></span><span>Capacity: <b>{{ a.capacity }}</b></span><span>From <b>{{ a.price }}</b></span>
+                <sc-if value="{{ a.flag }}" hint-placeholder-val="{{ false }}"><span style="color:#B42318">⚠ {{ a.flag }}</span></sc-if>
+              </span>
+            </span>
+            <span style="display:flex;flex-direction:column;gap:8px;flex:0 0 170px">
+              <button onClick="{{ a.onApprove }}" style="font:inherit;font-size:13px;font-weight:800;color:#fff;background:#0B8A55;border:none;border-radius:999px;padding:11px;cursor:pointer" style-hover="background:#087045">✓ Approve</button>
+              <button onClick="{{ a.onReject }}" style="font:inherit;font-size:13px;font-weight:800;color:#B42318;background:#FDEBEA;border:none;border-radius:999px;padding:11px;cursor:pointer" style-hover="background:#F04438;color:#fff">✕ Reject with reason</button>
+              <button style="font:inherit;font-size:12px;font-weight:800;color:#37437D;background:#EEEDFB;border:none;border-radius:999px;padding:9px;cursor:pointer">Preview listing</button>
+            </span>
+          </span>
+        </sc-for>
+        <sc-if value="{{ rejectOpen }}" hint-placeholder-val="{{ false }}">
+          <div style="position:fixed;inset:0;background:rgba(30,34,73,.55);z-index:100;display:flex;align-items:center;justify-content:center">
+            <div style="background:#fff;border-radius:22px;width:460px;padding:30px">
+              <div style="font-size:18px;font-weight:800">Reject "{{ rejectTitle }}"?</div>
+              <div style="font-size:13px;color:#8A8FB5;margin:8px 0 14px">The reason is sent to the organizer and shown on their draft.</div>
+              <textarea style="width:100%;height:90px;border:1.5px solid #E4E2F5;border-radius:12px;font:inherit;font-size:13.5px;padding:12px;resize:none;outline-color:#E935C1">Pricing on VIP tier missing GST breakup; venue permission letter not attached.</textarea>
+              <div style="display:flex;gap:10px;margin-top:16px">
+                <button onClick="{{ closeReject }}" style="font:inherit;flex:1;font-size:13.5px;font-weight:800;border:1.5px solid #E4E2F5;background:#fff;border-radius:999px;padding:12px;cursor:pointer">Keep in queue</button>
+                <button onClick="{{ confirmReject }}" style="font:inherit;flex:1;font-size:13.5px;font-weight:800;border:none;background:#F04438;color:#fff;border-radius:999px;padding:12px;cursor:pointer">Reject event</button>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <!-- CMS -->
+    <sc-if value="{{ isCms }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="Homepage CMS">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <div style="display:flex;gap:6px;background:#fff;border-radius:999px;padding:5px">
+            <span style="font-size:12.5px;font-weight:800;padding:8px 18px;border-radius:999px;background:#E935C1;color:#fff;cursor:pointer">Ahmedabad</span>
+            <span style="font-size:12.5px;font-weight:800;padding:8px 18px;border-radius:999px;color:#5A5F87;cursor:pointer">Surat</span>
+            <span style="font-size:12.5px;font-weight:800;padding:8px 18px;border-radius:999px;color:#5A5F87;cursor:pointer">Vadodara</span>
+            <span style="font-size:12.5px;font-weight:800;padding:8px 18px;border-radius:999px;color:#5A5F87;cursor:pointer">All cities</span>
+          </div>
+          <button style="font:inherit;font-size:12.5px;font-weight:800;color:#fff;background:#E935C1;border:none;border-radius:999px;padding:10px 20px;cursor:pointer" style-hover="background:#C41FA2">＋ New banner</button>
+        </div>
+        <div style="background:#fff;border-radius:18px;padding:20px 24px;margin-bottom:16px">
+          <div style="font-size:15px;font-weight:800;margin-bottom:12px">Hero banners — Ahmedabad <span style="font-size:11.5px;color:#8A8FB5;font-weight:700">· drag to reorder</span></div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <sc-for list="{{ cmsBanners }}" as="b" hint-placeholder-count="3">
+              <span style="display:flex;align-items:center;gap:14px;border:1.5px solid #EEEDFB;border-radius:14px;padding:12px 16px">
+                <span style="color:#C9CBE0;font-size:15px;font-weight:800;cursor:grab;letter-spacing:2px">⋮⋮</span>
+                <span style="flex:0 0 92px;height:44px;border-radius:10px;background:{{ b.grad }}"></span>
+                <span style="flex:1"><span style="font-size:13.5px;font-weight:800">{{ b.title }}</span><span style="display:block;font-size:11.5px;color:#8A8FB5;font-weight:600;margin-top:2px">{{ b.sub }} · {{ b.sched }}</span></span>
+                <span style="font-size:10.5px;font-weight:800;padding:4px 12px;border-radius:999px;background:{{ b.stBg }};color:{{ b.stColor }}">{{ b.status }}</span>
+                <span style="font-size:11.5px;font-weight:800;color:#37437D;background:#EEEDFB;border-radius:999px;padding:7px 14px;cursor:pointer">Edit</span>
+                <span style="font-size:11.5px;font-weight:800;color:#92400E;background:#FBF4E6;border-radius:999px;padding:7px 14px;cursor:pointer">Pause</span>
+              </span>
+            </sc-for>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div style="background:#fff;border-radius:18px;padding:20px 24px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+              <span style="font-size:15px;font-weight:800">Featured events curation</span>
+              <span style="font-size:11.5px;font-weight:800;color:#E935C1;background:#FDEBF7;border-radius:999px;padding:6px 14px;cursor:pointer">＋ Add event</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <sc-for list="{{ cmsFeatured }}" as="f" hint-placeholder-count="4">
+                <span style="display:flex;align-items:center;gap:12px;border:1.5px solid #EEEDFB;border-radius:12px;padding:10px 14px">
+                  <span style="color:#C9CBE0;font-weight:800;cursor:grab;letter-spacing:2px">⋮⋮</span>
+                  <span style="width:24px;height:24px;border-radius:50%;background:#EEEDFB;color:#37437D;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center">{{ f.n }}</span>
+                  <span style="flex:1"><span style="font-size:13px;font-weight:800">{{ f.name }}</span><span style="display:block;font-size:11px;color:#8A8FB5;font-weight:600">{{ f.org }}</span></span>
+                  <sc-if value="{{ f.pinned }}" hint-placeholder-val="{{ false }}"><span style="font-size:10px;font-weight:800;color:#C41FA2;background:#FDEBF7;border-radius:999px;padding:3px 10px">PINNED</span></sc-if>
+                  <span style="font-size:13px;color:#B42318;cursor:pointer;font-weight:800">✕</span>
+                </span>
+              </sc-for>
+            </div>
+          </div>
+          <div style="background:#fff;border-radius:18px;padding:20px 24px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+              <span style="font-size:15px;font-weight:800">Festival calendar editor</span>
+              <span style="font-size:11.5px;font-weight:800;color:#E935C1;background:#FDEBF7;border-radius:999px;padding:6px 14px;cursor:pointer">＋ Add festival</span>
+            </div>
+            <div style="display:grid;grid-template-columns:1.2fr 1fr 90px 60px;gap:10px;font-size:11px;font-weight:800;color:#8A8FB5;padding-bottom:8px;border-bottom:1px solid #EEEDFB"><span>FESTIVAL</span><span>DATES 2026–27</span><span>EVENTS</span><span></span></div>
+            <sc-for list="{{ cmsFests }}" as="f" hint-placeholder-count="5">
+              <span style="display:grid;grid-template-columns:1.2fr 1fr 90px 60px;gap:10px;font-size:12.5px;font-weight:600;padding:11px 0;border-bottom:1px solid #F4F3FB;align-items:center">
+                <span style="font-weight:800">{{ f.name }}</span><span>{{ f.dates }}</span><span style="font-variant-numeric:tabular-nums">{{ f.count }}</span>
+                <span style="font-size:11.5px;font-weight:800;color:#37437D;background:#EEEDFB;border-radius:999px;padding:6px 12px;cursor:pointer;text-align:center">Edit</span>
+              </span>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ORGANIZERS -->
+    <sc-if value="{{ isOrgs }}" hint-placeholder-val="{{ false }}">
+      <div style="background:#fff;border-radius:18px;padding:22px 24px" data-screen-label="Organizer directory">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <div style="display:flex;gap:6px;background:#EEEDFB;border-radius:999px;padding:5px">
+            <sc-for list="{{ orgTabs }}" as="t" hint-placeholder-count="3">
+              <button onClick="{{ t.onPick }}" style="font:inherit;font-size:12.5px;font-weight:800;padding:8px 18px;border-radius:999px;border:none;cursor:pointer;background:{{ t.bg }};color:{{ t.color }}">{{ t.label }}</button>
+            </sc-for>
+          </div>
+          <button style="font:inherit;font-size:12.5px;font-weight:800;color:#fff;background:#E935C1;border:none;border-radius:999px;padding:10px 20px;cursor:pointer">＋ Invite organizer</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1.6fr 120px 110px 110px 120px 110px 210px;gap:10px;font-size:11px;font-weight:800;color:#8A8FB5;padding:10px 0;border-bottom:1px solid #EEEDFB">
+          <span>ORGANIZER</span><span>KYC</span><span>EVENTS</span><span>GMV</span><span>PLAN</span><span>RATING</span><span>ACTIONS</span>
+        </div>
+        <sc-for list="{{ orgRows }}" as="o" hint-placeholder-count="6">
+          <span style="display:grid;grid-template-columns:1.6fr 120px 110px 110px 120px 110px 210px;gap:10px;font-size:12.5px;font-weight:600;padding:13px 0;border-bottom:1px solid #F4F3FB;align-items:center">
+            <span style="display:flex;align-items:center;gap:10px">
+              <span style="width:36px;height:36px;border-radius:50%;background:{{ o.bg }};color:#fff;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center">{{ o.initials }}</span>
+              <span><b>{{ o.name }}</b> <sc-if value="{{ o.verified }}" hint-placeholder-val="{{ true }}"><span style="color:#0B8A55;font-weight:800">✓</span></sc-if><span style="display:block;font-size:11px;color:#8A8FB5">{{ o.city }} · since {{ o.since }}</span></span>
+            </span>
+            <span><span style="font-size:10.5px;font-weight:800;padding:4px 10px;border-radius:999px;background:{{ o.kycBg }};color:{{ o.kycColor }}">{{ o.kyc }}</span></span>
+            <span>{{ o.events }}</span>
+            <span style="font-weight:800;font-variant-numeric:tabular-nums">{{ o.gmv }}</span>
+            <span>{{ o.plan }}</span>
+            <span>★ {{ o.rating }}</span>
+            <span style="display:flex;gap:6px">
+              <span style="font-size:11px;font-weight:800;color:#37437D;background:#EEEDFB;border-radius:999px;padding:7px 12px;cursor:pointer">Review KYC</span>
+              <span style="font-size:11px;font-weight:800;color:#B42318;background:#FDEBEA;border-radius:999px;padding:7px 12px;cursor:pointer">Suspend</span>
+              <span style="font-size:11px;font-weight:800;color:#92400E;background:#FBF4E6;border-radius:999px;padding:7px 12px;cursor:pointer">Freeze payouts</span>
+            </span>
+          </span>
+        </sc-for>
+      </div>
+    </sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+class Component extends DCLogic {
+  state = { view: 'Dashboard', orgTab: 'All', rejectOpen: false, rejectTitle: '', approved: [], rejected: [] };
+  icon(name, size = 16) {
+    const I = {
+      grid: [['M3 3h7v7H3z', 'M14 3h7v7h-7z', 'M3 14h7v7H3z', 'M14 14h7v7h-7z'], []],
+      ticket: [['M2 9a3 3 0 0 1 0 6v3a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1v-3a3 3 0 0 1 0-6V6a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1z', 'M13 5v2', 'M13 11v2', 'M13 17v2'], []],
+      check: [['M9 11l3 3L22 4', 'M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11'], []],
+      users: [['M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2', 'M23 21v-2a4 4 0 0 0-3-3.87', 'M16 3.13a4 4 0 0 1 0 7.75'], [[9, 7, 4]]],
+      user: [['M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'], [[12, 7, 4]]],
+      file: [['M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z', 'M14 2v6h6', 'M16 13H8', 'M16 17H8'], []],
+      rupee: [['M6 3h12', 'M6 8h12', 'M6 13l8.5 8', 'M6 13h3', 'M9 13c6.667 0 6.667-10 0-10'], []],
+      bank: [['M3 22h18', 'M6 18v-7', 'M10 18v-7', 'M14 18v-7', 'M18 18v-7', 'M2 9l10-7 10 7z'], []],
+      undo: [['M1 4v6h6', 'M3.5 15a9 9 0 1 0 2.5-9.4L1 10'], []],
+      megaphone: [['m3 11 18-5v12L3 13z', 'M11.6 16.8a3 3 0 1 1-5.8-1.6'], []],
+      folder: [['M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z'], []],
+      pin: [['M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1 1 16 0Z'], [[12, 10, 3]]],
+      list: [['M8 6h13', 'M8 12h13', 'M8 18h13', 'M3 6h.01', 'M3 12h.01', 'M3 18h.01'], []],
+      lock: [['M5 11h14a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1z', 'M8 11V7a4 4 0 0 1 8 0v4'], []]
+    };
+    const [paths, circles] = I[name];
+    const R = React.createElement;
+    return R('svg', { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' },
+      paths.map((d, i) => R('path', { key: 'p' + i, d })),
+      circles.map((c, i) => R('circle', { key: 'c' + i, cx: c[0], cy: c[1], r: c[2] })));
+  }
+  renderVals() {
+    const { view, orgTab, rejectOpen, rejectTitle, approved, rejected } = this.state;
+    const nav = [
+      ['Dashboard', 'grid'], ['Event Approvals', 'check'], ['Events', 'ticket'], ['Organizers', 'users'], ['Users', 'user'], ['Bookings', 'file'],
+      ['Financials', 'rupee'], ['Payouts', 'bank'], ['Refunds & Disputes', 'undo'], ['Promotions / CMS', 'megaphone'], ['Categories & Festivals', 'folder'],
+      ['Cities & Localities', 'pin'], ['Audit Logs', 'list'], ['Sub-Admins & Roles', 'lock']
+    ];
+    const live = ['Dashboard', 'Event Approvals', 'Organizers', 'Promotions / CMS'];
+    const approvalData = [
+      { id: 1, title: 'Diwali Rooftop Dinner & Fireworks View', cat: 'Diwali', org: 'Shree Events ✓', venue: 'Sky9, SG Highway', dates: '6–8 Nov', submitted: '2 hrs ago', tiers: 3, capacity: '180 / night', price: '₹1,499', flag: 'Fireworks mention — check permission', isEdit: false, grad: 'linear-gradient(135deg,#4C1D95,#F5B301)' },
+      { id: 2, title: 'Rangilo Re Garba — VIP tier price change', cat: 'Garba', org: 'Rangmanch Events ✓', venue: 'GMDC Ground', dates: '12–20 Oct', submitted: '5 hrs ago', tiers: 6, capacity: '5,000 / night', price: '₹399', flag: '', isEdit: true, grad: 'linear-gradient(135deg,#F97316,#E9358F)' },
+      { id: 3, title: 'Midnight Bhajan Sandhya', cat: 'Spiritual', org: 'Om Events (KYC pending)', venue: 'Bhadra Fort lawns', dates: '4 Oct', submitted: '1 day ago', tiers: 1, capacity: '800', price: 'Free', flag: 'Organizer KYC incomplete', isEdit: false, grad: 'linear-gradient(135deg,#92400E,#F5B301)' },
+      { id: 4, title: 'Uttarayan Rooftop Fest 2027', cat: 'Uttarayan', org: 'Patang Collective', venue: 'Navrangpura terraces', dates: '14–15 Jan', submitted: '2 days ago', tiers: 2, capacity: '150', price: '₹249', flag: '', isEdit: false, grad: 'linear-gradient(135deg,#0EA5E9,#F97316)' }
+    ];
+    return {
+      viewTitle: view,
+      navItems: nav.map(([label, icon]) => ({
+        label, iconEl: this.icon(icon),
+        badge: label === 'Event Approvals' ? '7' : label === 'Refunds & Disputes' ? '12' : '',
+        onPick: () => { if (live.includes(label)) this.setState({ view: label }); },
+        bg: view === label ? '#E935C1' : 'transparent', color: view === label ? '#fff' : 'rgba(255,255,255,.72)'
+      })),
+      isDash: view === 'Dashboard', isApprovals: view === 'Event Approvals', isOrgs: view === 'Organizers', isCms: view === 'Promotions / CMS',
+      cmsBanners: [
+        { title: 'Navratri Early Bird — B1G1 season passes', sub: 'Links to festival page · code RAAS26', sched: 'Live · 20 Aug – 15 Sep', status: 'Live', stBg: '#E8F6EE', stColor: '#0B8A55', grad: 'linear-gradient(115deg,#F97316,#E9358F)' },
+        { title: 'Diwali Mela Week — flat ₹200 off family packs', sub: 'Links to Diwali category · code DIYA200', sched: 'Scheduled · 20 Oct – 8 Nov', status: 'Scheduled', stBg: '#EEEDFB', stColor: '#37437D', grad: 'linear-gradient(115deg,#4C1D95,#F5B301)' },
+        { title: 'NYE Countdown — early-bird ₹799', sub: 'Links to event page directly', sched: 'Draft · not scheduled', status: 'Draft', stBg: '#F1F1F4', stColor: '#7A7F9E', grad: 'linear-gradient(115deg,#B91C1C,#14532D)' }
+      ],
+      cmsFeatured: [
+        { n: 1, name: 'Rangilo Re Garba Mahotsav 2026', org: 'Rangmanch Events', pinned: true },
+        { n: 2, name: 'Sufi Night under the Stars', org: 'Aatish Entertainment', pinned: true },
+        { n: 3, name: 'Ahmedabad Food Truck Fest', org: 'Khaana Khazana', pinned: false },
+        { n: 4, name: 'Diwali Mela at Kankaria', org: 'Shree Events', pinned: false }
+      ],
+      cmsFests: [
+        { name: 'Ganesh Chaturthi', dates: '26 Aug – 6 Sep', count: 96 },
+        { name: 'Navratri', dates: '12 – 20 Oct', count: 240 },
+        { name: 'Diwali', dates: '6 – 10 Nov', count: 130 },
+        { name: 'Uttarayan', dates: '14 – 15 Jan', count: 85 },
+        { name: 'Holi', dates: '22 – 23 Mar', count: 74 }
+      ],
+      goApprovals: () => this.setState({ view: 'Event Approvals' }),
+      stats: [
+        { label: 'GMV — SEPT', value: '₹3.4 Cr', delta: '▲ 22% MoM', deltaColor: '#7EE3B0', bg: '#1E2249', color: '#fff' },
+        { label: 'COMMISSION EARNED', value: '₹20.5 L', delta: '▲ 19%', deltaColor: '#0B8A55', bg: '#fff', color: '#1E2249' },
+        { label: 'TICKETS SOLD', value: '2,18,400', delta: '▲ 31,200 this week', deltaColor: '#0B8A55', bg: '#fff', color: '#1E2249' },
+        { label: 'ACTIVE ORGANIZERS', value: '312', delta: '+18 this month', deltaColor: '#8A8FB5', bg: '#fff', color: '#1E2249' },
+        { label: 'LIVE EVENTS', value: '486', delta: '7 pending approval', deltaColor: '#C41FA2', bg: '#fff', color: '#1E2249' }
+      ],
+      gmvBars: [['Feb', 34, '₹0.9Cr'], ['Mar', 52, '₹1.4Cr'], ['Apr', 40, '₹1.1Cr'], ['May', 46, '₹1.2Cr'], ['Jun', 58, '₹1.6Cr'], ['Jul', 72, '₹2.0Cr'], ['Aug', 96, '₹2.8Cr'], ['Sep', 120, '₹3.4Cr']].map(([label, h, val], i) => ({ label, val, h: h + 'px', color: i === 7 ? '#E935C1' : '#D9D6F2' })),
+      cats: [
+        { name: 'Garba & Navratri', count: 240, pct: '86%', color: '#E935C1' },
+        { name: 'Concerts', count: 96, pct: '48%', color: '#37437D' },
+        { name: 'Food Fests', count: 61, pct: '32%', color: '#F5B301' },
+        { name: 'Comedy', count: 44, pct: '24%', color: '#0EA5E9' }
+      ],
+      leaders: [
+        { rank: 1, name: 'Rangmanch Events', gmv: '₹48.2 L' },
+        { rank: 2, name: 'Shree Events', gmv: '₹31.6 L' },
+        { rank: 3, name: 'Aatish Entertainment', gmv: '₹22.9 L' }
+      ],
+      approvals: approvalData.filter(a => !approved.includes(a.id) && !rejected.includes(a.id)).map(a => ({
+        ...a,
+        onApprove: () => this.setState(s => ({ approved: [...s.approved, a.id] })),
+        onReject: () => this.setState({ rejectOpen: true, rejectTitle: a.title, rejectId: a.id })
+      })),
+      rejectOpen, rejectTitle,
+      closeReject: () => this.setState({ rejectOpen: false }),
+      confirmReject: () => this.setState(s => ({ rejectOpen: false, rejected: [...s.rejected, s.rejectId] })),
+      orgTabs: ['All', 'KYC pending', 'Suspended'].map(label => ({
+        label, onPick: () => this.setState({ orgTab: label }),
+        bg: orgTab === label ? '#E935C1' : 'transparent', color: orgTab === label ? '#fff' : '#5A5F87'
+      })),
+      orgRows: [
+        { name: 'Rangmanch Events', initials: 'RE', bg: '#0D8A72', city: 'Ahmedabad', since: '2023', kyc: 'Verified', events: 24, gmv: '₹48.2 L', plan: 'Pro ₹25k/yr', rating: '4.8', verified: true },
+        { name: 'Shree Events', initials: 'SE', bg: '#7C3AED', city: 'Ahmedabad', since: '2024', kyc: 'Verified', events: 18, gmv: '₹31.6 L', plan: 'Pro ₹25k/yr', rating: '4.7', verified: true },
+        { name: 'Aatish Entertainment', initials: 'AE', bg: '#E9358F', city: 'Ahmedabad', since: '2024', kyc: 'Verified', events: 12, gmv: '₹22.9 L', plan: 'Basic ₹10k/yr', rating: '4.6', verified: true },
+        { name: 'Om Events', initials: 'OE', bg: '#B45309', city: 'Gandhinagar', since: '2026', kyc: 'Pending', events: 1, gmv: '₹0', plan: 'Basic ₹10k/yr', rating: '—', verified: false },
+        { name: 'Patang Collective', initials: 'PC', bg: '#0369A1', city: 'Ahmedabad', since: '2025', kyc: 'Pending', events: 3, gmv: '₹2.1 L', plan: 'Basic ₹10k/yr', rating: '4.3', verified: false },
+        { name: 'NightOwl Parties', initials: 'NP', bg: '#475569', city: 'Ahmedabad', since: '2025', kyc: 'Suspended', events: 6, gmv: '₹8.4 L', plan: 'Basic ₹10k/yr', rating: '3.1', verified: false }
+      ].filter(o => orgTab === 'All' || (orgTab === 'KYC pending' && o.kyc === 'Pending') || (orgTab === 'Suspended' && o.kyc === 'Suspended'))
+       .map(o => ({ ...o,
+         kycBg: o.kyc === 'Verified' ? '#E8F6EE' : o.kyc === 'Pending' ? '#FBF4E6' : '#FDEBEA',
+         kycColor: o.kyc === 'Verified' ? '#0B8A55' : o.kyc === 'Pending' ? '#92400E' : '#B42318' }))
+    };
+  }
+}
+</script>
+</body>
+</html>

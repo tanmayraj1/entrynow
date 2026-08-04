@@ -1,0 +1,38 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: shiv_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: shiv
+      POSTGRES_PASSWORD: shiv_dev_password
+      POSTGRES_DB: shiv_events
+    ports:
+      - "5433:5432"
+    volumes:
+      - shiv_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shiv -d shiv_events"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: shiv_redis
+    restart: unless-stopped
+    # BullMQ requires no eviction of keys it depends on.
+    command: redis-server --appendonly yes --maxmemory-policy noeviction
+    ports:
+      - "6380:6379"
+    volumes:
+      - shiv_redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  shiv_pgdata:
+  shiv_redisdata:

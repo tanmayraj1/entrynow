@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>Shiv Events — Discover Events in Ahmedabad</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="./image-slot.js"></script>
+<style>
+  body { margin:0; font-family:'Plus Jakarta Sans',sans-serif; background:#F7FAF9; color:#16302B; }
+  a { color:#0D8A72; text-decoration:none; }
+  a:hover { color:#0A6B59; }
+  * { box-sizing:border-box; }
+</style>
+</helmet>
+
+<div style="min-width:1200px">
+<!-- Utility bar -->
+<div style="background:#16302B;color:#fff;font-size:13px;display:flex;align-items:center;justify-content:space-between;padding:8px 48px">
+  <div style="display:flex;align-items:center;gap:20px">
+    <button onClick="{{ toggleCity }}" style="display:flex;align-items:center;gap:6px;background:none;border:none;color:#fff;font:inherit;font-weight:700;cursor:pointer;padding:0">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F5B301" stroke-width="2.4"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+      {{ city }} ▾
+    </button>
+    <span style="opacity:.65">support@shivevents.in</span>
+    <span style="opacity:.65">1800-121-SHIV</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:16px">
+    <span style="opacity:.85;cursor:pointer">EN · हिंदी · ગુજરાતી</span>
+    <a href="Shiv-Events-Auth.dc.html" style="color:#fff;font-weight:600">Login / Signup</a>
+    <a href="Shiv-Events-Organizer-Onboarding.dc.html" style="background:#0D8A72;color:#fff;font-weight:700;padding:7px 16px;border-radius:999px" style-hover="background:#0A6B59">List Your Event</a>
+  </div>
+</div>
+
+<!-- Navbar -->
+<div style="background:#fff;border-bottom:1px solid #E3EBE8;display:flex;align-items:center;justify-content:space-between;padding:14px 48px;position:sticky;top:0;z-index:50">
+  <div style="display:flex;align-items:center;gap:40px">
+    <a href="Shiv-Events-Home.dc.html" style="display:flex;align-items:center;gap:9px">
+      <span style="width:34px;height:34px;border-radius:10px;background:#0D8A72;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:18px">S</span>
+      <span style="font-size:22px;font-weight:800;color:#16302B;letter-spacing:-.5px">shiv events<span style="color:#F5B301">.</span></span>
+    </a>
+    <div style="display:flex;gap:26px;font-size:14.5px;font-weight:600">
+      <a href="Shiv-Events-Listing.dc.html" style="color:#16302B" style-hover="color:#0D8A72">Explore Events</a>
+      <a href="Shiv-Events-Festival.dc.html" style="color:#16302B" style-hover="color:#0D8A72">Festivals</a>
+      <a href="Shiv-Events-Tickets.dc.html" style="color:#16302B" style-hover="color:#0D8A72">My Tickets</a>
+      <a href="Shiv-Events-Organizer.dc.html" style="color:#16302B" style-hover="color:#0D8A72">For Organizers</a>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:14px">
+    <button onClick="{{ toggleSearch }}" aria-label="Search" style="width:38px;height:38px;border-radius:50%;background:#E6F4F1;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#0D8A72" stroke-width="2.4"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg></button>
+    <span style="width:38px;height:38px;border-radius:50%;background:#E6F4F1;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#0D8A72" stroke-width="2.4"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"></path></svg><span style="position:absolute;top:7px;right:8px;width:8px;height:8px;border-radius:50%;background:#F04438;border:1.5px solid #fff"></span></span>
+    <a href="Shiv-Events-Account.dc.html" style="width:38px;height:38px;border-radius:50%;background:#0D8A72;color:#fff;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center">AP</a>
+  </div>
+</div>
+
+<!-- City modal -->
+<sc-if value="{{ cityOpen }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ toggleCity }}" style="position:fixed;inset:0;background:rgba(22,48,43,.55);z-index:100;display:flex;align-items:flex-start;justify-content:center;padding-top:110px">
+    <div style="background:#fff;border-radius:20px;padding:28px 32px;width:640px;box-shadow:0 24px 60px rgba(22,48,43,.3)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <span style="font-size:19px;font-weight:800">Select your city</span>
+        <span style="color:#5C6B68;font-size:13px;font-weight:600;cursor:pointer">⌖ Auto-detect my location</span>
+      </div>
+      <input placeholder="Search city…" style="width:100%;padding:11px 16px;border:1.5px solid #E3EBE8;border-radius:12px;font:inherit;font-size:14px;margin-bottom:18px;outline-color:#0D8A72">
+      <div style="font-size:12px;font-weight:700;color:#5C6B68;letter-spacing:.08em;margin-bottom:10px">POPULAR CITIES</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
+        <sc-for list="{{ cities }}" as="c" hint-placeholder-count="8">
+          <div style="border:1.5px solid #E3EBE8;border-radius:12px;padding:12px;text-align:center;font-weight:600;font-size:14px;cursor:pointer" style-hover="border-color:#0D8A72;background:#E6F4F1">{{ c }}</div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+<!-- Search overlay -->
+<sc-if value="{{ searchOpen }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ toggleSearch }}" style="position:fixed;inset:0;background:rgba(22,48,43,.55);z-index:100;display:flex;align-items:flex-start;justify-content:center;padding-top:100px">
+    <div style="background:#fff;border-radius:20px;width:640px;overflow:hidden;box-shadow:0 24px 60px rgba(22,48,43,.35)" data-screen-label="Search suggestions">
+      <div style="display:flex;align-items:center;gap:12px;padding:18px 22px;border-bottom:1px solid #EDF1EF">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0D8A72" stroke-width="2.4"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+        <input value="garba" style="flex:1;border:none;outline:none;font:inherit;font-size:16px;font-weight:600;color:#16302B">
+        <span style="font-size:10.5px;font-weight:800;color:#5C6B68;background:#F7FAF9;border:1px solid #E3EBE8;border-radius:7px;padding:4px 9px">ESC</span>
+      </div>
+      <div style="padding:8px 0">
+        <sc-for list="{{ suggestions }}" as="s" hint-placeholder-count="5">
+          <a href="{{ s.href }}" style="display:flex;align-items:center;gap:14px;padding:11px 22px;color:#16302B" style-hover="background:#F0F9F6;color:#16302B">
+            <span style="width:34px;height:34px;flex:0 0 auto;border-radius:10px;background:{{ s.chipBg }};color:{{ s.chipFg }};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800">{{ s.glyph }}</span>
+            <span style="flex:1;font-size:14px;font-weight:600"><b style="color:#0D8A72">garba</b>{{ s.rest }}</span>
+            <span style="font-size:10.5px;font-weight:800;color:#5C6B68;background:#F7FAF9;border:1px solid #E3EBE8;border-radius:999px;padding:4px 11px">{{ s.kind }}</span>
+          </a>
+        </sc-for>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;padding:14px 22px;border-top:1px solid #EDF1EF">
+        <span style="font-size:11px;font-weight:800;color:#5C6B68;letter-spacing:.06em">TRENDING</span>
+        <a href="Shiv-Events-Festival.dc.html" style="font-size:12px;font-weight:700;background:#E6F4F1;color:#0A6B59;border-radius:999px;padding:6px 14px">Navratri 2026</a>
+        <a href="Shiv-Events-Listing.dc.html" style="font-size:12px;font-weight:700;background:#E6F4F1;color:#0A6B59;border-radius:999px;padding:6px 14px">This weekend</a>
+        <a href="Shiv-Events-Listing.dc.html?view=map" style="font-size:12px;font-weight:700;background:#E6F4F1;color:#0A6B59;border-radius:999px;padding:6px 14px">Near me</a>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+<!-- Hero -->
+<div style="position:relative;height:520px;overflow:hidden">
+  <div style="position:absolute;inset:0;background:linear-gradient(135deg,#0A6B59,#16302B)">
+    <image-slot id="hero-garba" shape="rect" placeholder="Drop a Garba-night photo (dandiya, chaniya choli, lit mandap)"></image-slot>
+  </div>
+  <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(22,48,43,.25) 0%,rgba(22,48,43,.68) 78%,rgba(22,48,43,.05) 100%);pointer-events:none"></div>
+  <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;padding:0 48px;pointer-events:none">
+    <div style="text-align:center;pointer-events:none">
+      <div style="color:#fff;font-size:44px;font-weight:800;letter-spacing:-1px;text-shadow:0 2px 24px rgba(0,0,0,.35)">Ahmedabad's festivals, one ticket away</div>
+      <div style="color:rgba(255,255,255,.85);font-size:17px;margin-top:8px">Garba nights, Diwali melas, concerts &amp; more — book digital tickets, scan &amp; enter.</div>
+    </div>
+    <div style="background:#fff;border-radius:18px;padding:10px;display:flex;align-items:center;gap:0;box-shadow:0 16px 48px rgba(22,48,43,.35);width:860px;pointer-events:auto">
+      <div style="flex:1.3;padding:6px 18px;border-right:1px solid #E3EBE8">
+        <div style="font-size:11px;font-weight:700;color:#5C6B68;letter-spacing:.06em">WHAT</div>
+        <input placeholder="Event, artist or venue" style="border:none;outline:none;font:inherit;font-size:14.5px;width:100%;padding:2px 0">
+      </div>
+      <div style="flex:1;padding:6px 18px;border-right:1px solid #E3EBE8">
+        <div style="font-size:11px;font-weight:700;color:#5C6B68;letter-spacing:.06em">WHERE</div>
+        <input placeholder="Locality — Satellite, Bopal…" style="border:none;outline:none;font:inherit;font-size:14.5px;width:100%;padding:2px 0">
+      </div>
+      <div style="flex:.9;padding:6px 18px">
+        <div style="font-size:11px;font-weight:700;color:#5C6B68;letter-spacing:.06em">WHEN</div>
+        <input placeholder="Any date" style="border:none;outline:none;font:inherit;font-size:14.5px;width:100%;padding:2px 0">
+      </div>
+      <a href="Shiv-Events-Listing.dc.html" style="background:#0D8A72;color:#fff;font-weight:700;font-size:15px;padding:14px 30px;border-radius:13px;display:flex;align-items:center;gap:8px" style-hover="background:#0A6B59"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>Search</a>
+    </div>
+    <div style="display:flex;gap:10px;pointer-events:auto">
+      <sc-for list="{{ trendingChips }}" as="chip" hint-placeholder-count="4">
+        <a href="{{ chip.href }}" style="background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);color:#fff;font-size:13px;font-weight:600;padding:7px 16px;border-radius:999px;backdrop-filter:blur(6px)" style-hover="background:rgba(255,255,255,.28);color:#fff">{{ chip.label }}</a>
+      </sc-for>
+    </div>
+  </div>
+</div>
+
+<!-- Categories -->
+<div style="padding:44px 48px 10px" data-screen-label="Categories">
+  <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:20px">
+    <span style="font-size:24px;font-weight:800;letter-spacing:-.4px">Browse by category</span>
+    <a href="Shiv-Events-Listing.dc.html" style="font-size:14px;font-weight:700">See all →</a>
+  </div>
+  <div style="display:flex;gap:18px;overflow-x:auto;padding-bottom:14px">
+    <sc-for list="{{ categories }}" as="cat" hint-placeholder-count="10">
+      <a href="Shiv-Events-Listing.dc.html" style="flex:0 0 auto;width:118px;display:flex;flex-direction:column;align-items:center;gap:10px" style-hover="color:#0D8A72">
+        <span style="width:96px;height:96px;border-radius:50%;overflow:hidden;display:block;border:3px solid #E6F4F1;background:{{ cat.grad }}">
+          <image-slot id="{{ cat.slot }}" shape="circle" placeholder="{{ cat.name }}"></image-slot>
+        </span>
+        <span style="font-size:13px;font-weight:700;color:#16302B;text-align:center;line-height:1.25">{{ cat.name }}</span>
+      </a>
+    </sc-for>
+  </div>
+</div>
+
+<!-- Festival calendar strip -->
+<div style="padding:26px 48px" data-screen-label="Festival calendar">
+  <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:16px">
+    <span style="font-size:24px;font-weight:800;letter-spacing:-.4px">Festival calendar</span>
+    <span style="font-size:13.5px;color:#5C6B68">Plan ahead — {{ city }}'s year of celebrations</span>
+  </div>
+  <div style="display:flex;gap:14px;overflow-x:auto;padding-bottom:10px">
+    <sc-for list="{{ festivals }}" as="f" hint-placeholder-count="6">
+      <a href="Shiv-Events-Listing.dc.html" style="flex:0 0 auto;width:230px;background:#fff;border:1.5px solid #E3EBE8;border-radius:16px;padding:16px 18px;display:flex;flex-direction:column;gap:5px" style-hover="border-color:#0D8A72;box-shadow:0 8px 24px rgba(13,138,114,.12)">
+        <span style="width:38px;height:6px;border-radius:3px;background:{{ f.bar }}"></span>
+        <span style="font-size:16.5px;font-weight:800;color:#16302B;margin-top:6px">{{ f.name }}</span>
+        <span style="font-size:13px;color:#5C6B68;font-weight:600">{{ f.dates }}</span>
+        <span style="font-size:12.5px;color:#0D8A72;font-weight:700">{{ f.count }} events in {{ city }}</span>
+      </a>
+    </sc-for>
+  </div>
+</div>
+
+<!-- Featured events -->
+<div style="padding:26px 48px" data-screen-label="Featured events">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+    <span style="font-size:24px;font-weight:800;letter-spacing:-.4px">Featured events</span>
+    <div style="display:flex;gap:8px">
+      <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4">
+        <button onClick="{{ t.onPick }}" style="font:inherit;font-size:13.5px;font-weight:700;padding:8px 18px;border-radius:999px;cursor:pointer;border:1.5px solid {{ t.border }};background:{{ t.bg }};color:{{ t.color }}">{{ t.label }}</button>
+      </sc-for>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:22px">
+    <sc-for list="{{ featured }}" as="ev" hint-placeholder-count="6">
+      <a href="Shiv-Events-Event.dc.html" style="background:#fff;border-radius:20px;overflow:hidden;border:1px solid #E3EBE8;display:flex;flex-direction:column;transition:transform .18s,box-shadow .18s" style-hover="transform:translateY(-4px);box-shadow:0 16px 40px rgba(22,48,43,.14)">
+        <span style="position:relative;display:block;height:180px;background:{{ ev.grad }}">
+          <image-slot id="{{ ev.slot }}" shape="rect" placeholder="{{ ev.title }}"></image-slot>
+          <span style="position:absolute;top:12px;left:12px;background:#F5B301;color:#16302B;font-size:12.5px;font-weight:800;padding:5px 11px;border-radius:9px;pointer-events:none">{{ ev.date }}</span>
+          <sc-if value="{{ ev.ribbon }}" hint-placeholder-val="{{ false }}">
+            <span style="position:absolute;bottom:12px;left:12px;background:{{ ev.ribbonBg }};color:#fff;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:999px;pointer-events:none">{{ ev.ribbon }}</span>
+          </sc-if>
+          <span style="position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#F04438" stroke-width="2.4"><path d="M12 21s-8-5.2-8-11a4.6 4.6 0 0 1 8-3 4.6 4.6 0 0 1 8 3c0 5.8-8 11-8 11Z"></path></svg></span>
+        </span>
+        <span style="display:flex;flex-direction:column;gap:7px;padding:16px 18px 18px">
+          <span style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:11.5px;font-weight:800;color:#0D8A72;background:#E6F4F1;padding:3px 10px;border-radius:999px">{{ ev.cat }}</span>
+            <span style="display:flex;align-items:center;gap:4px;font-size:12.5px;font-weight:700;color:#16302B"><svg width="13" height="13" viewBox="0 0 24 24" fill="#F5B301"><path d="m12 2 3 6.6 7 .8-5.2 4.8 1.4 7L12 17.7 5.8 21.2l1.4-7L2 9.4l7-.8Z"></path></svg>{{ ev.rating }} <span style="color:#5C6B68;font-weight:600">({{ ev.reviews }})</span></span>
+          </span>
+          <span style="font-size:16.5px;font-weight:800;color:#16302B;line-height:1.3">{{ ev.title }}</span>
+          <span style="display:flex;align-items:center;gap:5px;font-size:12.5px;color:#5C6B68;font-weight:600">{{ ev.org }} <svg width="13" height="13" viewBox="0 0 24 24" fill="#0D8A72"><path d="M12 1.8 14.5 4l3.3-.5 1 3.2 3 1.5-1.2 3.1 1.2 3.1-3 1.5-1 3.2-3.3-.5L12 22l-2.5-2.2-3.3.5-1-3.2-3-1.5 1.2-3.1L2.2 9.4l3-1.5 1-3.2 3.3.5Z"></path><path d="m8.8 12 2.2 2.2 4.2-4.4" stroke="#fff" stroke-width="2" fill="none"></path></svg></span>
+          <span style="display:flex;align-items:center;gap:5px;font-size:12.5px;color:#5C6B68"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#5C6B68" stroke-width="2.2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg>{{ ev.loc }} · {{ ev.dist }} km</span>
+          <span style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+            <span style="font-size:15.5px;font-weight:800;color:#0D8A72">From {{ ev.price }}</span>
+            <span style="font-size:11.5px;color:#5C6B68;font-weight:600">{{ ev.soldLabel }}</span>
+          </span>
+          <span style="height:5px;border-radius:3px;background:#E6F4F1;overflow:hidden;display:block"><span style="display:block;height:100%;border-radius:3px;background:{{ ev.barColor }};width:{{ ev.soldPct }}"></span></span>
+        </span>
+      </a>
+    </sc-for>
+  </div>
+</div>
+
+<!-- Offers -->
+<div style="padding:26px 48px;display:grid;grid-template-columns:1fr 1fr;gap:22px" data-screen-label="Offers">
+  <a href="Shiv-Events-Listing.dc.html" style="border-radius:20px;padding:30px 34px;background:linear-gradient(115deg,#F97316,#E9358F);color:#fff;display:flex;flex-direction:column;gap:6px" style-hover="filter:brightness(1.06);color:#fff">
+    <span style="font-size:12px;font-weight:800;letter-spacing:.1em;opacity:.9">NAVRATRI EARLY BIRD</span>
+    <span style="font-size:26px;font-weight:800;letter-spacing:-.5px">Season passes — Buy 1 Get 1</span>
+    <span style="font-size:14px;opacity:.9">On select Garba venues till 15 Sep. Use code <b>RAAS26</b></span>
+    <span style="margin-top:10px;background:#fff;color:#16302B;font-weight:800;font-size:13.5px;padding:9px 18px;border-radius:999px;width:fit-content">Grab the offer →</span>
+  </a>
+  <a href="Shiv-Events-Listing.dc.html" style="border-radius:20px;padding:30px 34px;background:linear-gradient(115deg,#4C1D95,#F5B301);color:#fff;display:flex;flex-direction:column;gap:6px" style-hover="filter:brightness(1.06);color:#fff">
+    <span style="font-size:12px;font-weight:800;letter-spacing:.1em;opacity:.9">DIWALI MELA WEEK</span>
+    <span style="font-size:26px;font-weight:800;letter-spacing:-.5px">Family pack — flat ₹200 off</span>
+    <span style="font-size:14px;opacity:.9">4+ tickets on any Diwali mela. Use code <b>DIYA200</b></span>
+    <span style="margin-top:10px;background:#fff;color:#16302B;font-weight:800;font-size:13.5px;padding:9px 18px;border-radius:999px;width:fit-content">Grab the offer →</span>
+  </a>
+</div>
+
+<!-- Popular organizers -->
+<div style="padding:26px 48px" data-screen-label="Popular organizers">
+  <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:18px">
+    <span style="font-size:24px;font-weight:800;letter-spacing:-.4px">Popular organizers</span>
+    <a href="Shiv-Events-Listing.dc.html" style="font-size:14px;font-weight:700">See all →</a>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:18px">
+    <sc-for list="{{ organizers }}" as="o" hint-placeholder-count="5">
+      <span style="background:#fff;border:1px solid #E3EBE8;border-radius:18px;padding:22px 18px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center">
+        <span style="width:64px;height:64px;border-radius:50%;background:{{ o.bg }};color:#fff;font-weight:800;font-size:22px;display:flex;align-items:center;justify-content:center">{{ o.initials }}</span>
+        <span style="display:flex;align-items:center;gap:5px;font-size:15px;font-weight:800">{{ o.name }} <svg width="14" height="14" viewBox="0 0 24 24" fill="#0D8A72"><path d="M12 1.8 14.5 4l3.3-.5 1 3.2 3 1.5-1.2 3.1 1.2 3.1-3 1.5-1 3.2-3.3-.5L12 22l-2.5-2.2-3.3.5-1-3.2-3-1.5 1.2-3.1L2.2 9.4l3-1.5 1-3.2 3.3.5Z"></path><path d="m8.8 12 2.2 2.2 4.2-4.4" stroke="#fff" stroke-width="2" fill="none"></path></svg></span>
+        <span style="font-size:12.5px;color:#5C6B68;font-weight:600">{{ o.followers }} followers · ⭐ {{ o.rating }}</span>
+        <button style="font:inherit;font-size:13px;font-weight:700;color:#0D8A72;background:#E6F4F1;border:none;border-radius:999px;padding:8px 22px;cursor:pointer;margin-top:4px" style-hover="background:#0D8A72;color:#fff">Follow</button>
+      </span>
+    </sc-for>
+  </div>
+</div>
+
+<!-- How it works -->
+<div style="padding:40px 48px" data-screen-label="How it works">
+  <div style="text-align:center;font-size:24px;font-weight:800;letter-spacing:-.4px;margin-bottom:28px">How Shiv Events works</div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:22px">
+    <sc-for list="{{ steps }}" as="s" hint-placeholder-count="3">
+      <span style="background:#fff;border:1px solid #E3EBE8;border-radius:20px;padding:30px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center">
+        <span style="width:56px;height:56px;border-radius:16px;background:#E6F4F1;color:#0D8A72;font-weight:800;font-size:22px;display:flex;align-items:center;justify-content:center">{{ s.n }}</span>
+        <span style="font-size:17px;font-weight:800">{{ s.title }}</span>
+        <span style="font-size:13.5px;color:#5C6B68;line-height:1.5">{{ s.body }}</span>
+      </span>
+    </sc-for>
+  </div>
+</div>
+
+<!-- Stats band -->
+<div style="background:#0A6B59;color:#fff;padding:44px 48px;display:grid;grid-template-columns:repeat(4,1fr);gap:20px;text-align:center" data-screen-label="Stats">
+  <div><div style="font-size:34px;font-weight:800">4,200+</div><div style="font-size:13.5px;opacity:.8;font-weight:600">Events hosted</div></div>
+  <div><div style="font-size:34px;font-weight:800">12,00,000+</div><div style="font-size:13.5px;opacity:.8;font-weight:600">Tickets sold</div></div>
+  <div><div style="font-size:34px;font-weight:800">8</div><div style="font-size:13.5px;opacity:.8;font-weight:600">Cities across India</div></div>
+  <div><div style="font-size:34px;font-weight:800">850+</div><div style="font-size:13.5px;opacity:.8;font-weight:600">Verified organizers</div></div>
+</div>
+
+<!-- Testimonials + FAQ -->
+<div style="padding:44px 48px;display:grid;grid-template-columns:1fr 1fr;gap:44px" data-screen-label="Testimonials and FAQ">
+  <div>
+    <div style="font-size:24px;font-weight:800;letter-spacing:-.4px;margin-bottom:20px">Loved across Ahmedabad</div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <sc-for list="{{ testimonials }}" as="t" hint-placeholder-count="3">
+        <span style="background:#fff;border:1px solid #E3EBE8;border-radius:16px;padding:18px 20px;display:flex;gap:14px">
+          <span style="flex:0 0 auto;width:44px;height:44px;border-radius:50%;background:{{ t.bg }};color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center">{{ t.initials }}</span>
+          <span style="display:flex;flex-direction:column;gap:4px">
+            <span style="font-size:14px;color:#16302B;line-height:1.55">"{{ t.quote }}"</span>
+            <span style="font-size:12.5px;color:#5C6B68;font-weight:700">{{ t.name }} · {{ t.loc }}</span>
+          </span>
+        </span>
+      </sc-for>
+    </div>
+  </div>
+  <div>
+    <div style="font-size:24px;font-weight:800;letter-spacing:-.4px;margin-bottom:20px">Frequently asked</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <sc-for list="{{ faqs }}" as="f" hint-placeholder-count="4">
+        <span style="background:#fff;border:1px solid #E3EBE8;border-radius:14px;overflow:hidden;display:block">
+          <button onClick="{{ f.onToggle }}" style="width:100%;display:flex;justify-content:space-between;align-items:center;font:inherit;font-size:14.5px;font-weight:700;color:#16302B;background:none;border:none;padding:16px 20px;cursor:pointer;text-align:left">
+            {{ f.q }} <span style="color:#0D8A72;font-size:18px;font-weight:800">{{ f.mark }}</span>
+          </button>
+          <sc-if value="{{ f.open }}" hint-placeholder-val="{{ false }}">
+            <span style="display:block;padding:0 20px 16px;font-size:13.5px;color:#5C6B68;line-height:1.6">{{ f.a }}</span>
+          </sc-if>
+        </span>
+      </sc-for>
+    </div>
+  </div>
+</div>
+
+<!-- App band -->
+<sc-if value="{{ showAppBand }}" hint-placeholder-val="{{ true }}">
+<div style="margin:0 48px 44px;border-radius:24px;background:#16302B;color:#fff;padding:38px 44px;display:flex;justify-content:space-between;align-items:center">
+  <div>
+    <div style="font-size:24px;font-weight:800;letter-spacing:-.4px">The Shiv Events app is coming soon</div>
+    <div style="font-size:14px;opacity:.75;margin-top:6px">Tickets on WhatsApp, offline QR entry, and festival reminders — get notified at launch.</div>
+  </div>
+  <div style="display:flex;gap:10px">
+    <input placeholder="Your phone number" style="padding:12px 18px;border-radius:999px;border:none;font:inherit;font-size:14px;width:230px;outline:none">
+    <button style="font:inherit;background:#0D8A72;color:#fff;font-weight:700;font-size:14px;border:none;border-radius:999px;padding:12px 26px;cursor:pointer" style-hover="background:#0A6B59">Notify me</button>
+  </div>
+</div>
+</sc-if>
+
+<!-- Footer -->
+<div style="background:#16302B;color:#fff;padding:52px 48px 28px" data-screen-label="Footer">
+  <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr 1.3fr;gap:36px;padding-bottom:36px;border-bottom:1px solid rgba(255,255,255,.12)">
+    <div>
+      <div style="display:flex;align-items:center;gap:9px;margin-bottom:14px">
+        <span style="width:30px;height:30px;border-radius:9px;background:#0D8A72;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:16px">S</span>
+        <span style="font-size:20px;font-weight:800">shiv events<span style="color:#F5B301">.</span></span>
+      </div>
+      <div style="font-size:13.5px;opacity:.7;line-height:1.6">India's marketplace for communal &amp; cultural events. Discover, book and enter with one QR — starting with Ahmedabad.</div>
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <span style="background:rgba(255,255,255,.1);border-radius:8px;padding:6px 12px;font-size:11.5px;font-weight:700">UPI</span>
+        <span style="background:rgba(255,255,255,.1);border-radius:8px;padding:6px 12px;font-size:11.5px;font-weight:700">GPay</span>
+        <span style="background:rgba(255,255,255,.1);border-radius:8px;padding:6px 12px;font-size:11.5px;font-weight:700">PhonePe</span>
+        <span style="background:rgba(255,255,255,.1);border-radius:8px;padding:6px 12px;font-size:11.5px;font-weight:700">Paytm</span>
+        <span style="background:rgba(255,255,255,.1);border-radius:8px;padding:6px 12px;font-size:11.5px;font-weight:700">Cards</span>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;font-size:13.5px">
+      <span style="font-weight:800;font-size:14px;margin-bottom:4px">For users</span>
+      <a href="Shiv-Events-Listing.dc.html" style="color:rgba(255,255,255,.7)" style-hover="color:#fff">Explore events</a>
+      <a href="Shiv-Events-Tickets.dc.html" style="color:rgba(255,255,255,.7)" style-hover="color:#fff">My tickets</a>
+      <a href="Shiv-Events-Account.dc.html" style="color:rgba(255,255,255,.7)" style-hover="color:#fff">Wallet &amp; refunds</a>
+      <a href="Shiv-Events-Account.dc.html" style="color:rgba(255,255,255,.7)" style-hover="color:#fff">Invite friends</a>
+      <a href="Shiv-Events-Account.dc.html" style="color:rgba(255,255,255,.7)" style-hover="color:#fff">Help center</a>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;font-size:13.5px">
+      <span style="font-weight:800;font-size:14px;margin-bottom:4px">For organizers</span>
+      <a href="Shiv-Events-Organizer-Onboarding.dc.html" style="color:rgba(255,255,255,.7)" style-hover="color:#fff">List your event</a>
+      <a href="Shiv-Events-Organizer.dc.html" style="color:rgba(255,255,255,.7)" style-hover="color:#fff">Organizer portal</a>
+      <a href="Shiv-Events-Scanner.dc.html" style="color:rgba(255,255,255,.7)" style-hover="color:#fff">Gate scanner</a>
+      <a href="Shiv-Events-Organizer-Onboarding.dc.html" style="color:rgba(255,255,255,.7)" style-hover="color:#fff">Pricing &amp; plans</a>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;font-size:13.5px">
+      <span style="font-weight:800;font-size:14px;margin-bottom:4px">Stay in the loop</span>
+      <span style="opacity:.7">Festival lineups &amp; early-bird offers, monthly.</span>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <input placeholder="Email address" style="flex:1;padding:11px 16px;border-radius:999px;border:none;font:inherit;font-size:13px;outline:none">
+        <button style="font:inherit;background:#0D8A72;color:#fff;font-weight:700;font-size:13px;border:none;border-radius:999px;padding:11px 20px;cursor:pointer">Subscribe</button>
+      </div>
+      <span style="opacity:.7;margin-top:6px">support@shivevents.in · 1800-121-SHIV</span>
+    </div>
+  </div>
+  <div style="padding-top:20px;display:flex;justify-content:space-between;align-items:center;font-size:12.5px">
+    <span style="opacity:.6">Events in Ahmedabad · Surat · Vadodara · Rajkot · Gandhinagar · Mumbai · Pune · Jaipur</span>
+    <span style="opacity:.6">© 2026 Shiv Events Tickets Pvt. Ltd. · Terms · Privacy · Refund policy</span>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;city&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;default&quot;: &quot;Ahmedabad&quot;, &quot;options&quot;: [&quot;Ahmedabad&quot;, &quot;Surat&quot;, &quot;Vadodara&quot;, &quot;Mumbai&quot;], &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Content&quot;}, &quot;showAppBand&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Sections&quot;}}">
+class Component extends DCLogic {
+  state = { tab: 'All', openFaq: 0, cityOpen: false, searchOpen: false };
+  events = [
+    { slot: 'ev-garba', title: 'Rangilo Re Garba Mahotsav 2026', cat: 'Garba & Navratri', date: '12–20 Oct', org: 'Rangmanch Events', loc: 'GMDC Ground, Vastrapur', dist: '4.2', rating: '4.8', reviews: '1,240', price: '₹499', sold: 78, ribbon: 'Filling Fast', big: true, weekend: false, grad: 'linear-gradient(135deg,#F97316,#E9358F)' },
+    { slot: 'ev-sufi', title: 'Sufi Night under the Stars', cat: 'Concerts', date: '19 Sep', org: 'Aatish Entertainment', loc: 'Sabarmati Riverfront', dist: '6.1', rating: '4.6', reviews: '312', price: '₹299', sold: 44, ribbon: '', big: false, weekend: true, grad: 'linear-gradient(135deg,#1E3A5F,#7C3AED)' },
+    { slot: 'ev-comedy', title: 'Gujju Comedy Nights', cat: 'Comedy', date: '20 Sep', org: 'Hasya Manch', loc: 'Thaltej', dist: '2.8', rating: '4.5', reviews: '188', price: '₹349', sold: 62, ribbon: '', big: false, weekend: true, grad: 'linear-gradient(135deg,#0A6B59,#F5B301)' },
+    { slot: 'ev-food', title: 'Ahmedabad Food Truck Fest', cat: 'Food Fests', date: '26–27 Sep', org: 'Khaana Khazana Fests', loc: 'SG Highway', dist: '5.4', rating: '4.4', reviews: '426', price: '₹99', sold: 38, ribbon: '', big: false, weekend: true, grad: 'linear-gradient(135deg,#B45309,#F04438)' },
+    { slot: 'ev-diwali', title: 'Diwali Mela at Kankaria', cat: 'Diwali Events', date: '6–8 Nov', org: 'Shree Events', loc: 'Kankaria, Maninagar', dist: '8.9', rating: '4.7', reviews: '980', price: '₹149', sold: 55, ribbon: '', big: true, weekend: false, grad: 'linear-gradient(135deg,#4C1D95,#F5B301)' },
+    { slot: 'ev-holi', title: 'Holi Rang Shiv Events 2027', cat: 'Holi Parties', date: '22 Mar', org: 'Rangmanch Events', loc: 'Club O7, Bopal', dist: '7.2', rating: '4.6', reviews: '540', price: '₹599', sold: 91, ribbon: 'Few Left', big: true, weekend: false, grad: 'linear-gradient(135deg,#0D8A72,#E9358F,#F5B301)' }
+  ];
+  faqData = [
+    { q: 'How do digital tickets work at the gate?', a: 'Every booking gets a unique QR code sent to WhatsApp and email. Gate staff scan it once — it expires immediately after — and hand you a wristband or stub at the box office. No printouts needed.' },
+    { q: 'Can I cancel and get a refund?', a: 'Refunds follow each organizer\u2019s policy, shown before you pay. Where allowed, cancel from My Tickets and the amount returns to your original payment method or Shiv Events wallet in 5–7 days.' },
+    { q: 'Which payment methods are supported?', a: 'UPI (GPay, PhonePe, Paytm), all major credit and debit cards, netbanking and Shiv Events wallet balance. All prices are in ₹ with GST shown upfront.' },
+    { q: 'How do I list my own event?', a: 'Register as an organizer, complete a quick KYC, pick a plan and pay the onboarding fee. Once approved, you can create events, sell tiered tickets and scan entries with our free gate-scanner tool.' }
+  ];
+  renderVals() {
+    const { tab, openFaq, cityOpen } = this.state;
+    const filters = { 'All': () => true, 'This Weekend': e => e.weekend, 'Big Events': e => e.big, 'Small & Cozy': e => !e.big };
+    const featured = this.events.filter(filters[tab]).map(e => ({
+      ...e, soldPct: e.sold + '%', ribbonBg: e.sold > 85 ? '#F04438' : '#E9358F',
+      barColor: e.sold > 85 ? '#F04438' : '#0D8A72',
+      soldLabel: e.sold + '% tickets sold'
+    }));
+    return {
+      city: this.props.city ?? 'Ahmedabad',
+      showAppBand: this.props.showAppBand ?? true,
+      cityOpen, toggleCity: () => this.setState(s => ({ cityOpen: !s.cityOpen })),
+      searchOpen: this.state.searchOpen, toggleSearch: () => this.setState(s => ({ searchOpen: !s.searchOpen })),
+      suggestions: [
+        { glyph: '#', rest: ' & navratri', kind: 'Category', href: 'Shiv-Events-Listing.dc.html', chipBg: '#E6F4F1', chipFg: '#0A6B59' },
+        { glyph: '◎', rest: ' near Vastrapur — 12 events', kind: 'Near me', href: 'Shiv-Events-Listing.dc.html?view=map', chipBg: '#FDF3E3', chipFg: '#92400E' },
+        { glyph: 'E', rest: ' — Rangilo Re Garba Mahotsav 2026', kind: 'Event', href: 'Shiv-Events-Event.dc.html', chipBg: '#FDEBF6', chipFg: '#BE3B99' },
+        { glyph: 'E', rest: ' — Sheri Garba, Old City (free)', kind: 'Event', href: 'Shiv-Events-Event.dc.html', chipBg: '#FDEBF6', chipFg: '#BE3B99' },
+        { glyph: 'O', rest: ' specialists — Rangmanch Events', kind: 'Organizer', href: 'Shiv-Events-Organizer-Profile.dc.html', chipBg: '#F3EFFC', chipFg: '#6D28D9' }
+      ],
+      cities: ['Ahmedabad', 'Surat', 'Vadodara', 'Rajkot', 'Mumbai', 'Pune', 'Jaipur', 'Delhi NCR'],
+      trendingChips: [
+        { label: 'Navratri 2026', href: 'Shiv-Events-Festival.dc.html' },
+        { label: 'This Weekend', href: 'Shiv-Events-Listing.dc.html' },
+        { label: 'Under ₹500', href: 'Shiv-Events-Listing.dc.html' },
+        { label: 'Near Me', href: 'Shiv-Events-Listing.dc.html?view=map' }
+      ],
+      categories: [
+        { name: 'Garba & Navratri', slot: 'cat-garba', grad: 'linear-gradient(135deg,#F97316,#E9358F)' },
+        { name: 'Diwali Events', slot: 'cat-diwali', grad: 'linear-gradient(135deg,#4C1D95,#F5B301)' },
+        { name: 'Holi Parties', slot: 'cat-holi', grad: 'linear-gradient(135deg,#0D8A72,#E9358F)' },
+        { name: 'Christmas & NYE', slot: 'cat-nye', grad: 'linear-gradient(135deg,#B91C1C,#14532D)' },
+        { name: 'Concerts', slot: 'cat-concerts', grad: 'linear-gradient(135deg,#1E3A5F,#7C3AED)' },
+        { name: 'Comedy', slot: 'cat-comedy', grad: 'linear-gradient(135deg,#0A6B59,#F5B301)' },
+        { name: 'Food Fests', slot: 'cat-food', grad: 'linear-gradient(135deg,#B45309,#F04438)' },
+        { name: 'Spiritual', slot: 'cat-spiritual', grad: 'linear-gradient(135deg,#92400E,#F5B301)' },
+        { name: 'Kids & Family', slot: 'cat-kids', grad: 'linear-gradient(135deg,#0369A1,#22C55E)' },
+        { name: 'Uttarayan', slot: 'cat-kite', grad: 'linear-gradient(135deg,#0EA5E9,#F97316)' }
+      ],
+      festivals: [
+        { name: 'Ganesh Chaturthi', dates: '26 Aug – 6 Sep', count: 96, bar: '#F97316' },
+        { name: 'Navratri', dates: '12 – 20 Oct', count: 240, bar: '#E9358F' },
+        { name: 'Diwali', dates: '6 – 10 Nov', count: 130, bar: '#F5B301' },
+        { name: 'Christmas & NYE', dates: '24 Dec – 1 Jan', count: 110, bar: '#B91C1C' },
+        { name: 'Uttarayan', dates: '14 – 15 Jan', count: 85, bar: '#0EA5E9' },
+        { name: 'Holi', dates: '22 – 23 Mar', count: 74, bar: '#7C3AED' }
+      ],
+      tabs: ['All', 'This Weekend', 'Big Events', 'Small & Cozy'].map(label => ({
+        label, onPick: () => this.setState({ tab: label }),
+        bg: tab === label ? '#0D8A72' : '#fff', color: tab === label ? '#fff' : '#16302B',
+        border: tab === label ? '#0D8A72' : '#E3EBE8'
+      })),
+      featured,
+      organizers: [
+        { name: 'Rangmanch Events', initials: 'RE', followers: '48K', rating: '4.8', bg: '#0D8A72' },
+        { name: 'Shree Events', initials: 'SE', followers: '32K', rating: '4.7', bg: '#7C3AED' },
+        { name: 'Aatish Entertainment', initials: 'AE', followers: '27K', rating: '4.6', bg: '#E9358F' },
+        { name: 'Khaana Khazana', initials: 'KK', followers: '19K', rating: '4.4', bg: '#B45309' },
+        { name: 'Hasya Manch', initials: 'HM', followers: '12K', rating: '4.5', bg: '#1E3A5F' }
+      ],
+      steps: [
+        { n: '1', title: 'Discover', body: 'Search by festival, locality or "near me" — filter by date, price, language and crowd size.' },
+        { n: '2', title: 'Book', body: 'Pick your tier, pay with UPI or card, and get your QR ticket on WhatsApp and email instantly.' },
+        { n: '3', title: 'Scan & enter', body: 'Show the QR at the gate — one scan and you\u2019re in, with your wristband from the box office.' }
+      ],
+      testimonials: [
+        { quote: 'Booked season passes for all nine nights of Garba in two minutes. The QR entry at GMDC Ground was seamless.', name: 'Priya Shah', loc: 'Satellite', initials: 'PS', bg: '#0D8A72' },
+        { quote: 'As a first-time organizer, the dashboard and gate scanner made our 3,000-person Diwali mela feel effortless.', name: 'Kunal Mehta', loc: 'Navrangpura', initials: 'KM', bg: '#7C3AED' },
+        { quote: 'Found a small sufi night 2 km from home that I\u2019d never have heard about. Love the near-me radius search.', name: 'Ananya Desai', loc: 'Bopal', initials: 'AD', bg: '#E9358F' }
+      ],
+      faqs: this.faqData.map((f, i) => ({
+        ...f, open: openFaq === i, mark: openFaq === i ? '−' : '+',
+        onToggle: () => this.setState(s => ({ openFaq: s.openFaq === i ? -1 : i }))
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>

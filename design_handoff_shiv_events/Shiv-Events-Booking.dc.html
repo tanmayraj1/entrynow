@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>Checkout — Shiv Events</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  body { margin:0; font-family:'Plus Jakarta Sans',sans-serif; background:#F7FAF9; color:#16302B; }
+  a { color:#0D8A72; text-decoration:none; }
+  a:hover { color:#0A6B59; }
+  * { box-sizing:border-box; }
+  @keyframes pop { 0% { transform:scale(.4); opacity:0 } 70% { transform:scale(1.12) } 100% { transform:scale(1); opacity:1 } }
+  @keyframes spin { to { transform:rotate(360deg) } }
+  @keyframes fall { 0% { transform:translateY(-30px) rotate(0); opacity:1 } 100% { transform:translateY(120px) rotate(240deg); opacity:0 } }
+</style>
+</helmet>
+
+<div style="min-width:1100px;padding-bottom:60px">
+<!-- Navbar -->
+<div style="background:#fff;border-bottom:1px solid #E3EBE8;display:flex;align-items:center;justify-content:space-between;padding:14px 48px">
+  <a href="Shiv-Events-Home.dc.html" style="display:flex;align-items:center;gap:9px">
+    <span style="width:34px;height:34px;border-radius:10px;background:#0D8A72;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:18px">S</span>
+    <span style="font-size:22px;font-weight:800;color:#16302B;letter-spacing:-.5px">shiv events<span style="color:#F5B301">.</span></span>
+  </a>
+  <div style="display:flex;align-items:center;gap:14px">
+    <sc-if value="{{ showHold }}" hint-placeholder-val="{{ true }}">
+      <span style="display:flex;align-items:center;gap:7px;background:#FDEBEA;border:1px solid #F04438;color:#B42318;font-size:13px;font-weight:800;padding:8px 16px;border-radius:999px">Tickets held for {{ holdTime }}</span>
+    </sc-if>
+    <a href="Shiv-Events-Event.dc.html" style="font-size:13.5px;font-weight:700;color:#5C6B68">← Back to event</a>
+  </div>
+</div>
+
+<!-- Stepper -->
+<div style="display:flex;justify-content:center;gap:0;padding:28px 48px 8px" data-screen-label="Booking stepper">
+  <sc-for list="{{ steps }}" as="s" hint-placeholder-count="4">
+    <span style="display:flex;align-items:center">
+      <span style="display:flex;align-items:center;gap:9px">
+        <span style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;background:{{ s.bg }};color:{{ s.color }};border:2px solid {{ s.border }}">{{ s.mark }}</span>
+        <span style="font-size:13.5px;font-weight:800;color:{{ s.labelColor }}">{{ s.label }}</span>
+      </span>
+      <sc-if value="{{ s.notLast }}" hint-placeholder-val="{{ true }}"><span style="width:70px;height:2px;background:{{ s.lineBg }};margin:0 14px"></span></sc-if>
+    </span>
+  </sc-for>
+</div>
+
+<div style="display:flex;gap:26px;padding:22px 140px;align-items:flex-start">
+  <!-- MAIN -->
+  <div style="flex:1;min-width:0">
+
+    <!-- STEP 1: SELECT -->
+    <sc-if value="{{ isStep1 }}" hint-placeholder-val="{{ true }}">
+      <div style="background:#fff;border:1px solid #E3EBE8;border-radius:20px;padding:26px 28px" data-screen-label="Step 1 Select">
+        <div style="font-size:20px;font-weight:800;margin-bottom:4px">Select night &amp; tickets</div>
+        <div style="font-size:13px;color:#5C6B68;margin-bottom:18px">Rangilo Re Garba Mahotsav 2026 · GMDC Ground, Vastrapur</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px">
+          <sc-for list="{{ days }}" as="d" hint-placeholder-count="9">
+            <button onClick="{{ d.onPick }}" style="font:inherit;width:60px;padding:8px 0;border-radius:12px;cursor:pointer;text-align:center;border:1.5px solid {{ d.border }};background:{{ d.bg }};color:{{ d.color }};line-height:1.3">
+              <span style="display:block;font-size:10.5px;font-weight:700;opacity:.75">{{ d.dow }}</span>
+              <span style="display:block;font-size:14px;font-weight:800">{{ d.date }}</span>
+            </button>
+          </sc-for>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <sc-for list="{{ tiers }}" as="t" hint-placeholder-count="4">
+            <span style="border:1.5px solid {{ t.border }};background:{{ t.cardBg }};border-radius:16px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center">
+              <span>
+                <span style="font-size:14.5px;font-weight:800">{{ t.name }}</span>
+                <span style="display:block;font-size:11.5px;color:#5C6B68;font-weight:600;margin-top:2px">{{ t.desc }}</span>
+              </span>
+              <span style="display:flex;align-items:center;gap:18px">
+                <span style="font-size:15.5px;font-weight:800;color:#0D8A72">{{ t.price }}</span>
+                <span style="display:flex;align-items:center;gap:10px">
+                  <button onClick="{{ t.onMinus }}" style="width:28px;height:28px;border-radius:50%;border:1.5px solid #C8D6D1;background:#fff;font:inherit;font-size:15px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center">−</button>
+                  <span style="font-size:14px;font-weight:800;min-width:16px;text-align:center">{{ t.qty }}</span>
+                  <button onClick="{{ t.onPlus }}" style="width:28px;height:28px;border-radius:50%;border:none;background:#0D8A72;color:#fff;font:inherit;font-size:15px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:#0A6B59">+</button>
+                </span>
+              </span>
+            </span>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- STEP 2: ATTENDEES -->
+    <sc-if value="{{ isStep2 }}" hint-placeholder-val="{{ false }}">
+      <div style="background:#fff;border:1px solid #E3EBE8;border-radius:20px;padding:26px 28px" data-screen-label="Step 2 Attendees">
+        <div style="font-size:20px;font-weight:800;margin-bottom:4px">Attendee details</div>
+        <div style="font-size:13px;color:#5C6B68;margin-bottom:20px">Tickets &amp; entry QR will be sent to the contact below. Guest checkout — verify with phone OTP.</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:8px">
+          <div><div style="font-size:12px;font-weight:800;margin-bottom:6px">Phone (OTP verified)</div>
+            <div style="display:flex;gap:8px"><input value="+91 98980 12345" style="flex:1;padding:12px 16px;border:1.5px solid #0D8A72;border-radius:12px;font:inherit;font-size:14px;background:#F0F9F6"><span style="display:flex;align-items:center;gap:5px;color:#0D8A72;font-size:12.5px;font-weight:800">✓ Verified</span></div></div>
+          <div><div style="font-size:12px;font-weight:800;margin-bottom:6px">Email</div>
+            <input placeholder="you@example.com" value="arjun.patel@gmail.com" style="width:100%;padding:12px 16px;border:1.5px solid #E3EBE8;border-radius:12px;font:inherit;font-size:14px;outline-color:#0D8A72"></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px;margin-top:14px">
+          <sc-for list="{{ attendees }}" as="a" hint-placeholder-count="2">
+            <span style="border:1px solid #E3EBE8;border-radius:16px;padding:16px 18px;display:block;background:#F7FAF9">
+              <span style="display:flex;justify-content:space-between;margin-bottom:10px">
+                <span style="font-size:13px;font-weight:800">Ticket {{ a.n }} — {{ a.tier }}</span>
+                <span style="font-size:12px;font-weight:700;color:#0D8A72">{{ a.night }}</span>
+              </span>
+              <span style="display:grid;grid-template-columns:1.4fr 1fr;gap:12px">
+                <input placeholder="Full name (as on ID)" value="{{ a.name }}" style="padding:11px 14px;border:1.5px solid #E3EBE8;border-radius:11px;font:inherit;font-size:13.5px;outline-color:#0D8A72;background:#fff">
+                <select style="padding:11px 12px;border:1.5px solid #E3EBE8;border-radius:11px;font:inherit;font-size:13.5px;background:#fff;color:#16302B"><option>Age 18+</option><option>Age 12–17</option><option>Under 12</option></select>
+              </span>
+            </span>
+          </sc-for>
+        </div>
+        <div style="display:flex;align-items:center;gap:9px;margin-top:16px;font-size:13px;font-weight:600;color:#5C6B68">
+          <span style="width:18px;height:18px;border-radius:5px;background:#0D8A72;display:flex;align-items:center;justify-content:center"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4"><path d="m4 12.5 5.5 5.5L20 6.5"></path></svg></span>
+          Send tickets on WhatsApp too
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- STEP 3: PAYMENT -->
+    <sc-if value="{{ isStep3 }}" hint-placeholder-val="{{ false }}">
+      <div style="background:#fff;border:1px solid #E3EBE8;border-radius:20px;padding:26px 28px" data-screen-label="Step 3 Payment">
+        <div style="font-size:20px;font-weight:800;margin-bottom:18px">Payment</div>
+
+        <sc-if value="{{ payFailed }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;justify-content:space-between;align-items:center;background:#FDEBEA;border:1.5px solid #F04438;border-radius:14px;padding:14px 18px;margin-bottom:18px">
+            <span style="font-size:13.5px;font-weight:700;color:#B42318">✕ Payment failed — your bank declined the UPI request. No money was deducted.</span>
+            <button onClick="{{ onPay }}" style="font:inherit;font-size:13px;font-weight:800;background:#F04438;color:#fff;border:none;border-radius:999px;padding:9px 20px;cursor:pointer">Retry payment</button>
+          </div>
+        </sc-if>
+
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <sc-for list="{{ payMethods }}" as="m" hint-placeholder-count="4">
+            <button onClick="{{ m.onPick }}" style="font:inherit;text-align:left;border:1.5px solid {{ m.border }};background:{{ m.bg }};border-radius:16px;padding:16px 18px;cursor:pointer;display:block;width:100%">
+              <span style="display:flex;align-items:center;gap:12px">
+                <span style="width:20px;height:20px;border-radius:50%;border:2px solid {{ m.dotBorder }};display:flex;align-items:center;justify-content:center"><span style="width:10px;height:10px;border-radius:50%;background:{{ m.dot }}"></span></span>
+                <span style="flex:1">
+                  <span style="font-size:14.5px;font-weight:800;color:#16302B">{{ m.name }}</span>
+                  <span style="display:block;font-size:12px;color:#5C6B68;font-weight:600;margin-top:2px">{{ m.desc }}</span>
+                </span>
+                <span style="display:flex;gap:6px">
+                  <sc-for list="{{ m.badges }}" as="b" hint-placeholder-count="3">
+                    <span style="font-size:10.5px;font-weight:800;background:#F7FAF9;border:1px solid #E3EBE8;border-radius:7px;padding:4px 9px">{{ b }}</span>
+                  </sc-for>
+                </span>
+              </span>
+              <sc-if value="{{ m.showUpiField }}" hint-placeholder-val="{{ false }}">
+                <span style="display:flex;gap:10px;margin-top:14px;padding-left:32px">
+                  <input placeholder="yourname@upi" value="arjun@oksbi" style="flex:1;padding:11px 14px;border:1.5px solid #E3EBE8;border-radius:11px;font:inherit;font-size:13.5px;background:#fff;outline-color:#0D8A72">
+                  <span style="font-size:11.5px;color:#5C6B68;font-weight:600;display:flex;align-items:center">A collect request will open in your UPI app</span>
+                </span>
+              </sc-if>
+              <sc-if value="{{ m.showCardField }}" hint-placeholder-val="{{ false }}">
+                <span style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px;margin-top:14px;padding-left:32px">
+                  <input placeholder="Card number" style="padding:11px 14px;border:1.5px solid #E3EBE8;border-radius:11px;font:inherit;font-size:13.5px;background:#fff;outline-color:#0D8A72">
+                  <input placeholder="MM / YY" style="padding:11px 14px;border:1.5px solid #E3EBE8;border-radius:11px;font:inherit;font-size:13.5px;background:#fff;outline-color:#0D8A72">
+                  <input placeholder="CVV" style="padding:11px 14px;border:1.5px solid #E3EBE8;border-radius:11px;font:inherit;font-size:13.5px;background:#fff;outline-color:#0D8A72">
+                </span>
+              </sc-if>
+            </button>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- STEP 4: CONFIRMATION -->
+    <sc-if value="{{ isStep4 }}" hint-placeholder-val="{{ false }}">
+      <div style="background:#fff;border:1px solid #E3EBE8;border-radius:20px;padding:36px;position:relative;overflow:hidden;text-align:center" data-screen-label="Step 4 Confirmation">
+        <span style="position:absolute;left:12%;top:0;width:10px;height:10px;background:#E9358F;border-radius:2px;animation:fall 1.6s ease-in .1s both"></span>
+        <span style="position:absolute;left:28%;top:0;width:8px;height:8px;background:#F5B301;border-radius:50%;animation:fall 1.9s ease-in .3s both"></span>
+        <span style="position:absolute;left:52%;top:0;width:9px;height:9px;background:#0D8A72;border-radius:2px;animation:fall 1.7s ease-in .5s both"></span>
+        <span style="position:absolute;left:70%;top:0;width:8px;height:8px;background:#7C3AED;border-radius:50%;animation:fall 2s ease-in .2s both"></span>
+        <span style="position:absolute;left:86%;top:0;width:10px;height:10px;background:#F97316;border-radius:2px;animation:fall 1.8s ease-in .4s both"></span>
+        <div style="width:84px;height:84px;border-radius:50%;background:#0D8A72;margin:0 auto 18px;display:flex;align-items:center;justify-content:center;animation:pop .5s ease-out both;box-shadow:0 12px 34px rgba(13,138,114,.4)">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><path d="m4.5 12.5 5 5L19.5 7"></path></svg>
+        </div>
+        <div style="font-size:26px;font-weight:800;letter-spacing:-.5px">Booking confirmed!</div>
+        <div style="font-size:14px;color:#5C6B68;margin-top:6px">Booking ID <b style="color:#16302B">SHV-2610-4821</b> · Tickets sent to <b style="color:#16302B">WhatsApp &amp; email</b></div>
+
+        <div style="display:flex;justify-content:center;gap:16px;margin-top:26px;flex-wrap:wrap">
+          <sc-for list="{{ ticketCards }}" as="t" hint-placeholder-count="2">
+            <span style="width:300px;background:#F7FAF9;border:1px solid #E3EBE8;border-radius:18px;overflow:hidden;text-align:left">
+              <span style="display:block;background:linear-gradient(115deg,#0D8A72,#0A6B59);color:#fff;padding:14px 18px">
+                <span style="font-size:11px;font-weight:800;opacity:.8;letter-spacing:.06em">RANGILO RE GARBA MAHOTSAV</span>
+                <span style="display:block;font-size:15px;font-weight:800;margin-top:2px">{{ t.tier }} — {{ t.name }}</span>
+              </span>
+              <span style="display:flex;padding:16px 18px;gap:14px;align-items:center;border-bottom:1px dashed #C8D6D1">
+                <span style="flex:1;font-size:12px;color:#5C6B68;font-weight:600;line-height:1.7">Night 1 · Sun 12 Oct<br>7:30 PM · Gate 2<br><b style="color:#16302B">GMDC Ground, Vastrapur</b></span>
+                <svg width="86" height="86" viewBox="0 0 21 21" style="background:#fff;border:1px solid #E3EBE8;border-radius:8px;padding:6px"><path fill="#16302B" d="M0 0h7v7H0zM2 2v3h3V2zM14 0h7v7h-7zM16 2v3h3V2zM0 14h7v7H0zM2 16v3h3V2zM9 0h2v2H9zM9 3h2v3H9zM12 8h3v2h-3zM16 9h2v2h-2zM19 9h2v2h-2zM9 9h2v2H9zM0 9h2v2H0zM3 9h3v2H3zM9 12h2v3H9zM12 12h2v2h-2zM15 13h2v2h-2zM18 13h3v2h-3zM12 16h2v2h-2zM15 16h3v3h-3zM19 18h2v3h-2zM9 18h2v3H9zM12 19h2v2h-2z"></path></svg>
+              </span>
+              <span style="display:flex;justify-content:space-between;align-items:center;padding:12px 18px">
+                <span style="font-size:11.5px;font-weight:800;color:#0D8A72">● ACTIVE — scan once at gate</span>
+                <span style="font-size:11.5px;font-weight:700;color:#5C6B68">{{ t.id }}</span>
+              </span>
+            </span>
+          </sc-for>
+        </div>
+
+        <div style="display:flex;justify-content:center;gap:12px;margin-top:26px">
+          <a href="Shiv-Events-Tickets.dc.html" style="background:#0D8A72;color:#fff;font-weight:800;font-size:14px;padding:13px 30px;border-radius:999px" style-hover="background:#0A6B59;color:#fff">View my tickets</a>
+          <span style="border:1.5px solid #E3EBE8;color:#16302B;font-weight:700;font-size:14px;padding:13px 24px;border-radius:999px;cursor:pointer;background:#fff" style-hover="border-color:#0D8A72">＋ Add to calendar</span>
+          <span style="border:1.5px solid #E3EBE8;color:#16302B;font-weight:700;font-size:14px;padding:13px 24px;border-radius:999px;cursor:pointer;background:#fff" style-hover="border-color:#0D8A72">Invite friends — get ₹100</span>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- Nav buttons -->
+    <sc-if value="{{ showNav }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex;justify-content:space-between;margin-top:20px">
+        <button onClick="{{ onBack }}" style="font:inherit;font-size:14px;font-weight:700;color:#5C6B68;background:none;border:1.5px solid #E3EBE8;border-radius:999px;padding:13px 28px;cursor:pointer;visibility:{{ backVis }}" style-hover="border-color:#0D8A72;color:#0D8A72">← Back</button>
+        <sc-if value="{{ isStep3 }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ onPay }}" style="font:inherit;font-size:15px;font-weight:800;color:#fff;background:#0D8A72;border:none;border-radius:999px;padding:14px 40px;cursor:pointer;box-shadow:0 8px 20px rgba(13,138,114,.35);display:flex;align-items:center;gap:10px" style-hover="background:#0A6B59">
+            <sc-if value="{{ paying }}" hint-placeholder-val="{{ false }}"><span style="width:16px;height:16px;border:2.5px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block"></span></sc-if>
+            {{ payLabel }}
+          </button>
+        </sc-if>
+        <sc-if value="{{ showContinue }}" hint-placeholder-val="{{ true }}">
+          <button onClick="{{ onNext }}" style="font:inherit;font-size:15px;font-weight:800;color:#fff;background:#0D8A72;border:none;border-radius:999px;padding:14px 40px;cursor:pointer;box-shadow:0 8px 20px rgba(13,138,114,.35)" style-hover="background:#0A6B59">Continue →</button>
+        </sc-if>
+      </div>
+    </sc-if>
+  </div>
+
+  <!-- ORDER SUMMARY -->
+  <sc-if value="{{ showSummary }}" hint-placeholder-val="{{ true }}">
+    <div style="flex:0 0 330px;background:#fff;border:1px solid #E3EBE8;border-radius:20px;padding:22px 24px;position:sticky;top:20px" data-screen-label="Order summary">
+      <div style="font-size:16px;font-weight:800;margin-bottom:6px">Order summary</div>
+      <div style="font-size:12.5px;color:#5C6B68;font-weight:600;padding-bottom:12px;border-bottom:1px dashed #E3EBE8">Rangilo Re Garba Mahotsav 2026<br>{{ nightLabel }} · GMDC Ground</div>
+      <div style="display:flex;flex-direction:column;gap:9px;padding:14px 0;border-bottom:1px dashed #E3EBE8">
+        <sc-for list="{{ lineItems }}" as="li" hint-placeholder-count="2">
+          <span style="display:flex;justify-content:space-between;font-size:13px;font-weight:600"><span>{{ li.label }}</span><span style="font-weight:800">{{ li.amount }}</span></span>
+        </sc-for>
+      </div>
+      <div style="display:flex;gap:8px;padding:14px 0">
+        <input placeholder="Promo code" value="{{ promoVal }}" onChange="{{ onPromoInput }}" style="flex:1;padding:10px 14px;border:1.5px solid #E3EBE8;border-radius:11px;font:inherit;font-size:13px;outline-color:#0D8A72">
+        <button onClick="{{ onApplyPromo }}" style="font:inherit;font-size:13px;font-weight:800;color:#0D8A72;background:#E6F4F1;border:none;border-radius:11px;padding:10px 18px;cursor:pointer" style-hover="background:#0D8A72;color:#fff">Apply</button>
+      </div>
+      <sc-if value="{{ promoApplied }}" hint-placeholder-val="{{ false }}">
+        <div style="font-size:12px;font-weight:800;color:#0D8A72;background:#F0F9F6;border:1px dashed #0D8A72;border-radius:10px;padding:8px 12px;margin-bottom:10px">✓ RAAS26 applied — ₹250 off</div>
+      </sc-if>
+      <div style="display:flex;flex-direction:column;gap:8px;padding-top:4px;font-size:13px;font-weight:600;color:#5C6B68">
+        <span style="display:flex;justify-content:space-between"><span>Subtotal</span><span style="color:#16302B;font-weight:700">{{ subtotal }}</span></span>
+        <sc-if value="{{ promoApplied }}" hint-placeholder-val="{{ false }}">
+          <span style="display:flex;justify-content:space-between;color:#0D8A72"><span>Discount (RAAS26)</span><span style="font-weight:800">− ₹250</span></span>
+        </sc-if>
+        <span style="display:flex;justify-content:space-between"><span>Booking fee</span><span style="color:#16302B;font-weight:700">{{ fee }}</span></span>
+        <span style="display:flex;justify-content:space-between"><span>GST (18% on fee)</span><span style="color:#16302B;font-weight:700">{{ gst }}</span></span>
+        <span style="display:flex;justify-content:space-between;border-top:1.5px solid #16302B;margin-top:6px;padding-top:10px;font-size:16px;font-weight:800;color:#16302B"><span>Total</span><span>{{ total }}</span></span>
+      </div>
+      <div style="margin-top:14px;font-size:11.5px;color:#5C6B68;line-height:1.6;background:#F7FAF9;border-radius:10px;padding:10px 12px">Payments secured by UPI / PCI-DSS gateways. Refunds per organizer policy — 85% up to 48 hrs before the session.</div>
+    </div>
+  </sc-if>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;simulateFailure&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Demo behavior&quot;}}">
+class Component extends DCLogic {
+  state = { step: 1, day: 0, qty: { single: 2, couple: 0, vip: 0, family: 0 }, method: 'upi', promoVal: '', promoApplied: false, paying: false, payFailed: false, hold: 480, done: false };
+  tierData = [
+    { id: 'single', name: 'Single Night', desc: 'Entry for selected night', price: 499 },
+    { id: 'couple', name: 'Couple Entry', desc: '2 entries · same night', price: 899 },
+    { id: 'vip', name: 'VIP Lounge', desc: 'Lounge seating · valet · buffet', price: 1499 },
+    { id: 'family', name: 'Family Pack', desc: '4 entries + kids zone band', price: 1599 }
+  ];
+  componentDidMount() {
+    this.timer = setInterval(() => {
+      if (this.state.step < 4 && this.state.hold > 0) this.setState(s => ({ hold: s.hold - 1 }));
+    }, 1000);
+  }
+  componentWillUnmount() { clearInterval(this.timer); }
+  renderVals() {
+    const st = this.state;
+    const dows = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun','Mon','Tue'];
+    const inr = n => '₹' + n.toLocaleString('en-IN');
+    const subtotalN = this.tierData.reduce((s, t) => s + t.price * st.qty[t.id], 0);
+    const discount = st.promoApplied ? 250 : 0;
+    const feeN = Math.round(Math.max(subtotalN - discount, 0) * 0.035);
+    const gstN = Math.round(feeN * 0.18);
+    const totalN = Math.max(subtotalN - discount, 0) + feeN + gstN;
+    const count = Object.values(st.qty).reduce((a, b) => a + b, 0);
+    const stepDefs = ['Select', 'Attendees', 'Payment', 'Confirmation'];
+    const failNext = this.props.simulateFailure ?? true;
+    return {
+      steps: stepDefs.map((label, i) => {
+        const n = i + 1, doneStep = st.step > n, active = st.step === n;
+        return { label, notLast: n < 4, mark: doneStep ? '✓' : String(n),
+          bg: doneStep || active ? '#0D8A72' : '#fff', color: doneStep || active ? '#fff' : '#5C6B68',
+          border: doneStep || active ? '#0D8A72' : '#C8D6D1', labelColor: active ? '#16302B' : '#5C6B68',
+          lineBg: doneStep ? '#0D8A72' : '#E3EBE8' };
+      }),
+      isStep1: st.step === 1, isStep2: st.step === 2, isStep3: st.step === 3, isStep4: st.step === 4,
+      showNav: st.step < 4, showContinue: st.step < 3, showSummary: st.step < 4,
+      backVis: st.step > 1 ? 'visible' : 'hidden',
+      onBack: () => this.setState(s => ({ step: Math.max(1, s.step - 1), payFailed: false })),
+      onNext: () => this.setState(s => ({ step: Math.min(4, s.step + 1) })),
+      showHold: st.step < 4, holdTime: Math.floor(st.hold / 60) + ':' + String(st.hold % 60).padStart(2, '0'),
+      days: Array.from({ length: 9 }, (_, i) => ({
+        dow: dows[i], date: (12 + i) + ' Oct', onPick: () => this.setState({ day: i }),
+        bg: st.day === i ? '#0D8A72' : '#fff', color: st.day === i ? '#fff' : '#16302B', border: st.day === i ? '#0D8A72' : '#E3EBE8'
+      })),
+      nightLabel: 'Night ' + (st.day + 1) + ' · ' + (12 + st.day) + ' Oct',
+      tiers: this.tierData.map(t => {
+        const q = st.qty[t.id];
+        return { ...t, qty: q, price: inr(t.price),
+          border: q > 0 ? '#0D8A72' : '#E3EBE8', cardBg: q > 0 ? '#F0F9F6' : '#fff',
+          onPlus: () => this.setState(s => ({ qty: { ...s.qty, [t.id]: Math.min(q + 1, 10) } })),
+          onMinus: () => this.setState(s => ({ qty: { ...s.qty, [t.id]: Math.max(q - 1, 0) } })) };
+      }),
+      attendees: (() => {
+        const names = ['Arjun Patel', 'Meera Patel', '', ''];
+        const out = []; let n = 1;
+        this.tierData.forEach(t => { for (let i = 0; i < st.qty[t.id]; i++) { out.push({ n, tier: t.name, night: 'Night ' + (st.day + 1) + ' · ' + (12 + st.day) + ' Oct', name: names[n - 1] || '' }); n++; } });
+        return out.length ? out : [{ n: 1, tier: 'Single Night', night: 'Night 1', name: '' }];
+      })(),
+      payMethods: [
+        { id: 'upi', name: 'UPI', desc: 'GPay · PhonePe · Paytm · any UPI app', badges: ['GPay', 'PhonePe', 'Paytm'] },
+        { id: 'card', name: 'Credit / Debit card', desc: 'Visa, Mastercard, RuPay, Amex', badges: ['Visa', 'MC', 'RuPay'] },
+        { id: 'net', name: 'Netbanking', desc: 'All major Indian banks', badges: ['SBI', 'HDFC', '+38'] },
+        { id: 'wallet', name: 'Shiv Events wallet', desc: 'Balance: ₹350 — covers part of this order', badges: ['₹350'] }
+      ].map(m => ({ ...m,
+        onPick: () => this.setState({ method: m.id }),
+        border: st.method === m.id ? '#0D8A72' : '#E3EBE8', bg: st.method === m.id ? '#F0F9F6' : '#fff',
+        dotBorder: st.method === m.id ? '#0D8A72' : '#C8D6D1', dot: st.method === m.id ? '#0D8A72' : 'transparent',
+        showUpiField: st.method === m.id && m.id === 'upi', showCardField: st.method === m.id && m.id === 'card' })),
+      paying: st.paying, payFailed: st.payFailed,
+      payLabel: st.paying ? 'Processing payment…' : 'Pay ' + inr(totalN),
+      onPay: () => {
+        if (st.paying) return;
+        this.setState({ paying: true, payFailed: false });
+        setTimeout(() => {
+          if (failNext && !this.failedOnce) { this.failedOnce = true; this.setState({ paying: false, payFailed: true }); }
+          else this.setState({ paying: false, payFailed: false, step: 4 });
+        }, 1800);
+      },
+      lineItems: this.tierData.filter(t => st.qty[t.id] > 0).map(t => ({ label: t.name + ' × ' + st.qty[t.id], amount: inr(t.price * st.qty[t.id]) })),
+      promoVal: st.promoVal, onPromoInput: e => this.setState({ promoVal: e.target.value }),
+      promoApplied: st.promoApplied,
+      onApplyPromo: () => this.setState({ promoApplied: true, promoVal: 'RAAS26' }),
+      subtotal: inr(subtotalN), fee: inr(feeN), gst: inr(gstN), total: inr(totalN),
+      ticketCards: (() => {
+        const names = ['Arjun Patel', 'Meera Patel'];
+        const out = []; let n = 0;
+        this.tierData.forEach(t => { for (let i = 0; i < st.qty[t.id] && out.length < 4; i++) { out.push({ tier: t.name, name: names[n] || 'Guest ' + (n + 1), id: 'SHV-2610-482' + (n + 1) }); n++; } });
+        return out.length ? out : [{ tier: 'Single Night', name: 'Arjun Patel', id: 'SHV-2610-4821' }];
+      })()
+    };
+  }
+}
+</script>
+</body>
+</html>

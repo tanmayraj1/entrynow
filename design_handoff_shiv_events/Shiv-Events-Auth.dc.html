@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>Login — Shiv Events</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  body { margin:0; font-family:'Plus Jakarta Sans',sans-serif; background:#F7FAF9; color:#16302B; }
+  a { color:#0D8A72; text-decoration:none; } a:hover { color:#0A6B59; }
+  * { box-sizing:border-box; }
+</style>
+</helmet>
+
+<div style="min-height:100vh;display:flex">
+  <!-- Left brand panel -->
+  <div style="flex:1;background:linear-gradient(160deg,#0A6B59,#16302B);color:#fff;display:flex;flex-direction:column;justify-content:space-between;padding:44px 52px">
+    <a href="Shiv-Events-Home.dc.html" style="display:flex;align-items:center;gap:9px;color:#fff">
+      <span style="width:34px;height:34px;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;color:#0D8A72;font-weight:800;font-size:18px">S</span>
+      <span style="font-size:22px;font-weight:800">shiv events<span style="color:#F5B301">.</span></span>
+    </a>
+    <div>
+      <div style="font-size:36px;font-weight:800;letter-spacing:-.8px;line-height:1.2">Every garba night,<br>mela and concert<br>in one place.</div>
+      <div style="font-size:15px;opacity:.75;margin-top:14px;line-height:1.6">Book with UPI, get your QR on WhatsApp,<br>and walk straight in. Starting with Ahmedabad.</div>
+    </div>
+    <div style="font-size:12.5px;opacity:.6">4,200+ events hosted · 12,00,000+ tickets sold</div>
+  </div>
+
+  <!-- Right flow -->
+  <div style="flex:1.2;display:flex;align-items:center;justify-content:center;padding:40px">
+    <div style="width:440px">
+
+      <!-- STEP 1: PHONE -->
+      <sc-if value="{{ isPhone }}" hint-placeholder-val="{{ true }}">
+        <div data-screen-label="Login phone">
+          <div style="font-size:26px;font-weight:800;letter-spacing:-.5px">Login or sign up</div>
+          <div style="font-size:14px;color:#5C6B68;margin-top:6px">We'll send a one-time password to your phone.</div>
+          <div style="display:flex;gap:10px;margin-top:24px">
+            <span style="flex:0 0 74px;display:flex;align-items:center;justify-content:center;border:1.5px solid #E3EBE8;border-radius:13px;font-size:14.5px;font-weight:700;background:#fff">+91</span>
+            <input placeholder="98980 12345" style="flex:1;padding:14px 18px;border:1.5px solid #E3EBE8;border-radius:13px;font:inherit;font-size:15px;outline-color:#0D8A72">
+          </div>
+          <button onClick="{{ toOtp }}" style="font:inherit;width:100%;margin-top:14px;background:#0D8A72;color:#fff;font-size:15px;font-weight:800;border:none;border-radius:999px;padding:15px;cursor:pointer;box-shadow:0 8px 20px rgba(13,138,114,.3)" style-hover="background:#0A6B59">Send OTP</button>
+          <div style="display:flex;align-items:center;gap:12px;margin:22px 0"><span style="flex:1;height:1px;background:#E3EBE8"></span><span style="font-size:12px;font-weight:700;color:#5C6B68">OR</span><span style="flex:1;height:1px;background:#E3EBE8"></span></div>
+          <button style="font:inherit;width:100%;background:#fff;border:1.5px solid #E3EBE8;color:#16302B;font-size:14px;font-weight:700;border-radius:999px;padding:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px" style-hover="border-color:#0D8A72"><span style="width:18px;height:18px;border-radius:50%;background:conic-gradient(#EA4335 0 25%,#4285F4 25% 50%,#34A853 50% 75%,#FBBC05 75% 100%)"></span>Continue with Google</button>
+          <button style="font:inherit;width:100%;margin-top:10px;background:#fff;border:1.5px solid #E3EBE8;color:#16302B;font-size:14px;font-weight:700;border-radius:999px;padding:13px;cursor:pointer" style-hover="border-color:#0D8A72">Continue with email</button>
+          <div style="font-size:11.5px;color:#5C6B68;margin-top:18px;line-height:1.6;text-align:center">By continuing you agree to our <a href="#">Terms</a> and <a href="#">Privacy policy</a>.</div>
+        </div>
+      </sc-if>
+
+      <!-- STEP 2: OTP -->
+      <sc-if value="{{ isOtp }}" hint-placeholder-val="{{ false }}">
+        <div data-screen-label="OTP entry">
+          <button onClick="{{ toPhone }}" style="font:inherit;font-size:13px;font-weight:700;color:#5C6B68;background:none;border:none;cursor:pointer;padding:0;margin-bottom:16px">← Change number</button>
+          <div style="font-size:26px;font-weight:800;letter-spacing:-.5px">Enter the OTP</div>
+          <div style="font-size:14px;color:#5C6B68;margin-top:6px">Sent to <b style="color:#16302B">+91 98980 12345</b> · <span style="color:#0D8A72;font-weight:700">{{ otpTimer }}</span></div>
+          <div style="display:flex;gap:10px;margin-top:24px">
+            <input value="4" style="width:58px;height:62px;text-align:center;font:inherit;font-size:22px;font-weight:800;border:1.5px solid #0D8A72;border-radius:13px;background:#F0F9F6;outline-color:#0D8A72">
+            <input value="8" style="width:58px;height:62px;text-align:center;font:inherit;font-size:22px;font-weight:800;border:1.5px solid #0D8A72;border-radius:13px;background:#F0F9F6;outline-color:#0D8A72">
+            <input value="2" style="width:58px;height:62px;text-align:center;font:inherit;font-size:22px;font-weight:800;border:1.5px solid #0D8A72;border-radius:13px;background:#F0F9F6;outline-color:#0D8A72">
+            <input value="1" style="width:58px;height:62px;text-align:center;font:inherit;font-size:22px;font-weight:800;border:1.5px solid #0D8A72;border-radius:13px;background:#F0F9F6;outline-color:#0D8A72">
+            <input placeholder="•" style="width:58px;height:62px;text-align:center;font:inherit;font-size:22px;font-weight:800;border:1.5px solid #E3EBE8;border-radius:13px;outline-color:#0D8A72">
+            <input placeholder="•" style="width:58px;height:62px;text-align:center;font:inherit;font-size:22px;font-weight:800;border:1.5px solid #E3EBE8;border-radius:13px;outline-color:#0D8A72">
+          </div>
+          <button onClick="{{ toInterests }}" style="font:inherit;width:100%;margin-top:18px;background:#0D8A72;color:#fff;font-size:15px;font-weight:800;border:none;border-radius:999px;padding:15px;cursor:pointer;box-shadow:0 8px 20px rgba(13,138,114,.3)" style-hover="background:#0A6B59">Verify &amp; continue</button>
+          <div style="font-size:13px;color:#5C6B68;margin-top:14px;text-align:center">Didn't get it? <a href="#" style="font-weight:700">Resend on WhatsApp</a></div>
+        </div>
+      </sc-if>
+
+      <!-- STEP 3: INTERESTS -->
+      <sc-if value="{{ isInterests }}" hint-placeholder-val="{{ false }}">
+        <div data-screen-label="Pick interests">
+          <div style="display:flex;justify-content:space-between;align-items:baseline">
+            <div style="font-size:26px;font-weight:800;letter-spacing:-.5px">Pick your interests</div>
+            <span style="font-size:12px;font-weight:700;color:#5C6B68">Step 1 of 2</span>
+          </div>
+          <div style="font-size:14px;color:#5C6B68;margin-top:6px">We'll tune your feed to what you love.</div>
+          <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:24px">
+            <sc-for list="{{ interests }}" as="i" hint-placeholder-count="10">
+              <button onClick="{{ i.onToggle }}" style="font:inherit;font-size:13.5px;font-weight:700;padding:11px 20px;border-radius:999px;cursor:pointer;border:1.5px solid {{ i.border }};background:{{ i.bg }};color:{{ i.color }}">{{ i.mark }}{{ i.name }}</button>
+            </sc-for>
+          </div>
+          <button onClick="{{ toOrganizers }}" style="font:inherit;width:100%;margin-top:26px;background:#0D8A72;color:#fff;font-size:15px;font-weight:800;border:none;border-radius:999px;padding:15px;cursor:pointer;box-shadow:0 8px 20px rgba(13,138,114,.3)" style-hover="background:#0A6B59">Continue ({{ pickedCount }} picked)</button>
+          <button onClick="{{ toOrganizers }}" style="font:inherit;width:100%;margin-top:10px;background:none;border:1.5px solid #E3EBE8;color:#5C6B68;font-size:13.5px;font-weight:700;border-radius:999px;padding:13px;cursor:pointer" style-hover="border-color:#0D8A72;color:#0D8A72">Skip for now</button>
+        </div>
+      </sc-if>
+
+      <!-- STEP 4: FOLLOW ORGANIZERS -->
+      <sc-if value="{{ isOrganizers }}" hint-placeholder-val="{{ false }}">
+        <div data-screen-label="Follow organizers">
+          <div style="display:flex;justify-content:space-between;align-items:baseline">
+            <div style="font-size:26px;font-weight:800;letter-spacing:-.5px">Follow organizers</div>
+            <span style="font-size:12px;font-weight:700;color:#5C6B68">Step 2 of 2</span>
+          </div>
+          <div style="font-size:14px;color:#5C6B68;margin-top:6px">Get first access when they announce new events.</div>
+          <div style="display:flex;flex-direction:column;gap:12px;margin-top:22px">
+            <sc-for list="{{ orgs }}" as="o" hint-placeholder-count="4">
+              <span style="display:flex;align-items:center;gap:14px;background:#fff;border:1.5px solid #E3EBE8;border-radius:16px;padding:14px 16px">
+                <span style="width:48px;height:48px;border-radius:50%;background:{{ o.bg }};color:#fff;font-weight:800;font-size:16px;display:flex;align-items:center;justify-content:center">{{ o.initials }}</span>
+                <span style="flex:1">
+                  <span style="display:flex;align-items:center;gap:5px;font-size:14.5px;font-weight:800">{{ o.name }} <svg width="13" height="13" viewBox="0 0 24 24" fill="#0D8A72"><path d="M12 1.8 14.5 4l3.3-.5 1 3.2 3 1.5-1.2 3.1 1.2 3.1-3 1.5-1 3.2-3.3-.5L12 22l-2.5-2.2-3.3.5-1-3.2-3-1.5 1.2-3.1L2.2 9.4l3-1.5 1-3.2 3.3.5Z"></path><path d="m8.8 12 2.2 2.2 4.2-4.4" stroke="#fff" stroke-width="2" fill="none"></path></svg></span>
+                  <span style="display:block;font-size:12px;color:#5C6B68;font-weight:600">{{ o.followers }} followers · ⭐ {{ o.rating }} · {{ o.tag }}</span>
+                </span>
+                <button onClick="{{ o.onToggle }}" style="font:inherit;font-size:12.5px;font-weight:800;border-radius:999px;padding:9px 20px;cursor:pointer;border:1.5px solid {{ o.btnBorder }};background:{{ o.btnBg }};color:{{ o.btnColor }}">{{ o.btnLabel }}</button>
+              </span>
+            </sc-for>
+          </div>
+          <a href="Shiv-Events-Home.dc.html" style="display:block;text-align:center;width:100%;margin-top:26px;background:#0D8A72;color:#fff;font-size:15px;font-weight:800;border-radius:999px;padding:15px;box-shadow:0 8px 20px rgba(13,138,114,.3)" style-hover="background:#0A6B59;color:#fff">Finish — take me to events</a>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+class Component extends DCLogic {
+  state = { step: 'phone', picked: ['Garba & Navratri'], followed: ['Rangmanch Events'], otpSec: 24 };
+  componentDidMount() { this.t = setInterval(() => { if (this.state.step === 'otp' && this.state.otpSec > 0) this.setState(s => ({ otpSec: s.otpSec - 1 })); }, 1000); }
+  componentWillUnmount() { clearInterval(this.t); }
+  renderVals() {
+    const { step, picked, followed, otpSec } = this.state;
+    return {
+      isPhone: step === 'phone', isOtp: step === 'otp', isInterests: step === 'interests', isOrganizers: step === 'organizers',
+      toPhone: () => this.setState({ step: 'phone' }),
+      toOtp: () => this.setState({ step: 'otp', otpSec: 24 }),
+      toInterests: () => this.setState({ step: 'interests' }),
+      toOrganizers: () => this.setState({ step: 'organizers' }),
+      otpTimer: otpSec > 0 ? 'resend in 0:' + String(otpSec).padStart(2, '0') : 'resend now',
+      interests: ['Garba & Navratri', 'Diwali Melas', 'Holi Parties', 'Concerts', 'Comedy', 'Food Fests', 'Spiritual', 'Kids & Family', 'Uttarayan', 'Christmas & NYE', 'Theatre', 'Workshops'].map(name => {
+        const on = picked.includes(name);
+        return { name, mark: on ? '✓ ' : '', border: on ? '#0D8A72' : '#E3EBE8', bg: on ? '#E6F4F1' : '#fff', color: on ? '#0A6B59' : '#16302B',
+          onToggle: () => this.setState(s => ({ picked: on ? s.picked.filter(p => p !== name) : [...s.picked, name] })) };
+      }),
+      pickedCount: picked.length,
+      orgs: [
+        { name: 'Rangmanch Events', initials: 'RE', bg: '#0D8A72', followers: '48K', rating: '4.8', tag: 'Garba' },
+        { name: 'Shree Events', initials: 'SE', bg: '#7C3AED', followers: '32K', rating: '4.7', tag: 'Melas' },
+        { name: 'Aatish Entertainment', initials: 'AE', bg: '#E9358F', followers: '27K', rating: '4.6', tag: 'Concerts' },
+        { name: 'Hasya Manch', initials: 'HM', bg: '#1E3A5F', followers: '12K', rating: '4.5', tag: 'Comedy' }
+      ].map(o => {
+        const on = followed.includes(o.name);
+        return { ...o, btnLabel: on ? 'Following ✓' : 'Follow', btnBorder: on ? '#0D8A72' : '#E3EBE8', btnBg: on ? '#0D8A72' : '#fff', btnColor: on ? '#fff' : '#16302B',
+          onToggle: () => this.setState(s => ({ followed: on ? s.followed.filter(f => f !== o.name) : [...s.followed, o.name] })) };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>My Account — Shiv Events</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  body { margin:0; font-family:'Plus Jakarta Sans',sans-serif; background:#F7FAF9; color:#16302B; }
+  a { color:#0D8A72; text-decoration:none; } a:hover { color:#0A6B59; }
+  * { box-sizing:border-box; }
+</style>
+</helmet>
+
+<div style="min-width:1200px;padding-bottom:50px">
+<!-- Navbar -->
+<div style="background:#fff;border-bottom:1px solid #E3EBE8;display:flex;align-items:center;justify-content:space-between;padding:14px 48px;position:sticky;top:0;z-index:50">
+  <div style="display:flex;align-items:center;gap:40px">
+    <a href="Shiv-Events-Home.dc.html" style="display:flex;align-items:center;gap:9px">
+      <span style="width:34px;height:34px;border-radius:10px;background:#0D8A72;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:18px">S</span>
+      <span style="font-size:22px;font-weight:800;color:#16302B;letter-spacing:-.5px">shiv events<span style="color:#F5B301">.</span></span>
+    </a>
+    <div style="display:flex;gap:26px;font-size:14.5px;font-weight:600">
+      <a href="Shiv-Events-Listing.dc.html" style="color:#16302B" style-hover="color:#0D8A72">Explore Events</a>
+      <a href="Shiv-Events-Tickets.dc.html" style="color:#16302B" style-hover="color:#0D8A72">My Tickets</a>
+      <a href="Shiv-Events-Organizer.dc.html" style="color:#16302B" style-hover="color:#0D8A72">For Organizers</a>
+    </div>
+  </div>
+  <span style="width:38px;height:38px;border-radius:50%;background:#0D8A72;color:#fff;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer">AP</span>
+</div>
+
+<div style="display:flex;gap:26px;padding:28px 48px;align-items:flex-start">
+  <!-- Menu -->
+  <div style="flex:0 0 280px;background:#fff;border:1px solid #E3EBE8;border-radius:18px;padding:18px" data-screen-label="Account menu">
+    <div style="display:flex;align-items:center;gap:14px;padding:8px 10px 18px;border-bottom:1px solid #EDF1EF;margin-bottom:10px">
+      <span style="width:52px;height:52px;border-radius:50%;background:#0D8A72;color:#fff;font-weight:800;font-size:18px;display:flex;align-items:center;justify-content:center">AP</span>
+      <span><span style="font-size:16px;font-weight:800">Arjun Patel</span><span style="display:block;font-size:12px;color:#5C6B68;font-weight:600">+91 98980 12345 · Ahmedabad</span></span>
+    </div>
+    <sc-for list="{{ menu }}" as="m" hint-placeholder-count="8">
+      <button onClick="{{ m.onPick }}" style="font:inherit;width:100%;display:flex;align-items:center;justify-content:space-between;font-size:14px;font-weight:700;padding:12px 14px;border-radius:12px;border:none;cursor:pointer;text-align:left;background:{{ m.bg }};color:{{ m.color }}">{{ m.label }} <span style="color:#9AA7A3">›</span></button>
+    </sc-for>
+    <a href="Shiv-Events-Tickets.dc.html" style="display:flex;align-items:center;justify-content:space-between;font-size:14px;font-weight:700;padding:12px 14px;border-radius:12px;color:#16302B" style-hover="background:#F0F9F6;color:#0D8A72">My orders / tickets <span style="color:#9AA7A3">›</span></a>
+    <button style="font:inherit;width:100%;display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;padding:12px 14px;border-radius:12px;border:none;cursor:pointer;text-align:left;background:none;color:#B42318;margin-top:6px" style-hover="background:#FDEBEA">Logout</button>
+  </div>
+
+  <!-- Content -->
+  <div style="flex:1;min-width:0">
+    <!-- PROFILE -->
+    <sc-if value="{{ isProfile }}" hint-placeholder-val="{{ true }}">
+      <div style="background:#fff;border:1px solid #E3EBE8;border-radius:20px;padding:26px 28px" data-screen-label="Profile settings">
+        <div style="font-size:20px;font-weight:800;margin-bottom:20px">Profile settings</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div><div style="font-size:12px;font-weight:800;margin-bottom:6px">Full name</div><input value="Arjun Patel" style="width:100%;padding:12px 16px;border:1.5px solid #E3EBE8;border-radius:12px;font:inherit;font-size:14px;outline-color:#0D8A72"></div>
+          <div><div style="font-size:12px;font-weight:800;margin-bottom:6px">Phone</div><div style="display:flex;gap:8px"><input value="+91 98980 12345" style="flex:1;padding:12px 16px;border:1.5px solid #0D8A72;border-radius:12px;font:inherit;font-size:14px;background:#F0F9F6"><span style="display:flex;align-items:center;color:#0D8A72;font-size:12px;font-weight:800">✓ Verified</span></div></div>
+          <div><div style="font-size:12px;font-weight:800;margin-bottom:6px">Email</div><input value="arjun.patel@gmail.com" style="width:100%;padding:12px 16px;border:1.5px solid #E3EBE8;border-radius:12px;font:inherit;font-size:14px;outline-color:#0D8A72"></div>
+          <div><div style="font-size:12px;font-weight:800;margin-bottom:6px">City</div><select style="width:100%;padding:12px;border:1.5px solid #E3EBE8;border-radius:12px;font:inherit;font-size:14px;background:#fff"><option>Ahmedabad</option><option>Surat</option><option>Vadodara</option></select></div>
+          <div><div style="font-size:12px;font-weight:800;margin-bottom:6px">Preferred language</div><select style="width:100%;padding:12px;border:1.5px solid #E3EBE8;border-radius:12px;font:inherit;font-size:14px;background:#fff"><option>English</option><option>हिंदी</option><option>ગુજરાતી</option></select></div>
+          <div><div style="font-size:12px;font-weight:800;margin-bottom:6px">WhatsApp updates</div><select style="width:100%;padding:12px;border:1.5px solid #E3EBE8;border-radius:12px;font:inherit;font-size:14px;background:#fff"><option>On — tickets &amp; reminders</option><option>Tickets only</option><option>Off</option></select></div>
+        </div>
+        <div style="margin-top:18px;font-size:12px;font-weight:800;margin-bottom:10px">My interests</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          <span style="font-size:12.5px;font-weight:700;background:#E6F4F1;color:#0A6B59;border-radius:999px;padding:8px 16px">✓ Garba &amp; Navratri</span>
+          <span style="font-size:12.5px;font-weight:700;background:#E6F4F1;color:#0A6B59;border-radius:999px;padding:8px 16px">✓ Concerts</span>
+          <span style="font-size:12.5px;font-weight:700;background:#E6F4F1;color:#0A6B59;border-radius:999px;padding:8px 16px">✓ Food Fests</span>
+          <a href="Shiv-Events-Auth.dc.html" style="font-size:12.5px;font-weight:700;background:#fff;border:1.5px dashed #C8D6D1;color:#5C6B68;border-radius:999px;padding:8px 16px">＋ Edit interests</a>
+        </div>
+        <button style="font:inherit;margin-top:24px;background:#0D8A72;color:#fff;font-size:14px;font-weight:800;border:none;border-radius:999px;padding:13px 34px;cursor:pointer" style-hover="background:#0A6B59">Save changes</button>
+      </div>
+    </sc-if>
+
+    <!-- WALLET -->
+    <sc-if value="{{ isWallet }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="Wallet">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+          <div style="background:linear-gradient(115deg,#0A6B59,#16302B);color:#fff;border-radius:20px;padding:26px 28px">
+            <div style="font-size:12px;font-weight:800;opacity:.7;letter-spacing:.06em">WALLET BALANCE</div>
+            <div style="font-size:34px;font-weight:800;margin-top:4px">₹350</div>
+            <div style="font-size:12.5px;opacity:.75;margin-top:6px">Auto-applies at checkout · never expires</div>
+            <button style="font:inherit;margin-top:14px;background:#fff;color:#16302B;font-size:13px;font-weight:800;border:none;border-radius:999px;padding:10px 22px;cursor:pointer">＋ Add money</button>
+          </div>
+          <div style="background:#fff;border:1px solid #E3EBE8;border-radius:20px;padding:26px 28px">
+            <div style="font-size:15px;font-weight:800;margin-bottom:10px">Refund in progress</div>
+            <div style="font-size:13px;color:#5C6B68;font-weight:600;line-height:1.7">₹848 — Indie Night (cancelled 12 Jun)<br>Refund to UPI arjun@oksbi · <b style="color:#F5B301">Processing</b><br>Expected by <b style="color:#16302B">7 Aug 2026</b></div>
+            <a href="Shiv-Events-Tickets.dc.html" style="display:inline-block;margin-top:10px;font-size:12.5px;font-weight:800">Track refund →</a>
+          </div>
+        </div>
+        <div style="background:#fff;border:1px solid #E3EBE8;border-radius:20px;padding:24px 28px">
+          <div style="font-size:15px;font-weight:800;margin-bottom:12px">Transactions</div>
+          <sc-for list="{{ txns }}" as="t" hint-placeholder-count="4">
+            <span style="display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:1px solid #EDF1EF">
+              <span><span style="font-size:13.5px;font-weight:700">{{ t.what }}</span><span style="display:block;font-size:11.5px;color:#5C6B68;font-weight:600">{{ t.when }}</span></span>
+              <span style="font-size:14px;font-weight:800;color:{{ t.color }}">{{ t.amt }}</span>
+            </span>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- COUPONS -->
+    <sc-if value="{{ isCoupons }}" hint-placeholder-val="{{ false }}">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px" data-screen-label="Coupons">
+        <sc-for list="{{ coupons }}" as="c" hint-placeholder-count="4">
+          <span style="background:#fff;border:1.5px dashed {{ c.border }};border-radius:18px;padding:20px 22px;display:flex;flex-direction:column;gap:6px;position:relative;overflow:hidden">
+            <span style="position:absolute;right:-24px;top:-24px;width:80px;height:80px;border-radius:50%;background:{{ c.blob }}"></span>
+            <span style="font-size:11px;font-weight:800;color:{{ c.tagColor }};letter-spacing:.06em">{{ c.tag }}</span>
+            <span style="font-size:19px;font-weight:800">{{ c.title }}</span>
+            <span style="font-size:12.5px;color:#5C6B68;font-weight:600;line-height:1.5">{{ c.desc }}</span>
+            <span style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+              <span style="font-size:13px;font-weight:800;background:#F7FAF9;border:1px solid #E3EBE8;border-radius:9px;padding:7px 14px;letter-spacing:.08em">{{ c.code }}</span>
+              <span style="font-size:12.5px;font-weight:800;color:#0D8A72;cursor:pointer">Copy code</span>
+            </span>
+          </span>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <!-- NOTIFICATIONS -->
+    <sc-if value="{{ isNotifs }}" hint-placeholder-val="{{ false }}">
+      <div style="background:#fff;border:1px solid #E3EBE8;border-radius:20px;padding:10px 28px" data-screen-label="Notifications">
+        <sc-for list="{{ notifs }}" as="n" hint-placeholder-count="5">
+          <span style="display:flex;gap:16px;padding:18px 0;border-bottom:1px solid #EDF1EF;align-items:flex-start">
+            <span style="width:42px;height:42px;flex:0 0 auto;border-radius:50%;background:{{ n.bg }};color:{{ n.fg }};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px">{{ n.glyph }}</span>
+            <span style="flex:1"><span style="font-size:14px;font-weight:800">{{ n.title }}</span><span style="display:block;font-size:12.5px;color:#5C6B68;font-weight:600;margin-top:3px;line-height:1.5">{{ n.body }}</span><span style="display:block;font-size:11px;color:#9AA7A3;font-weight:700;margin-top:4px">{{ n.when }}</span></span>
+            <span style="color:#9AA7A3;cursor:pointer;font-size:15px">✕</span>
+          </span>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <!-- WISHLIST -->
+    <sc-if value="{{ isWishlist }}" hint-placeholder-val="{{ false }}">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:18px" data-screen-label="Wishlist">
+        <sc-for list="{{ wishlist }}" as="w" hint-placeholder-count="3">
+          <a href="Shiv-Events-Event.dc.html" style="background:#fff;border:1px solid #E3EBE8;border-radius:18px;overflow:hidden;display:flex;flex-direction:column" style-hover="box-shadow:0 12px 30px rgba(22,48,43,.12)">
+            <span style="position:relative;height:130px;display:block;background:{{ w.grad }}">
+              <span style="position:absolute;top:10px;right:10px;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="#F04438"><path d="M12 21s-8-5.2-8-11a4.6 4.6 0 0 1 8-3 4.6 4.6 0 0 1 8 3c0 5.8-8 11-8 11Z"></path></svg></span>
+              <span style="position:absolute;top:10px;left:10px;background:#F5B301;color:#16302B;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:8px">{{ w.date }}</span>
+            </span>
+            <span style="padding:14px 16px;display:flex;flex-direction:column;gap:5px">
+              <span style="font-size:14.5px;font-weight:800;color:#16302B">{{ w.title }}</span>
+              <span style="font-size:12px;color:#5C6B68;font-weight:600">{{ w.meta }}</span>
+              <span style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+                <span style="font-size:14px;font-weight:800;color:#0D8A72">{{ w.price }}</span>
+                <span style="background:#0D8A72;color:#fff;font-size:12px;font-weight:700;padding:7px 16px;border-radius:999px">Book</span>
+              </span>
+            </span>
+          </a>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <!-- INVITE -->
+    <sc-if value="{{ isInvite }}" hint-placeholder-val="{{ false }}">
+      <div style="background:#fff;border:1px solid #E3EBE8;border-radius:20px;padding:40px;text-align:center" data-screen-label="Invite friends">
+        <div style="width:110px;height:110px;border-radius:50%;background:#E6F4F1;margin:0 auto 16px;display:flex;align-items:center;justify-content:center">
+          <span style="width:64px;height:74px;background:#fff;border-radius:12px;border:2.5px solid #0D8A72;display:flex;align-items:center;justify-content:center"><span style="width:34px;height:34px;border-radius:50%;background:#F5B301;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px;color:#16302B">₹</span></span>
+        </div>
+        <div style="font-size:24px;font-weight:800;letter-spacing:-.4px">Get ₹100 for every friend</div>
+        <div style="font-size:14px;color:#5C6B68;margin-top:8px;line-height:1.6">Share your code — they get ₹100 off their first booking,<br>you get ₹100 in your wallet when they attend.</div>
+        <div style="display:flex;justify-content:center;gap:10px;margin-top:22px">
+          <span style="font-size:16px;font-weight:800;letter-spacing:.14em;background:#F7FAF9;border:1.5px dashed #0D8A72;border-radius:12px;padding:13px 26px">ARJUN100</span>
+          <button style="font:inherit;font-size:14px;font-weight:800;background:#0D8A72;color:#fff;border:none;border-radius:12px;padding:13px 24px;cursor:pointer" style-hover="background:#0A6B59">Copy</button>
+        </div>
+        <div style="display:flex;justify-content:center;gap:10px;margin-top:20px">
+          <span style="border:1.5px solid #E3EBE8;border-radius:12px;padding:11px 20px;font-size:13px;font-weight:700;cursor:pointer" style-hover="border-color:#0D8A72">WhatsApp</span>
+          <span style="border:1.5px solid #E3EBE8;border-radius:12px;padding:11px 20px;font-size:13px;font-weight:700;cursor:pointer" style-hover="border-color:#0D8A72">Instagram</span>
+          <span style="border:1.5px solid #E3EBE8;border-radius:12px;padding:11px 20px;font-size:13px;font-weight:700;cursor:pointer" style-hover="border-color:#0D8A72">Copy link</span>
+        </div>
+        <div style="font-size:12.5px;color:#5C6B68;font-weight:700;margin-top:22px">3 friends joined · ₹300 earned so far</div>
+      </div>
+    </sc-if>
+
+    <!-- HELP -->
+    <sc-if value="{{ isHelp }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="Help center">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:16px">
+          <span style="background:#fff;border:1px solid #E3EBE8;border-radius:16px;padding:20px;text-align:center"><span style="font-size:14.5px;font-weight:800">WhatsApp support</span><span style="display:block;font-size:12px;color:#5C6B68;font-weight:600;margin-top:4px">Replies in ~5 min, 9 AM–11 PM</span></span>
+          <span style="background:#fff;border:1px solid #E3EBE8;border-radius:16px;padding:20px;text-align:center"><span style="font-size:14.5px;font-weight:800">Call 1800-121-SHIV</span><span style="display:block;font-size:12px;color:#5C6B68;font-weight:600;margin-top:4px">Toll-free · event days till 1 AM</span></span>
+          <span style="background:#fff;border:1px solid #E3EBE8;border-radius:16px;padding:20px;text-align:center"><span style="font-size:14.5px;font-weight:800">support@shivevents.in</span><span style="display:block;font-size:12px;color:#5C6B68;font-weight:600;margin-top:4px">Response within 24 hrs</span></span>
+        </div>
+        <div style="background:#fff;border:1px solid #E3EBE8;border-radius:20px;padding:14px 28px">
+          <sc-for list="{{ helpFaqs }}" as="f" hint-placeholder-count="5">
+            <span style="display:block;border-bottom:1px solid #EDF1EF">
+              <button onClick="{{ f.onToggle }}" style="width:100%;display:flex;justify-content:space-between;align-items:center;font:inherit;font-size:14px;font-weight:700;background:none;border:none;padding:16px 0;cursor:pointer;text-align:left;color:#16302B">{{ f.q }} <span style="color:#0D8A72;font-size:17px;font-weight:800">{{ f.mark }}</span></button>
+              <sc-if value="{{ f.open }}" hint-placeholder-val="{{ false }}"><span style="display:block;padding:0 0 16px;font-size:13px;color:#5C6B68;line-height:1.6">{{ f.a }}</span></sc-if>
+            </span>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+class Component extends DCLogic {
+  state = { section: 'Profile', openFaq: 0 };
+  renderVals() {
+    const { section, openFaq } = this.state;
+    const sections = ['Profile', 'Wallet & refunds', 'Coupons', 'Notifications', 'Wishlist', 'Invite friends', 'Help center'];
+    return {
+      menu: sections.map(label => ({ label, onPick: () => this.setState({ section: label }),
+        bg: section === label ? '#E6F4F1' : 'transparent', color: section === label ? '#0A6B59' : '#16302B' })),
+      isProfile: section === 'Profile', isWallet: section === 'Wallet & refunds', isCoupons: section === 'Coupons',
+      isNotifs: section === 'Notifications', isWishlist: section === 'Wishlist', isInvite: section === 'Invite friends', isHelp: section === 'Help center',
+      txns: [
+        { what: 'Referral reward — Meera joined', when: '28 Jul 2026', amt: '+ ₹100', color: '#0B8A55' },
+        { what: 'Used at checkout — Monsoon Comedy Jam', when: '15 Aug 2026', amt: '− ₹150', color: '#B42318' },
+        { what: 'Referral reward — Rohan joined', when: '2 Jul 2026', amt: '+ ₹100', color: '#0B8A55' },
+        { what: 'Cashback — Food Truck Fest offer', when: '2 Jul 2026', amt: '+ ₹300', color: '#0B8A55' }
+      ],
+      coupons: [
+        { tag: 'NAVRATRI SPECIAL', tagColor: '#C2410C', title: 'B1G1 on Season Pass', desc: 'Rangilo Re Garba & 4 more venues · till 15 Sep', code: 'RAAS26', border: '#F5B301', blob: '#FDF3E3' },
+        { tag: 'DIWALI MELA WEEK', tagColor: '#6D28D9', title: 'Flat ₹200 off family packs', desc: 'On 4+ tickets at any Diwali mela · 1–10 Nov', code: 'DIYA200', border: '#C4B5FD', blob: '#F3EFFC' },
+        { tag: 'REFERRAL', tagColor: '#0A6B59', title: '₹100 off first booking', desc: 'For your invited friends · no minimum', code: 'ARJUN100', border: '#0D8A72', blob: '#E6F4F1' },
+        { tag: 'WEEKDAY OFFER', tagColor: '#B42318', title: '15% off comedy shows', desc: 'Mon–Thu shows under ₹500 · max ₹75 off', code: 'HASYA15', border: '#FCA5A5', blob: '#FDEBEA' }
+      ],
+      notifs: [
+        { glyph: '✓', bg: '#E6F4F1', fg: '#0A6B59', title: 'Booking confirmed', body: 'SHV-2610-4821 — Rangilo Re Garba, Night 1. Tickets sent to WhatsApp & email.', when: '2 min ago' },
+        { glyph: '%', bg: '#FDF3E3', fg: '#92400E', title: 'Early-bird ends tonight', body: 'RAAS26 B1G1 on season passes expires at midnight — 4 venues left.', when: '3 hrs ago' },
+        { glyph: '♥', bg: '#FDEBEA', fg: '#B42318', title: 'Wishlist price drop', body: 'NYE Countdown Carnival early-bird now ₹799 (was ₹999).', when: 'Yesterday' },
+        { glyph: '★', bg: '#F3EFFC', fg: '#6D28D9', title: 'Rangmanch Events announced a new event', body: 'Diwali Rooftop Dinner & Fireworks View — following organizers get 24-hr early access.', when: '2 days ago' },
+        { glyph: '₹', bg: '#E6F4F1', fg: '#0A6B59', title: 'Refund processed', body: '₹848 for Indie Night sent to arjun@oksbi. Should reflect by 7 Aug.', when: '3 days ago' }
+      ],
+      wishlist: [
+        { title: 'NYE Countdown Carnival', meta: 'SG Highway · 31 Dec', price: 'From ₹799', date: '31 Dec', grad: 'linear-gradient(135deg,#B91C1C,#14532D)' },
+        { title: 'Holi Rang Utsav 2027', meta: 'Club O7, Bopal · 22 Mar', price: 'From ₹599', date: '22 Mar', grad: 'linear-gradient(135deg,#0D8A72,#E9358F,#F5B301)' },
+        { title: 'Sufi Night under the Stars', meta: 'Riverfront · 19 Sep', price: 'From ₹299', date: '19 Sep', grad: 'linear-gradient(135deg,#1E3A5F,#7C3AED)' }
+      ],
+      helpFaqs: [
+        { q: 'My QR won\u2019t scan at the gate — what do I do?', a: 'Increase screen brightness and hold steady inside the frame. If it still fails, gate staff can look up your booking ID manually — keep SHV-XXXX handy from My Tickets.' },
+        { q: 'How do refunds work?', a: 'Each event shows its refund policy before payment. Approved refunds go back to your original payment method or wallet within 5–7 working days.' },
+        { q: 'Can I transfer my ticket to a friend?', a: 'Yes — open the ticket in My Tickets and tap "Transfer to friend" any time before the first scan. Their phone number gets a fresh QR; yours is voided.' },
+        { q: 'I paid but didn\u2019t get a ticket.', a: 'If money was deducted without a confirmation, it auto-refunds within 30 minutes. Check the Wallet & refunds tab; if it persists, ping WhatsApp support.' },
+        { q: 'How do I become an organizer?', a: 'Tap "List Your Event", complete KYC (PAN/GST + bank), pick a plan and pay the onboarding fee. Most accounts are approved within 24 hours.' }
+      ].map((f, i) => ({ ...f, open: openFaq === i, mark: openFaq === i ? '−' : '+',
+        onToggle: () => this.setState(s => ({ openFaq: s.openFaq === i ? -1 : i })) }))
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>Navratri in Ahmedabad 2026 — Garba Events &amp; Season Passes | Shiv Events</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="./image-slot.js"></script>
+<style>
+  body { margin:0; font-family:'Plus Jakarta Sans',sans-serif; background:#F7FAF9; color:#16302B; }
+  a { color:#0D8A72; text-decoration:none; } a:hover { color:#0A6B59; }
+  * { box-sizing:border-box; }
+</style>
+</helmet>
+
+<div style="min-width:1200px">
+<!-- Navbar -->
+<div style="background:#fff;border-bottom:1px solid #E3EBE8;display:flex;align-items:center;justify-content:space-between;padding:14px 48px;position:sticky;top:0;z-index:50">
+  <div style="display:flex;align-items:center;gap:40px">
+    <a href="Shiv-Events-Home.dc.html" style="display:flex;align-items:center;gap:9px">
+      <span style="width:34px;height:34px;border-radius:10px;background:#0D8A72;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:18px">S</span>
+      <span style="font-size:22px;font-weight:800;color:#16302B;letter-spacing:-.5px">shiv events<span style="color:#F5B301">.</span></span>
+    </a>
+    <div style="display:flex;gap:26px;font-size:14.5px;font-weight:600">
+      <a href="Shiv-Events-Listing.dc.html" style="color:#16302B" style-hover="color:#0D8A72">Explore Events</a>
+      <a href="Shiv-Events-Festival.dc.html" style="color:#0D8A72">Festivals</a>
+      <a href="Shiv-Events-Tickets.dc.html" style="color:#16302B" style-hover="color:#0D8A72">My Tickets</a>
+    </div>
+  </div>
+  <span style="width:38px;height:38px;border-radius:50%;background:#0D8A72;color:#fff;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer">AP</span>
+</div>
+
+<!-- Festival hero -->
+<div style="position:relative;height:380px;overflow:hidden" data-screen-label="Festival hero">
+  <div style="position:absolute;inset:0;background:linear-gradient(120deg,#C2410C,#E9358F)">
+    <image-slot id="fest-hero" shape="rect" placeholder="Navratri hero — sheri garba wide shot"></image-slot>
+  </div>
+  <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(22,48,43,.2),rgba(22,48,43,.72));pointer-events:none"></div>
+  <div style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:38px 48px;pointer-events:none">
+    <span style="font-size:12px;font-weight:800;color:#F5B301;letter-spacing:.14em">FESTIVAL GUIDE · 12 – 20 OCT 2026</span>
+    <span style="color:#fff;font-size:40px;font-weight:800;letter-spacing:-.8px;margin-top:6px">Navratri in Ahmedabad</span>
+    <span style="color:rgba(255,255,255,.85);font-size:15px;margin-top:8px;max-width:640px;line-height:1.6">240 garba nights across the city — traditional sheri garba in the old city, mega grounds in Vastrapur, club raas on SG Highway. Season passes, single nights and family packs, all with QR entry.</span>
+    <span style="display:flex;gap:22px;margin-top:16px;color:#fff;font-size:13.5px;font-weight:700;pointer-events:auto">
+      <span><b style="font-size:18px">240</b> events</span>
+      <span><b style="font-size:18px">9</b> nights</span>
+      <span><b style="font-size:18px">₹99</b> onwards</span>
+      <span><b style="font-size:18px">1.2L+</b> going</span>
+    </span>
+  </div>
+</div>
+
+<!-- Night navigator -->
+<div style="padding:26px 48px" data-screen-label="Night navigator">
+  <div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:6px">
+    <sc-for list="{{ nights }}" as="n" hint-placeholder-count="9">
+      <a href="Shiv-Events-Listing.dc.html" style="flex:0 0 auto;width:120px;background:#fff;border:1.5px solid #E3EBE8;border-radius:14px;padding:12px 14px;text-align:center" style-hover="border-color:#0D8A72">
+        <span style="display:block;font-size:11px;font-weight:800;color:#E9358F">NIGHT {{ n.num }}</span>
+        <span style="display:block;font-size:16px;font-weight:800;color:#16302B;margin-top:2px">{{ n.date }}</span>
+        <span style="display:block;font-size:11px;font-weight:700;color:#5C6B68;margin-top:2px">{{ n.count }} events</span>
+      </a>
+    </sc-for>
+  </div>
+</div>
+
+<!-- Browse by vibe (category grid) -->
+<div style="padding:10px 48px" data-screen-label="Browse by vibe">
+  <div style="font-size:22px;font-weight:800;letter-spacing:-.4px;margin-bottom:16px">Browse by vibe</div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px">
+    <sc-for list="{{ vibes }}" as="v" hint-placeholder-count="4">
+      <a href="Shiv-Events-Listing.dc.html" style="position:relative;height:120px;border-radius:18px;overflow:hidden;display:flex;align-items:flex-end;padding:16px;background:{{ v.grad }}" style-hover="filter:brightness(1.08)">
+        <span style="position:relative;color:#fff;pointer-events:none"><span style="display:block;font-size:16px;font-weight:800;text-shadow:0 1px 8px rgba(0,0,0,.35)">{{ v.name }}</span><span style="font-size:12px;font-weight:700;opacity:.9">{{ v.count }} events</span></span>
+      </a>
+    </sc-for>
+  </div>
+</div>
+
+<!-- Top garba events -->
+<div style="padding:30px 48px" data-screen-label="Top garba events">
+  <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:16px">
+    <span style="font-size:22px;font-weight:800;letter-spacing:-.4px">Top garba nights</span>
+    <a href="Shiv-Events-Listing.dc.html" style="font-size:14px;font-weight:700">All 240 Navratri events →</a>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px">
+    <sc-for list="{{ events }}" as="e" hint-placeholder-count="6">
+      <a href="Shiv-Events-Event.dc.html" style="background:#fff;border:1px solid #E3EBE8;border-radius:18px;overflow:hidden;display:flex;flex-direction:column;transition:transform .18s,box-shadow .18s" style-hover="transform:translateY(-4px);box-shadow:0 16px 40px rgba(22,48,43,.14)">
+        <span style="position:relative;height:150px;display:block;background:{{ e.grad }}">
+          <image-slot id="{{ e.slot }}" shape="rect" placeholder="{{ e.title }}"></image-slot>
+          <span style="position:absolute;top:10px;left:10px;background:#F5B301;color:#16302B;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:8px;pointer-events:none">{{ e.tag }}</span>
+        </span>
+        <span style="padding:14px 16px;display:flex;flex-direction:column;gap:5px">
+          <span style="font-size:15px;font-weight:800;color:#16302B">{{ e.title }}</span>
+          <span style="font-size:12px;color:#5C6B68;font-weight:600">{{ e.meta }}</span>
+          <span style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+            <span style="font-size:14px;font-weight:800;color:#0D8A72">{{ e.price }}</span>
+            <span style="font-size:12px;font-weight:700;color:#5C6B68">⭐ {{ e.rating }}</span>
+          </span>
+        </span>
+      </a>
+    </sc-for>
+  </div>
+</div>
+
+<!-- Guide + FAQ -->
+<div style="padding:14px 48px 40px;display:grid;grid-template-columns:1.2fr 1fr;gap:36px" data-screen-label="Festival guide">
+  <div>
+    <div style="font-size:22px;font-weight:800;letter-spacing:-.4px;margin-bottom:14px">First-timer's guide</div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <sc-for list="{{ guide }}" as="g" hint-placeholder-count="4">
+        <span style="background:#fff;border:1px solid #E3EBE8;border-radius:14px;padding:16px 18px;display:flex;gap:14px">
+          <span style="width:34px;height:34px;flex:0 0 auto;border-radius:10px;background:#FDF3E3;color:#B45309;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:14px">{{ g.n }}</span>
+          <span><span style="font-size:14px;font-weight:800">{{ g.title }}</span><span style="display:block;font-size:12.5px;color:#5C6B68;line-height:1.6;margin-top:3px">{{ g.body }}</span></span>
+        </span>
+      </sc-for>
+    </div>
+  </div>
+  <div>
+    <div style="font-size:22px;font-weight:800;letter-spacing:-.4px;margin-bottom:14px">Navratri FAQs</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <sc-for list="{{ faqs }}" as="f" hint-placeholder-count="4">
+        <span style="background:#fff;border:1px solid #E3EBE8;border-radius:14px;overflow:hidden;display:block">
+          <button onClick="{{ f.onToggle }}" style="width:100%;display:flex;justify-content:space-between;align-items:center;font:inherit;font-size:13.5px;font-weight:700;color:#16302B;background:none;border:none;padding:14px 18px;cursor:pointer;text-align:left">{{ f.q }} <span style="color:#0D8A72;font-size:17px;font-weight:800">{{ f.mark }}</span></button>
+          <sc-if value="{{ f.open }}" hint-placeholder-val="{{ false }}"><span style="display:block;padding:0 18px 14px;font-size:12.5px;color:#5C6B68;line-height:1.6">{{ f.a }}</span></sc-if>
+        </span>
+      </sc-for>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<div style="background:#16302B;color:#fff;padding:26px 48px;display:flex;justify-content:space-between;align-items:center">
+  <span style="display:flex;align-items:center;gap:8px"><span style="width:26px;height:26px;border-radius:8px;background:#0D8A72;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px">S</span><span style="font-weight:800;font-size:16px">shiv events<span style="color:#F5B301">.</span></span></span>
+  <span style="font-size:12.5px;opacity:.65">Navratri in Ahmedabad · Surat · Vadodara · Rajkot · Mumbai · Pune</span>
+  <span style="font-size:12.5px;opacity:.65">© 2026 Shiv Events Pvt. Ltd.</span>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+class Component extends DCLogic {
+  state = { openFaq: 0 };
+  renderVals() {
+    const { openFaq } = this.state;
+    return {
+      nights: Array.from({ length: 9 }, (_, i) => ({ num: i + 1, date: (12 + i) + ' Oct', count: [212, 224, 231, 240, 238, 236, 229, 218, 204][i] })),
+      vibes: [
+        { name: 'Traditional sheri garba', count: 64, grad: 'linear-gradient(120deg,#B45309,#F5B301)' },
+        { name: 'Mega grounds & orchestras', count: 38, grad: 'linear-gradient(120deg,#C2410C,#E9358F)' },
+        { name: 'Club raas & DJ nights', count: 52, grad: 'linear-gradient(120deg,#4C1D95,#E9358F)' },
+        { name: 'Society & family garba', count: 86, grad: 'linear-gradient(120deg,#0A6B59,#22C55E)' }
+      ],
+      events: [
+        { slot: 'fx-1', title: 'Rangilo Re Garba Mahotsav 2026', meta: 'GMDC Ground, Vastrapur · live orchestra', tag: 'Season pass', price: 'From ₹399', rating: '4.8', grad: 'linear-gradient(135deg,#F97316,#E9358F)' },
+        { slot: 'fx-2', title: 'United Garba Grounds', meta: 'Satellite · 3,000/night', tag: 'Filling fast', price: 'From ₹399', rating: '4.6', grad: 'linear-gradient(135deg,#E9358F,#7C3AED)' },
+        { slot: 'fx-3', title: 'Raas Rangat 2026', meta: 'Bopal · couples special rounds', tag: 'B1G1', price: 'From ₹549', rating: '4.5', grad: 'linear-gradient(135deg,#F97316,#F5B301)' },
+        { slot: 'fx-4', title: 'Sheri Garba — Old City Heritage Walk', meta: 'Khadia · community-run, all welcome', tag: 'Free', price: 'Free entry', rating: '4.9', grad: 'linear-gradient(135deg,#0A6B59,#0EA5E9)' },
+        { slot: 'fx-5', title: 'Club Navratri Nights', meta: 'SG Highway · DJ raas, 21+', tag: 'Late night', price: 'From ₹799', rating: '4.3', grad: 'linear-gradient(135deg,#B91C1C,#E9358F)' },
+        { slot: 'fx-6', title: 'Sharad Purnima Raas Night', meta: 'Riverfront lawns · full-moon finale', tag: '25 Oct', price: 'From ₹299', rating: 'New', grad: 'linear-gradient(135deg,#1E3A5F,#F5B301)' }
+      ],
+      guide: [
+        { n: '1', title: 'Season pass vs single nights', body: 'Going 4+ nights? A season pass usually breaks even by night 3 and gets you express-entry gates at the big grounds.' },
+        { n: '2', title: 'What to wear', body: 'Chaniya choli and kediyu rentals are available at most mega venues (₹300–800/night). Sports shoes over sandals — you\u2019ll dance 3+ hours.' },
+        { n: '3', title: 'Getting home late', body: 'Events run past midnight. Metro runs till 11 PM during Navratri; pre-book return autos or use venue valet parking.' },
+        { n: '4', title: 'Going with kids or elders', body: 'Filter for "Kids zone" and "Wheelchair access" amenities — family-oriented grounds have seating rings around the garba circle.' }
+      ],
+      faqs: [
+        { q: 'When is Navratri 2026 in Ahmedabad?', a: '12–20 October 2026, nine nights, with Sharad Purnima raas events continuing till 25 October.' },
+        { q: 'Do venues allow entry without pre-booked tickets?', a: 'Big grounds usually sell out by evening — box-office entry isn\u2019t guaranteed. Sheri garba in the old city is free and open to all.' },
+        { q: 'Are there women-only or family-only events?', a: 'Yes — use the Female Entry tier filter and the "family garba" vibe. Several societies run ladies-only dandiya rounds nightly.' },
+        { q: 'What time do garba nights actually start?', a: 'Gates open ~6:30 PM, aarti around 7:30 PM, orchestra rounds peak 9–11:30 PM. Gates typically close for entry at 10:30 PM.' }
+      ].map((f, i) => ({ ...f, open: openFaq === i, mark: openFaq === i ? '−' : '+',
+        onToggle: () => this.setState(s => ({ openFaq: s.openFaq === i ? -1 : i })) }))
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>Page not found — Shiv Events</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  body { margin:0; font-family:'Plus Jakarta Sans',sans-serif; background:#F7FAF9; color:#16302B; }
+  a { color:#0D8A72; text-decoration:none; } a:hover { color:#0A6B59; }
+  * { box-sizing:border-box; }
+  @keyframes sway { 0%,100% { transform:rotate(-6deg) } 50% { transform:rotate(6deg) } }
+</style>
+</helmet>
+
+<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px">
+  <div style="position:relative;width:150px;height:150px;border-radius:50%;background:#E6F4F1;display:flex;align-items:center;justify-content:center;margin-bottom:24px">
+    <span style="width:70px;height:88px;background:#fff;border:3px solid #0D8A72;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;animation:sway 3s ease-in-out infinite">
+      <span style="width:36px;height:36px;border-radius:8px;background:repeating-linear-gradient(90deg,#16302B 0 4px,#fff 4px 8px)"></span>
+      <span style="width:36px;height:4px;border-radius:2px;background:#E3EBE8"></span>
+      <span style="width:26px;height:4px;border-radius:2px;background:#E3EBE8"></span>
+    </span>
+    <span style="position:absolute;right:6px;top:12px;width:30px;height:30px;border-radius:50%;background:#F5B301;display:flex;align-items:center;justify-content:center;font-weight:800;color:#16302B">?</span>
+  </div>
+  <div style="font-size:56px;font-weight:800;letter-spacing:-1.5px;color:#0D8A72">404</div>
+  <div style="font-size:22px;font-weight:800;margin-top:4px">This page missed its entry window</div>
+  <div style="font-size:14px;color:#5C6B68;margin-top:8px;line-height:1.6">Like a QR after the gate scan — this link is no longer valid.<br>The event may have ended, moved, or never existed.</div>
+  <div style="display:flex;gap:12px;margin-top:26px">
+    <a href="Shiv-Events-Home.dc.html" style="background:#0D8A72;color:#fff;font-weight:800;font-size:14px;padding:13px 30px;border-radius:999px" style-hover="background:#0A6B59;color:#fff">Back to home</a>
+    <a href="Shiv-Events-Listing.dc.html" style="border:1.5px solid #E3EBE8;background:#fff;color:#16302B;font-weight:700;font-size:14px;padding:13px 26px;border-radius:999px" style-hover="border-color:#0D8A72;color:#0D8A72">Explore events</a>
+    <a href="Shiv-Events-Tickets.dc.html" style="border:1.5px solid #E3EBE8;background:#fff;color:#16302B;font-weight:700;font-size:14px;padding:13px 26px;border-radius:999px" style-hover="border-color:#0D8A72;color:#0D8A72">My tickets</a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}"></script>
+</body>
+</html>
