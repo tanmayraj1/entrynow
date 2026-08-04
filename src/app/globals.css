@@ -431,6 +431,37 @@
   92%, 100% { transform: translateX(0) rotate(0deg); }
 }
 
+/* How much room a shell takes before the page content starts, so a loading
+   fallback can centre the ticket in the area a reader can actually see.
+
+   A route-level `loading.tsx` renders in two quite different places. On a hard
+   load it *replaces* everything — React has no shell on screen yet — so it
+   should centre in the whole viewport, and `--tear-chrome` stays 0. On a
+   client-side navigation the shell is already painted and the fallback streams
+   in underneath it; centring in the full viewport there would push the ticket
+   half a header too low and add a scrollbar to a screen with nothing to
+   scroll. Because these declarations live on the shells, the fallback simply
+   inherits the right number — or nothing at all when there is no shell.
+
+   `data-chrome`, not `data-theme`: the root fallback sets a theme to get the
+   marketplace tokens, and it must not pick up the marketplace's offsets. */
+[data-chrome="market"] {
+  /* header stack (112) + the sticky dock's reserved padding (56) */
+  --tear-chrome: 168px;
+}
+[data-chrome="portal"] {
+  /* demo banner + topbar (92) + the content well's own padding (40) */
+  --tear-chrome: 132px;
+}
+@media (min-width: 768px) {
+  [data-chrome="market"] { --tear-chrome: 201px; }
+}
+@media (min-width: 1024px) {
+  /* The dock — and its padding — are gone at `lg`. */
+  [data-chrome="market"] { --tear-chrome: 145px; }
+  [data-chrome="portal"] { --tear-chrome: 148px; }
+}
+
 @layer components {
   .se-lift {
     transition: transform 180ms ease, box-shadow 180ms ease;

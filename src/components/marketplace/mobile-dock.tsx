@@ -9,6 +9,7 @@ import {
   CategoryGlyph,
   categoryAccent,
 } from "@/components/brand/category-glyph";
+import { DOCK_HEIGHT_PX } from "./dock-height";
 
 /**
  * The mobile dock — the primary tab bar, with categories behind a button.
@@ -20,7 +21,7 @@ import {
  * sheet shows all twelve at once and costs nothing until it is asked for.
  */
 
-const TAB_HEIGHT = 56;
+const TAB_HEIGHT = DOCK_HEIGHT_PX;
 
 export interface DockCategory {
   slug: string;
@@ -258,5 +259,3 @@ function SheetTile({
   );
 }
 
-/** Height the dock occupies, for the page padding that keeps content clear. */
-export const DOCK_HEIGHT_PX = TAB_HEIGHT;

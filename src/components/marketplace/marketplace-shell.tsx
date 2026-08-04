@@ -3,7 +3,8 @@ import { SiteHeader } from "./site-header";
 import { DemoBanner } from "./demo-banner";
 import { isDemoMode } from "@/lib/demo";
 import { SiteFooter } from "./site-footer";
-import { MobileDock, DOCK_HEIGHT_PX } from "./mobile-dock";
+import { MobileDock } from "./mobile-dock";
+import { DOCK_HEIGHT_PX } from "./dock-height";
 import {
   getCategories,
   getCities,
@@ -38,7 +39,11 @@ export async function MarketplaceShell({
     : 0;
 
   return (
-    <div data-theme="market" className="min-h-screen flex flex-col bg-bg">
+    <div
+      data-theme="market"
+      data-chrome="market"
+      className="min-h-screen flex flex-col bg-bg"
+    >
       {isDemoMode() && <DemoBanner />}
       <SiteHeader
         citySlug={citySlug}

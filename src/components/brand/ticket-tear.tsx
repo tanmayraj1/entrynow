@@ -12,36 +12,36 @@ import { cn } from "@/lib/cn";
  * every size, and it takes its colours from the theme so the same component
  * works on the marketplace's light background and the scanner's dark one.
  *
- * **Motion is entrance-only and honours `prefers-reduced-motion`.** The
- * reduced-motion rule in `globals.css` collapses every animation globally, and
- * that is the correct outcome here: the two halves settle in their parted
- * position and the ticket still reads as a ticket. Nobody is left staring at a
- * blank box because they turned animation off.
+ * **Motion honours `prefers-reduced-motion`.** The global rule in `globals.css`
+ * collapses every animation to a single 0.001ms pass, which leaves both halves
+ * at their `100%` keyframe — joined. So a reader with motion off sees a whole,
+ * still ticket rather than a blank box or a frozen half-torn one.
+ *
+ * The SVG is sized in CSS rather than by `width`/`height` attributes so it can
+ * step up at `md`. The tear animates by `translateX` in *user units* inside the
+ * viewBox, so the gesture scales with the artwork instead of getting relatively
+ * smaller as the ticket grows.
  */
 export function TicketTear({
   label = "Loading",
-  size = 132,
   className,
 }: {
-  /** Announced to screen readers; the visible caption is separate. */
+  /** Announced to screen readers; also the visible caption. */
   label?: string;
-  size?: number;
   className?: string;
 }) {
   return (
     <div
-      className={cn("flex flex-col items-center gap-3", className)}
+      className={cn("flex flex-col items-center gap-3.5 md:gap-4", className)}
       role="status"
       aria-live="polite"
     >
       <svg
-        width={size}
-        height={size * 0.62}
         viewBox="0 0 132 82"
         fill="none"
         aria-hidden
         data-motion="ticket-tear"
-        className="overflow-visible"
+        className="w-[148px] md:w-[212px] h-auto overflow-visible"
       >
         <defs>
           <linearGradient id="tt-grad" x1="0" y1="0" x2="1" y2="1">
@@ -51,7 +51,7 @@ export function TicketTear({
           </linearGradient>
         </defs>
 
-        {/* Left half — the part you keep. Carries the "EN" mark. */}
+        {/* Left half — the part you keep. */}
         <g style={{ animation: "en-tear-left 1.9s ease-in-out infinite" }}>
           <path
             d="M4 14a6 6 0 0 1 6-6h52v10a5 5 0 0 0 0 10v10a5 5 0 0 0 0 10v10a5 5 0 0 0 0 10v6H10a6 6 0 0 1-6-6V14Z"
@@ -79,7 +79,9 @@ export function TicketTear({
         </g>
       </svg>
 
-      <span className="text-[12.5px] font-bold text-ink-muted">{label}</span>
+      <span className="text-[13px] md:text-[15px] font-bold text-ink-muted text-center">
+        {label}
+      </span>
       <span className="sr-only">{label}, please wait</span>
     </div>
   );
@@ -88,12 +90,19 @@ export function TicketTear({
 /**
  * Full-bleed variant for a route-level `loading.tsx`.
  *
- * Centres in the viewport minus the header, so the ticket lands where the
- * content will, rather than pinned to the top of the page.
+ * Centres in the viewport rather than in the content flow, because at this
+ * moment there *is* no content to centre against — the page is what we are
+ * waiting for. `100svh` (not `100vh`) is the small viewport height, so mobile
+ * Safari's collapsing address bar cannot push the ticket below the fold and
+ * introduce a scrollbar on a screen with nothing to scroll.
+ *
+ * `--tear-chrome` is how much room the surrounding shell already takes; it is
+ * declared per shell in `globals.css` and defaults to 0 when the fallback has
+ * replaced the whole page and there is no shell to sit under.
  */
 export function TicketTearScreen({ label }: { label?: string }) {
   return (
-    <div className="min-h-[60vh] grid place-items-center px-6 py-20">
+    <div className="grid place-items-center px-6 py-16 min-h-[calc(100svh-var(--tear-chrome,0px))]">
       <TicketTear label={label} />
     </div>
   );

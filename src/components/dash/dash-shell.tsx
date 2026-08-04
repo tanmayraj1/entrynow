@@ -43,7 +43,11 @@ export function DashShell({
   const onDark = theme === "dash-admin";
 
   return (
-    <div data-theme={theme} className="min-h-screen bg-bg text-ink flex flex-col">
+    <div
+      data-theme={theme}
+      data-chrome="portal"
+      className="min-h-screen bg-bg text-ink flex flex-col"
+    >
       {isDemoMode() && <DemoBanner />}
       <DashChrome
         groups={groups}
