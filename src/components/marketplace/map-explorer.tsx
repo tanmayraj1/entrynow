@@ -5,7 +5,6 @@ import Link from "next/link";
 import {
   BadgeCheck,
   Building2,
-  Compass,
   Landmark,
   Loader2,
   MapPin as MapPinIcon,
@@ -246,7 +245,18 @@ export function MapExplorer({
             aria-expanded={placesOpen}
             role="combobox"
             aria-controls="map-place-options"
-            className="w-full rounded-[12px] border border-border bg-bg pl-10 pr-3 py-2.5 text-[14px] outline-none focus:border-primary focus:bg-surface"
+            // Mobile only (`max-md:`). On a phone these two controls stack into
+            // two flat grey rectangles that look like nothing else on the site.
+            // The pill radius, white surface and lifted shadow are the same
+            // treatment as the hero's search card, so the section reads as part
+            // of the product rather than a default form. Desktop keeps the
+            // compact inline row it already had.
+            className={cn(
+              "w-full rounded-[12px] border border-border bg-bg pl-10 pr-3 py-2.5",
+              "text-[14px] outline-none focus:border-primary focus:bg-surface",
+              "max-md:rounded-full max-md:bg-surface max-md:border-border-strong",
+              "max-md:py-3 max-md:shadow-[var(--shadow-e1)]",
+            )}
           />
 
           {placesOpen && places.length > 0 && (
@@ -297,15 +307,29 @@ export function MapExplorer({
           className={cn(
             "shrink-0 rounded-[12px] px-4 py-2.5 text-[13.5px] font-bold flex items-center justify-center gap-2 cursor-pointer",
             "border transition-colors disabled:opacity-60 disabled:cursor-wait",
+            "max-md:rounded-full max-md:py-3",
             origin
               ? "bg-primary text-white border-primary hover:bg-primary-dark"
-              : "bg-surface text-ink border-border hover:border-primary hover:text-primary",
+              : [
+                  "bg-surface text-ink border-border hover:border-primary hover:text-primary",
+                  // Mobile only: this is a call to action, and the brand
+                  // gradient is reserved for exactly that (D-019). It matches
+                  // the hero's Search button, which is the same promise one
+                  // screen up. The engaged state deliberately stays flat
+                  // `bg-primary` — gradient invites, solid confirms.
+                  "max-md:[background:var(--brand-gradient)] max-md:text-white",
+                  "max-md:border-transparent max-md:shadow-[var(--shadow-cta)]",
+                  "max-md:hover:text-white",
+                ],
           )}
         >
           {locating ? (
             <Loader2 size={15} className="animate-spin" />
           ) : (
-            <Compass size={15} strokeWidth={2.4} />
+            // MapPin, not Compass: the header's city selector and every pin on
+            // the map below are pin-shaped, so a compass was the one location
+            // glyph on the page that matched nothing else.
+            <MapPinIcon size={15} strokeWidth={2.4} />
           )}
           {origin ? "Near me · on" : "Use my location"}
         </button>

@@ -416,6 +416,21 @@
   to { transform: rotate(360deg); }
 }
 
+/* The loading ticket tearing along its perforation. The two halves part,
+   hold for a beat so the eye reads the gap, then close again. Transform only
+   — no width or left — so it composites on the GPU and never reflows the
+   page behind it. */
+@keyframes en-tear-left {
+  0%, 18%   { transform: translateX(0) rotate(0deg); }
+  46%, 62%  { transform: translateX(-7px) rotate(-3.5deg); }
+  92%, 100% { transform: translateX(0) rotate(0deg); }
+}
+@keyframes en-tear-right {
+  0%, 18%   { transform: translateX(0) rotate(0deg); }
+  46%, 62%  { transform: translateX(7px) rotate(3.5deg); }
+  92%, 100% { transform: translateX(0) rotate(0deg); }
+}
+
 @layer components {
   .se-lift {
     transition: transform 180ms ease, box-shadow 180ms ease;
