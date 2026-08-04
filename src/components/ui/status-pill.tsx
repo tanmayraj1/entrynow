@@ -73,10 +73,21 @@ export const STATUS_TONE: Record<string, StatusTone> = {
   RESOLVED_PARTIAL: "confirmed",
 };
 
-/** "CANCELLED_BY_ORGANIZER" -> "Cancelled by organizer" */
+/**
+ * "CANCELLED_BY_ORGANIZER" -> "Cancelled by organizer"
+ *
+ * Acronyms are restored afterwards. Sentence-casing the whole string turned
+ * `KYC_IN_REVIEW` into "Kyc in review", which is the sort of thing that makes
+ * an otherwise careful screen look machine-generated — and it sat on the
+ * approvals queue, the first admin screen anyone opens.
+ */
+const ACRONYMS = /\b(kyc|gst|upi|qr|id|sms|gmv)\b/gi;
+
 export function humanizeStatus(status: string): string {
   const s = status.replace(/_/g, " ").toLowerCase();
-  return s.charAt(0).toUpperCase() + s.slice(1);
+  return (s.charAt(0).toUpperCase() + s.slice(1)).replace(ACRONYMS, (m) =>
+    m.toUpperCase(),
+  );
 }
 
 export function StatusPill({

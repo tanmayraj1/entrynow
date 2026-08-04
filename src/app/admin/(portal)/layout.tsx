@@ -13,6 +13,22 @@ import { db } from "@/lib/db";
  * `hasPermission` purely so a SUPPORT admin is not shown a Finance link that
  * would 404 on them; hiding a link is a courtesy, never a control.
  */
+/** What this desk is, in words an operator would use for it. */
+const DESK_LABELS: Record<string, string> = {
+  APPROVALS: "event approvals",
+  CONTENT: "site content",
+  FINANCE: "payouts",
+  SUPPORT: "support & disputes",
+};
+
+function describeDesk(permissions: string[], isSuper: boolean): string {
+  if (isSuper) return "Full access to every desk";
+  const named = permissions.map((p) => DESK_LABELS[p] ?? p.toLowerCase());
+  if (named.length === 0) return "No desks assigned";
+  if (named.length === 1) return `Handles ${named[0]}`;
+  return `Handles ${named.slice(0, -1).join(", ")} and ${named.at(-1)}`;
+}
+
 export default async function AdminLayout({
   children,
 }: LayoutProps<"/admin">) {
@@ -98,7 +114,10 @@ export default async function AdminLayout({
     <DashShell
       theme="dash-admin"
       title="Entry Now — platform admin"
-      subtitle={ctx.permissions.join(" · ").toLowerCase()}
+      // Not `permissions.join(" · ").toLowerCase()`, which rendered the single
+      // word "super" under the heading — redundant with the badge beside it,
+      // and reading like a leaked enum rather than a description of the desk.
+      subtitle={describeDesk(ctx.permissions, ctx.isSuper)}
       badge={
         ctx.isSuper ? (
           <StatusPill tone="danger" label="Super" />

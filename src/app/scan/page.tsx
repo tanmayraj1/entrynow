@@ -11,6 +11,7 @@ export const metadata: Metadata = { title: "Pick an event" };
 export default async function ScanHomePage() {
   const user = await getSessionUser();
   const events = user ? await listScannableEvents(user.id) : [];
+  const liveCount = events.filter((e) => e.liveSession !== null).length;
 
   return (
     <div className="flex flex-col gap-5 px-5 py-6">
@@ -26,9 +27,14 @@ export default async function ScanHomePage() {
           {events.length ? "Which gate are you on?" : "Nothing assigned yet"}
         </h1>
         <p className="text-[13px] font-semibold text-ink-muted mt-1.5">
-          {events.length
-            ? "Tonight's events are at the top."
-            : "Ask the organizer to add your mobile number to the event's staff list, then reopen this page."}
+          {!events.length
+            ? "Ask the organizer to add your mobile number to the event's staff list, then reopen this page."
+            : liveCount
+              ? `${liveCount} running now, at the top.`
+              : // Saying "tonight's events are at the top" when nothing is
+                // running tonight sends someone hunting for a gate that is not
+                // open. Better to say so and let them plan.
+                `Nothing is running right now — ${events.length} ${events.length === 1 ? "event" : "events"} assigned to you.`}
         </p>
       </div>
 
@@ -39,7 +45,7 @@ export default async function ScanHomePage() {
             <li key={e.id}>
               <Link
                 href={`/scan/${e.id}`}
-                className="flex items-center gap-3 rounded-[16px] border border-border bg-surface px-4 py-3.5 active:bg-selected-bg transition-colors"
+                className="flex items-start gap-3 rounded-[16px] border border-border bg-surface px-4 py-3.5 active:bg-selected-bg transition-colors"
               >
                 <span
                   className={
@@ -50,16 +56,31 @@ export default async function ScanHomePage() {
                 >
                   <ScanLine size={18} strokeWidth={2.4} />
                 </span>
+                {/* Nothing here truncates.
+                 *
+                 * It used to: one line for the title, one for venue-and-time,
+                 * both `truncate`. On a 375px phone that produced "Mareez Ni
+                 * Gazal — Gujarati N…" above "Natarani Amphitheatre · Next Fri,
+                 * 21 Au…" — the two things a gate needs to tell events apart,
+                 * the name and the time, both cut off. The list is short and
+                 * the screen is tall; letting it wrap costs nothing. */}
                 <span className="min-w-0 grow">
-                  <span className="block text-[14.5px] font-extrabold truncate">
+                  {live && (
+                    <span className="inline-block text-[10px] font-extrabold uppercase tracking-wider text-[#0a1226] bg-primary rounded-full px-2 py-0.5 mb-1">
+                      Live now
+                    </span>
+                  )}
+                  <span className="block text-[14.5px] font-extrabold leading-snug">
                     {e.title}
                   </span>
-                  <span className="block text-[11.5px] font-semibold text-ink-muted truncate">
-                    {e.venueName} ·{" "}
+                  <span className="block text-[11.5px] font-semibold text-ink-muted leading-snug mt-0.5">
+                    {e.venueName}
+                  </span>
+                  <span className="block text-[11.5px] font-semibold text-ink-muted leading-snug">
                     {live
                       ? `Night ${e.liveSession!.sequence} — until ${formatIstTime(e.liveSession!.endsAt)}`
                       : e.nextSessionAt
-                        ? `Next ${formatIstDate(e.nextSessionAt)} ${formatIstTime(e.nextSessionAt)}`
+                        ? `Next ${formatIstDate(e.nextSessionAt)}, ${formatIstTime(e.nextSessionAt)}`
                         : "No sessions scheduled"}
                   </span>
                   {e.assignedGate && (
@@ -76,7 +97,7 @@ export default async function ScanHomePage() {
                 <ChevronRight
                   size={17}
                   strokeWidth={2.6}
-                  className="text-ink-muted shrink-0"
+                  className="text-ink-muted shrink-0 mt-1"
                 />
               </Link>
             </li>

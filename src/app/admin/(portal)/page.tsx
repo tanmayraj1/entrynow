@@ -11,14 +11,21 @@ import {
 } from "lucide-react";
 import { StatCard } from "@/components/dash/stat-card";
 import { hasPermission, requireAdmin } from "@/lib/auth/rbac";
-import { getAdminOverview } from "@/lib/queries/admin/queries";
+import { getAdminOverview, listAuditLog } from "@/lib/queries/admin/queries";
+import { formatIstDate, formatIstTime } from "@/lib/ist";
 
 
 export const metadata: Metadata = { title: "Admin" };
 
 export default async function AdminOverviewPage() {
   const ctx = await requireAdmin("SUPPORT");
-  const o = await getAdminOverview();
+  const isSuper = hasPermission(ctx.permissions, "SUPER");
+  const [o, audit] = await Promise.all([
+    getAdminOverview(),
+    // Only fetched for the role that may see it — not fetched then hidden.
+    isSuper ? listAuditLog({ perPage: 6 }) : Promise.resolve({ rows: [] }),
+  ]);
+  const recent = audit.rows;
 
   const queues = [
     {
@@ -125,6 +132,56 @@ export default async function AdminOverviewPage() {
           </div>
         )}
       </section>
+
+      {/* The overview used to stop at the queue cards, leaving two thirds of
+          the first screen an admin ever sees completely blank. The audit log
+          already records every action with before/after values — surfacing the
+          last few of them turns a landing page into a place you can tell at a
+          glance whether anything happened overnight.
+
+          SUPER only, matching the "Read the log" link below it: a sub-admin
+          should not learn what desks they cannot reach have been doing. */}
+      {hasPermission(ctx.permissions, "SUPER") && (
+        <section>
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <h2 className="text-[14px] font-extrabold">Recent activity</h2>
+            <Link
+              href="/admin/audit"
+              className="text-[12px] font-bold text-primary hover:underline"
+            >
+              Full audit log →
+            </Link>
+          </div>
+          {recent.length === 0 ? (
+            <p className="text-[12.5px] font-semibold text-ink-muted bg-surface border border-border rounded-[var(--radius-card)] p-4">
+              Nothing recorded yet. Every approval, suspension, payout and
+              config change lands here with its before and after values.
+            </p>
+          ) : (
+            <ol className="bg-surface border border-border rounded-[var(--radius-card)] divide-y divide-divider">
+              {recent.map((r) => (
+                <li
+                  key={r.id}
+                  className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-3"
+                >
+                  <span className="flex items-center gap-2.5 min-w-0">
+                    <code className="text-[12px] font-extrabold text-primary shrink-0">
+                      {r.action}
+                    </code>
+                    <span className="text-[12px] font-semibold text-ink-muted truncate">
+                      {r.actor?.name ?? r.actor?.phone ?? "system"} ·{" "}
+                      {r.entityType.toLowerCase()}
+                    </span>
+                  </span>
+                  <span className="text-[11.5px] font-semibold text-ink-muted tabular shrink-0">
+                    {formatIstDate(r.createdAt)} {formatIstTime(r.createdAt)}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          )}
+        </section>
+      )}
 
       <p className="text-[11.5px] font-semibold text-ink-muted">
         Every action taken here writes an audit row with before/after values.
