@@ -20,6 +20,10 @@ booking numbers `EN` + 6 digits. The repo directory is still `Shiv_Events`.
 | `spec-coverage.json` | repo root | **The spec's durable form** — 132 clauses, each with its implementing file and covering test |
 | `DECISIONS.md` | repo root | The durable record of every conflict resolved and every gap filled |
 
+**`HANDOVER.md`** is the long-form version of this file: the full chronology,
+the reasoning behind each surface, and every trap in one place. Read it if you
+are picking this up cold. This file is the short version, loaded every session.
+
 The spec is not a file, so **`DECISIONS.md` is the authority** on what was
 decided and why. Read it before changing anything about money, time, refunds or
 inventory. Append to it — required by the spec's Part J — whenever you make a
@@ -117,11 +121,16 @@ docker compose up -d   # Postgres 5433, Redis 6380 (offset from defaults on purp
 npm run dev
 ```
 
-Sign in at `/auth`, either way:
+Attendees sign in at `/auth`; staff have their own doors at `/organizer/login`
+and `/admin/login` (D-035). Same credential store — separate doors are
+presentation, never the boundary.
 
 - **Phone** `9812345001`, OTP `123456` (pre-filled). Any seeded number works;
-  `9000000001` is the super admin.
-- **Email** `meera@demo.entrynow.in`, password `demo1234`.
+  `9000000001` is the super admin, `9900000001`–`6` are organizers.
+- **Email** `meera@demo.entrynow.in`, password `demo1234`. **Attendees only** —
+  no organizer or admin row has a `passwordHash`, which is why the staff doors
+  offer phone + OTP alone.
+- **Guest** — no account at all. Name, phone and email at checkout (D-036).
 
 Pay with test cards on the payment screen — `4111 1111 1111 1111` succeeds,
 `4000 0000 0000 0002` declines, `success@upi` / `failure@upi` for UPI.
@@ -166,20 +175,23 @@ agrees — plus 390/768/1440 for horizontal overflow.
 ## Status — 4 August 2026
 
 `npm run audit`: **A1–A3, A7, A12, A13 green**; A6/A8–A11 are "not built yet"
-counters. **Completion 43%** (spec 57/132, models written 33/47). **96 tests**,
-including DB-backed concurrency tests for I1 *and* I2 against a real Postgres.
-Production `npm run build` is clean across **57 routes**.
+counters. **Completion 45%** (spec 60/132 with 2 clauses relaxed by decision,
+models written 33/47). **102 tests**, including DB-backed concurrency tests for
+I1 *and* I2 against a real Postgres. `npm run preflight` passes with one
+warning. Production `npm run build` is clean across **70 routes**.
 
 **Done and verified:** marketplace read path · map location search on real OSM
-tiles · phone-OTP **and** email+password auth · account hub · the **booking
-engine** (atomic hold + release, promo reservation, payments adapter with signed
-webhooks, idempotent capture, persisted double-entry ledger) · demo mode with a
-real payment screen and test cards · licensed event photography · the **portal
+tiles · phone-OTP, email+password **and guest** checkout · account hub · the
+**booking engine** (atomic hold + release, promo reservation, payments adapter
+with signed webhooks, idempotent capture, persisted double-entry ledger) ·
+ticket delivery by in-app notification, SMS and email · demo mode with a real
+payment screen and test cards · licensed event photography · the **portal
 foundation** (RBAC guards, branded tenant isolation, audit log, state machines,
 audit checks A12/A13) · the **refund engine** (wallet mode, idempotent,
 per-booking transactions — D-031) · the **organizer portal** (11 routes) · the
-**admin portal** (10 routes) · the **gate scanner PWA** (signed QR, atomic
-claim, offline manifest + IndexedDB queue + device-clock replay).
+**admin portal** (10 routes) · each portal's own sign-in door (D-035) · the
+**gate scanner PWA** (signed QR, atomic claim, offline manifest + IndexedDB
+queue + device-clock replay).
 
 **Not yet done:** transfers · the payout *run* (approve/mark-paid exist; the
 02:00 IST batch job does not) · 11 of the 12 Part H jobs · reviews · referrals ·
@@ -187,7 +199,13 @@ claim, offline manifest + IndexedDB queue + device-clock replay).
 event-wizard steps beyond the draft (cover image upload needs `STORAGE_DRIVER`)
 · KYC document upload, for the same reason.
 
-**The repo has ZERO git commits.** Everything exists only on this disk.
+Deployed at <https://entrynow.vercel.app> — Vercel + Neon + Upstash,
+auto-deploying on push to `main`. `/admin` sits behind HTTP Basic
+(`src/middleware.ts`).
+
+`SESSION_JWT_SECRET` and `QR_JWT_SECRET` are still the published `.env.example`
+values. Rotating the QR secret invalidates every outstanding ticket (D-032), so
+do it **before** selling, not after.
 
 ## Traps that have already bitten
 
@@ -206,3 +224,17 @@ event-wizard steps beyond the draft (cover image upload needs `STORAGE_DRIVER`)
 - `notFound()` / `redirect()` are **thrown** control-flow. A server action that
   catches its own errors will swallow them — hence two guard families in
   `src/lib/auth/rbac.ts` (D-028).
+- **A server component cannot import a value from a `"use client"` module.** The
+  bundler substitutes a client reference and the failure is *silent* — a
+  template literal compiled to `var(--dock-pad, function() {…}px)`, the browser
+  dropped it as invalid, and the sticky dock covered the last 56px of every
+  mobile page. Shared constants get their own plain module
+  (`src/components/marketplace/dock-height.ts`).
+- **A refused page does not answer 404.** Both portals guard in a `layout.tsx`
+  and check row ownership in the `page`, so Next has already streamed the layout
+  and committed a 200 before anything calls `notFound()` — the 404 arrives as a
+  *body*. Any check asserting on status alone is measuring the wrong thing;
+  `scripts/preflight.mts` asserts on content with a canary instead.
+- **Guest checkout must never reach a claimed account.** `User.phone` is unique,
+  so "find or create by phone" is one line away from an account takeover. See
+  `src/lib/auth/guest.ts` and D-036.
