@@ -27,6 +27,38 @@ const ok = (l: string, pass: boolean, d = "") => {
 };
 const note = (l: string) => { console.log(`  warn  ${l}`); warn++; };
 
+/**
+ * Is this page refused?
+ *
+ * **A refused page does not reliably answer 404, and asserting on the status
+ * alone was wrong.** Both portals call their guard in a `layout.tsx`, and the
+ * per-row ownership check happens further in, in the page. By then Next has
+ * already streamed the layout — so the HTTP status was committed as 200 before
+ * anything called `notFound()`, and the 404 arrives as a *body*, not a code.
+ *
+ * The earlier version of this check read `r.status === 404` and reported nine
+ * failures on a portal that was in fact refusing correctly. Worse, it would
+ * have reported exactly the same nine failures if the pages had been leaking
+ * every byte of another organizer's data — it never looked at what came back.
+ * A security check that cannot tell those two apart is not a security check.
+ *
+ * So: accept a real 404, or a 200 whose body is the not-found screen — and in
+ * either case fail loudly if the protected string appears anywhere in it.
+ */
+const NOT_FOUND_MARK = "This page has left the ground";
+
+async function refusedPage(path: string, cookie: string, secret?: string) {
+  const r = await fetch(`${BASE}${path}`, { headers: { cookie }, redirect: "manual" });
+  const body = r.status === 200 ? await r.text() : "";
+  const leaked = Boolean(secret) && body.includes(secret!);
+  if (leaked) return { pass: false, detail: `LEAKED protected content (${r.status})` };
+  if (r.status === 404) return { pass: true, detail: "404" };
+  if (r.status === 200 && body.includes(NOT_FOUND_MARK)) {
+    return { pass: true, detail: "not-found body, streamed 200" };
+  }
+  return { pass: false, detail: `got ${r.status}, and the body is not the not-found screen` };
+}
+
 async function session(userId: string) {
   const sid = randomUUID();
   await db.session.create({ data: { userId, tokenHash: createHash("sha256").update(sid).digest("hex"),
@@ -106,12 +138,16 @@ const mine = await fetch(`${BASE}/api/bookings`, { method: "POST",
   body: JSON.stringify({ eventSlug: ev.slug, lines: [{ tierId: tier.id, quantity: 1 }] }) }).then((r) => r.json());
 const mineRow = await db.booking.findUniqueOrThrow({ where: { bookingNumber: mine.bookingNumber } });
 {
-  const r = await fetch(`${BASE}/booking/${mine.bookingNumber}`, { headers: { cookie: cookieB } });
-  ok("another user cannot view my booking page", r.status === 404, `got ${r.status}`);
+  // The canary must be something ONLY the real page renders. The booking
+  // number is not it: Next embeds the request URL in the streamed RSC payload,
+  // so it comes back inside the not-found screen too and reads as a leak that
+  // is not there. The event title is on the booking page and nowhere else.
+  const v = await refusedPage(`/booking/${mine.bookingNumber}`, cookieB, ev.title);
+  ok("another user cannot view my booking page", v.pass, v.detail);
 }
 {
-  const r = await fetch(`${BASE}/booking/${mine.bookingNumber}/pay`, { headers: { cookie: cookieB } });
-  ok("another user cannot open my payment page", r.status === 404, `got ${r.status}`);
+  const v = await refusedPage(`/booking/${mine.bookingNumber}/pay`, cookieB, ev.title);
+  ok("another user cannot open my payment page", v.pass, v.detail);
 }
 {
   const r = await fetch(`${BASE}/api/demo/pay`, { method: "POST",
@@ -120,8 +156,8 @@ const mineRow = await db.booking.findUniqueOrThrow({ where: { bookingNumber: min
   ok("another user cannot pay for my booking", r.status === 404, `got ${r.status}`);
 }
 {
-  const r = await fetch(`${BASE}/booking/${mine.bookingNumber}`);
-  ok("an anonymous visitor cannot view a booking", r.status === 404, `got ${r.status}`);
+  const v = await refusedPage(`/booking/${mine.bookingNumber}`, "", ev.title);
+  ok("an anonymous visitor cannot view a booking", v.pass, v.detail);
 }
 
 console.log("\n── WEBHOOK ──");
@@ -164,18 +200,24 @@ console.log("\n── DEMO-MODE GUARD ──");
   // exercised in a child process with a real production environment — which
   // is closer to what a deploy actually does anyway.
   const { execFileSync } = await import("node:child_process");
-  const probe = (ack: boolean) => {
+  const probe = (env: Record<string, string>) => {
     try {
       execFileSync(process.execPath, ["--input-type=module", "-e",
         `const m = await import("./src/lib/demo.ts"); m.assertDemoModeIsIntentional();`],
         { env: { ...process.env, NODE_ENV: "production", DEMO_MODE: "true",
-                 ...(ack ? { DEMO_MODE_ALLOW_PRODUCTION: "true" } : { DEMO_MODE_ALLOW_PRODUCTION: "" }) },
+                 DEMO_MODE_ALLOW_PRODUCTION: "", SITE_PASSWORD: "", ...env },
           stdio: "pipe" });
       return false;
     } catch { return true; }
   };
-  ok("demo mode refuses to boot in production unacknowledged", probe(false));
-  ok("...and boots once explicitly acknowledged", !probe(true));
+  ok("demo mode refuses to boot in production unacknowledged", probe({}));
+  // The acknowledgement must be backed by the thing that actually gates the
+  // deployment. The first deploy set the flag on a site that turned out to be
+  // fully public, so the flag alone is no longer enough.
+  ok("...and still refuses when acknowledged with no SITE_PASSWORD",
+     probe({ DEMO_MODE_ALLOW_PRODUCTION: "true" }));
+  ok("...and boots once acknowledged AND gated",
+     !probe({ DEMO_MODE_ALLOW_PRODUCTION: "true", SITE_PASSWORD: "a-real-password" }));
 }
 
 console.log("\n── TENANT ISOLATION ──");
@@ -187,7 +229,7 @@ console.log("\n── TENANT ISOLATION ──");
   const orgs = await db.organizerProfile.findMany({
     where: { status: { in: ["VERIFIED", "SUSPENDED"] } },
     take: 2, orderBy: { createdAt: "asc" },
-    include: { user: true, events: { take: 1, select: { id: true } } },
+    include: { user: true, events: { take: 1, select: { id: true, title: true } } },
   });
 
   if (orgs.length < 2 || !orgs[0].events.length) {
@@ -196,6 +238,9 @@ console.log("\n── TENANT ISOLATION ──");
     const [a, b] = orgs;
     const cookieOrgB = await session(b.user.id);
     const foreign = a.events[0].id;
+    // The event's own title is the canary: if any of these pages rendered A's
+    // event for B, this string is what would come back.
+    const canary = a.events[0].title;
 
     for (const path of [
       `/organizer/events/${foreign}`,
@@ -203,8 +248,8 @@ console.log("\n── TENANT ISOLATION ──");
       `/organizer/events/${foreign}/live`,
       `/organizer/events/${foreign}/staff`,
     ]) {
-      const r = await fetch(`${BASE}${path}`, { headers: { cookie: cookieOrgB }, redirect: "manual" });
-      ok(`organizer B is refused ${path.replace(foreign, "{A-event}")}`, r.status === 404, `got ${r.status}`);
+      const v = await refusedPage(path, cookieOrgB, canary);
+      ok(`organizer B is refused ${path.replace(foreign, "{A-event}")}`, v.pass, v.detail);
     }
 
     // The owner still gets in — otherwise the four checks above would pass on a
@@ -253,8 +298,8 @@ console.log("\n── ADMIN RBAC ──");
     ];
     for (const [path, need] of gated) {
       if (held.includes(need as never)) continue;
-      const r = await fetch(`${BASE}${path}`, { headers: { cookie: cookieSub }, redirect: "manual" });
-      ok(`sub-admin without ${need} is refused ${path}`, r.status === 404, `got ${r.status}`);
+      const v = await refusedPage(path, cookieSub);
+      ok(`sub-admin without ${need} is refused ${path}`, v.pass, v.detail);
     }
 
     for (const path of ["/admin", "/admin/finance", "/admin/config", "/admin/audit", "/admin/cms"]) {
@@ -263,8 +308,20 @@ console.log("\n── ADMIN RBAC ──");
     }
 
     // An ordinary attendee must not reach the admin surface at all.
-    const r = await fetch(`${BASE}/admin`, { headers: { cookie: cookieA }, redirect: "manual" });
-    ok("a non-admin user is refused /admin", r.status === 404, `got ${r.status}`);
+    const v = await refusedPage("/admin", cookieA);
+    ok("a non-admin user is refused /admin", v.pass, v.detail);
+
+    // Signed out is the one case that redirects rather than 404s — to the
+    // portal's own public sign-in page, which gives away nothing (D-035). It
+    // must still be a redirect and never the dashboard.
+    const anon = await fetch(`${BASE}/admin`, { redirect: "manual" });
+    const anonBody = anon.status === 200 ? await anon.text() : "";
+    ok(
+      "a signed-out visitor is sent to /admin/login, not into the portal",
+      (anon.status === 307 && (anon.headers.get("location") ?? "").includes("/admin/login")) ||
+        (anon.status === 200 && anonBody.includes("/admin/login")),
+      `got ${anon.status}`,
+    );
   }
 }
 
@@ -277,7 +334,13 @@ console.log("\n── SECRETS ──");
     note("SESSION_JWT_SECRET / QR_JWT_SECRET are still the published .env.example values — rotate before deploying");
   else ok("secrets differ from the published example values", true);
   const { execSync } = await import("node:child_process");
-  const tracked = execSync("git ls-files | grep -c '^\\.env' || true").toString().trim();
+  // `.env.example` is *meant* to be tracked — it is the documented template,
+  // and `.gitignore` un-ignores it deliberately. Only a real `.env` (or a
+  // `.env.local`, `.env.production`) carries live secrets, so exclude the
+  // example rather than reporting the repo's correct state as a failure.
+  const tracked = execSync(
+    "git ls-files | grep '^\\.env' | grep -v '^\\.env\\.example$' | wc -l",
+  ).toString().trim();
   ok(".env is not tracked by git", tracked === "0", `${tracked} tracked`);
 }
 

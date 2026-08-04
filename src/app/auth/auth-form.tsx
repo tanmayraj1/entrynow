@@ -13,7 +13,19 @@ import { confirmOtp, requestOtp, type ActionState } from "./actions";
  * Two `useActionState` forms rather than one, because the two steps have
  * genuinely different validation and error vocabularies (spec C1.4).
  */
-export function AuthForm({ next }: { next: string }) {
+export function AuthForm({
+  next,
+  heading = "Sign in to book",
+  blurb = "We'll text you a code. Your number is how tickets reach you and how you're identified at the gate.",
+  showTerms = true,
+}: {
+  next: string;
+  /** Overridden by the staff doors, where "to book" is the wrong promise. */
+  heading?: string;
+  blurb?: string;
+  /** The terms line belongs on the consumer sign-up, not on a staff login. */
+  showTerms?: boolean;
+}) {
   const router = useRouter();
   const [phoneState, phoneAction, phonePending] = useActionState<
     ActionState,
@@ -44,10 +56,9 @@ export function AuthForm({ next }: { next: string }) {
       {step === "phone" ? (
         <form action={phoneAction} className="flex flex-col gap-4">
           <div>
-            <h1 className="text-[22px] tracking-[-0.4px]">Sign in to book</h1>
+            <h1 className="text-[22px] tracking-[-0.4px]">{heading}</h1>
             <p className="text-[13px] text-ink-muted font-semibold mt-1.5">
-              We&apos;ll text you a code. Your number is how tickets reach you
-              and how you&apos;re identified at the gate.
+              {blurb}
             </p>
           </div>
 
@@ -80,11 +91,13 @@ export function AuthForm({ next }: { next: string }) {
             Send code
           </Button>
 
-          <p className="text-[11.5px] text-ink-muted text-center leading-relaxed">
-            By continuing you agree to our{" "}
-            <Link href="/legal/terms">terms</Link> and{" "}
-            <Link href="/legal/privacy">privacy policy</Link>.
-          </p>
+          {showTerms && (
+            <p className="text-[11.5px] text-ink-muted text-center leading-relaxed">
+              By continuing you agree to our{" "}
+              <Link href="/legal/terms">terms</Link> and{" "}
+              <Link href="/legal/privacy">privacy policy</Link>.
+            </p>
+          )}
         </form>
       ) : (
         <form action={otpAction} className="flex flex-col gap-4">

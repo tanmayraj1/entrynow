@@ -252,7 +252,7 @@
       "part": "B",
       "kind": "behaviour",
       "rule": "On approval of a date/venue change: mandatory blast to booked users + a 72h free-cancellation window regardless of refund policy",
-      "impl": "src/app/admin/actions.ts",
+      "impl": "src/app/admin/(portal)/actions.ts",
       "test": null
     },
     {
@@ -300,7 +300,7 @@
       "part": "B",
       "kind": "behaviour",
       "rule": "SUSPENDED auto-PAUSES all LIVE events, FREEZES payouts, and leaves login read-only",
-      "impl": "src/app/admin/actions.ts",
+      "impl": "src/app/admin/(portal)/actions.ts",
       "test": null
     },
     {
@@ -628,7 +628,7 @@
       "part": "D",
       "kind": "behaviour",
       "rule": "Payouts are FINANCE-approved in batches, or auto-approved under the configured ceiling, then PAID with a ledger debit and a generated GST invoice",
-      "impl": "src/app/admin/actions.ts",
+      "impl": "src/app/admin/(portal)/actions.ts",
       "test": null
     },
     {
@@ -684,7 +684,7 @@
       "part": "E",
       "kind": "behaviour",
       "rule": "Admin review shows a rendered preview, raw fields and organizer history; rejection carries a reason; resubmission shows a diff",
-      "impl": "src/app/admin/approvals/page.tsx",
+      "impl": "src/app/admin/(portal)/approvals/page.tsx",
       "test": null
     },
     {
@@ -804,7 +804,7 @@
       "part": "G",
       "kind": "behaviour",
       "rule": "Dispute: OPEN -> INVESTIGATING -> RESOLVED_REFUND | RESOLVED_REJECT | RESOLVED_PARTIAL",
-      "impl": "src/app/admin/actions.ts",
+      "impl": "src/app/admin/(portal)/actions.ts",
       "test": "src/lib/state-machines.test.ts"
     },
     {
@@ -812,7 +812,7 @@
       "part": "G",
       "kind": "behaviour",
       "rule": "Opening a dispute on an event auto-freezes that event's payout portion",
-      "impl": "src/app/admin/actions.ts",
+      "impl": "src/app/admin/(portal)/actions.ts",
       "test": null
     },
     {
@@ -820,7 +820,7 @@
       "part": "G",
       "kind": "behaviour",
       "rule": "Resolution actions execute atomically with the resolution record; user and organizer are both notified with the outcome note",
-      "impl": "src/app/admin/actions.ts",
+      "impl": "src/app/admin/(portal)/actions.ts",
       "test": null
     },
     {
@@ -828,7 +828,7 @@
       "part": "G",
       "kind": "behaviour",
       "rule": "Category, festival, city and locality edits deactivate and never delete, because events reference them",
-      "impl": "src/app/admin/actions.ts",
+      "impl": "src/app/admin/(portal)/actions.ts",
       "test": null
     },
     {

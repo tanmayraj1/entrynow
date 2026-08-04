@@ -16,7 +16,7 @@ export function SiteFooter({ citySlug }: { citySlug: string }) {
       title: "For organizers",
       links: [
         { href: "/organizer/onboarding", label: "List your event" },
-        { href: "/organizer", label: "Organizer portal" },
+        { href: "/organizer/login", label: "Organizer sign in" },
         { href: "/organizer/pricing", label: "Plans & commission" },
       ],
     },

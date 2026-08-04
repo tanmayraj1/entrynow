@@ -1,6 +1,6 @@
 import "server-only";
 
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import type { AdminPermission, OrganizerStatus, PlanTier } from "@/generated/prisma";
 import { db } from "@/lib/db";
 import { organizerScope, type OrganizerId } from "@/lib/queries/organizer/scope";
@@ -12,9 +12,19 @@ import { getSessionUser } from "./session";
  * Three rules this file exists to enforce, all of which have burned real
  * products:
  *
- * 1. **`notFound()`, never `redirect("/auth")`.** A redirect confirms the route
- *    exists and that the caller merely lacks access, which is a free map of the
- *    admin surface for anyone probing. A 404 says nothing.
+ * 1. **A signed-in caller who lacks the role gets `notFound()`, never a
+ *    redirect.** A redirect confirms the route exists and that the caller
+ *    merely lacks access, which is a free map of the admin surface for anyone
+ *    probing. A 404 says nothing.
+ *
+ *    A caller with **no session at all** is the one exception, and it costs
+ *    nothing: they are sent to that portal's own sign-in page, which is public
+ *    and linked from the footer, so the redirect reveals only what anybody
+ *    could already see. Without it a staff member whose session simply expired
+ *    gets a bare 404 on a portal they use every day, with no way back in
+ *    (D-035). The enumeration argument still holds for the case it was written
+ *    about — an authenticated attacker probing for surfaces — and that case
+ *    still 404s.
  *
  * 2. **Call it in the server ACTION too, not just the page.** A page-level
  *    check protects the render; it does nothing about a crafted POST straight
@@ -57,7 +67,8 @@ export async function requireOrganizer(
   opts: { allowUnverified?: boolean } = {},
 ): Promise<OrganizerContext> {
   const user = await getSessionUser();
-  if (!user?.organizer) notFound();
+  if (!user) redirect("/organizer/login");
+  if (!user.organizer) notFound();
 
   const { status } = user.organizer;
   const usable =
@@ -119,7 +130,8 @@ export async function requireAdmin(
   permission: AdminPermission,
 ): Promise<AdminContext> {
   const user = await getSessionUser();
-  if (!user?.isAdmin) notFound();
+  if (!user) redirect("/admin/login");
+  if (!user.isAdmin) notFound();
 
   const permissions = user.adminPermissions;
   const isSuper = permissions.includes("SUPER");

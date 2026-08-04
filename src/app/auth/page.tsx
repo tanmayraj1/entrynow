@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { MarketplaceShell } from "@/components/marketplace/marketplace-shell";
@@ -25,8 +26,14 @@ export default async function AuthPage({ searchParams }: PageProps<"/auth">) {
 
   return (
     <MarketplaceShell citySlug={citySlug}>
-      <div className="flex justify-center px-4 py-10 md:py-16">
+      <div className="flex flex-col items-center gap-4 px-4 py-10 md:py-16">
         <AuthTabs next={next} demoMode={isDemoMode()} />
+        {/* Staff have their own doors. Same credentials — this is a signpost,
+            not a second credential store. */}
+        <p className="text-[12px] font-semibold text-ink-muted text-center">
+          Running events?{" "}
+          <Link href="/organizer/login">Organizer sign in</Link>
+        </p>
       </div>
     </MarketplaceShell>
   );
