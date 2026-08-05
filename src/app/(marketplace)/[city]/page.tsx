@@ -93,6 +93,9 @@ async function CityHome({
   city: NonNullable<Awaited<ReturnType<typeof getCityBySlug>>>;
   tab: FeaturedTab;
 }) {
+  // One batch, not two. `getViewerContext` used to be awaited *after* this
+  // block, which cost a whole extra round trip to Singapore — about 60ms of
+  // pure distance for a query that depends on nothing here.
   const [
     categories,
     festivals,
@@ -102,6 +105,7 @@ async function CityHome({
     stats,
     localities,
     mapPins,
+    viewer,
   ] = await Promise.all([
     getCategories(),
     getFestivalsWithCounts(city.id),
@@ -113,9 +117,8 @@ async function CityHome({
     // Rendered server-side so the map section has pins before its first
     // client fetch — the list is real content, not a loading state.
     getMapPins(city.id, { limit: 80 }),
+    getViewerContext(),
   ]);
-
-  const viewer = await getViewerContext();
 
   const trendingChips = [
     { label: "Navratri 2026", href: `/${citySlug}/festivals/navratri-2026` },

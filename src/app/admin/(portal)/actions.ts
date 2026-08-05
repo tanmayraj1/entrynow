@@ -1,7 +1,8 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { db } from "@/lib/db";
+import { CATALOG_TAG } from "@/lib/queries/marketplace";
 import { authorizeAdmin } from "@/lib/auth/rbac";
 import { pick, requestIp, writeAudit } from "@/lib/audit";
 import { assertTransition } from "@/lib/state-machines";
@@ -962,6 +963,15 @@ export async function toggleCatalogActive(
         : `${current.name} is hidden from the marketplace. Existing events keep working.`;
     });
     revalidatePath("/admin/cms");
+    // The catalog is cached for an hour on the marketplace side, so hiding a
+    // city or category has to say so explicitly — otherwise the row disappears
+    // from the admin table and stays on the public site until the TTL expires.
+    //
+    // `updateTag`, not `revalidateTag`. In this version of Next the latter
+    // takes a cache-life profile and schedules expiry; `updateTag` is the one
+    // with read-your-own-writes semantics, which is what an admin toggling a
+    // row and immediately reloading the marketplace expects.
+    updateTag(CATALOG_TAG);
     return ok(notice);
   } catch (err) {
     if (err instanceof Error && err.message === "Not found.") return fail("Not found.");

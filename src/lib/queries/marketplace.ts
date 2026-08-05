@@ -1,5 +1,7 @@
 import "server-only";
 
+import { unstable_cache } from "next/cache";
+
 import { db } from "@/lib/db";
 import {
   availabilityChip,
@@ -169,34 +171,58 @@ function toCard(e: RawEvent, now: Date): EventCardData {
 // Cities
 // ---------------------------------------------------------------------------
 
-export async function getCityBySlug(slug: string) {
-  return db.city.findFirst({ where: { slug, isActive: true } });
-}
+/**
+ * Reference data — cities, localities, categories.
+ *
+ * These are the catalog rows an admin edits a handful of times a year, and
+ * every marketplace page reads several of them: the shell needs cities and
+ * categories, the home page needs categories again and localities. That was
+ * four or five queries per render, each one a round trip to Postgres.
+ *
+ * Cached for an hour and tagged, so an admin toggling a row in `/admin/cms`
+ * can invalidate it deliberately rather than everyone waiting out the TTL.
+ * They are also the safest thing in the app to cache: nothing here is
+ * per-user, and a stale city name for a few minutes is not a defect.
+ */
+export const CATALOG_TAG = "catalog";
+const CATALOG_TTL = 3600;
 
-export async function getCities() {
-  return db.city.findMany({
-    where: { isActive: true },
-    orderBy: { sortOrder: "asc" },
-  });
-}
+export const getCityBySlug = unstable_cache(
+  async (slug: string) => db.city.findFirst({ where: { slug, isActive: true } }),
+  ["city-by-slug"],
+  { revalidate: CATALOG_TTL, tags: [CATALOG_TAG] },
+);
 
-export async function getLocalities(cityId: string) {
-  return db.locality.findMany({
-    where: { cityId, isActive: true },
-    orderBy: { name: "asc" },
-  });
-}
+export const getCities = unstable_cache(
+  async () =>
+    db.city.findMany({ where: { isActive: true }, orderBy: { sortOrder: "asc" } }),
+  ["cities"],
+  { revalidate: CATALOG_TTL, tags: [CATALOG_TAG] },
+);
+
+export const getLocalities = unstable_cache(
+  async (cityId: string) =>
+    db.locality.findMany({
+      where: { cityId, isActive: true },
+      orderBy: { name: "asc" },
+    }),
+  ["localities"],
+  { revalidate: CATALOG_TTL, tags: [CATALOG_TAG] },
+);
 
 // ---------------------------------------------------------------------------
 // Catalog
 // ---------------------------------------------------------------------------
 
-export async function getCategories() {
-  return db.category.findMany({
-    where: { isActive: true },
-    orderBy: { sortOrder: "asc" },
-  });
-}
+export const getCategories = unstable_cache(
+  async () =>
+    db.category.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: "asc" },
+    }),
+  ["categories"],
+  { revalidate: CATALOG_TTL, tags: [CATALOG_TAG] },
+);
 
 /** Festival strip, with a live-event count per festival for this city. */
 export async function getFestivalsWithCounts(cityId: string) {

@@ -60,8 +60,12 @@ async function Listing({
   city: NonNullable<Awaited<ReturnType<typeof getCityBySlug>>>;
   filters: ReturnType<typeof parseFilters>;
 }) {
-  const { events, total, facets } = await searchEvents(city.id, filters);
-  const viewer = await getViewerContext();
+  // Parallel, not serial: the viewer's wishlist does not depend on the search
+  // results, and awaiting it afterwards cost an extra round trip to Singapore.
+  const [{ events, total, facets }, viewer] = await Promise.all([
+    searchEvents(city.id, filters),
+    getViewerContext(),
+  ]);
 
   const heading = filters.q
     ? `“${filters.q}” in ${city.name}`
