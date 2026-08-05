@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
@@ -12,10 +13,12 @@ import { TicketPicker } from "@/components/marketplace/ticket-picker";
 import { ZonePlan } from "@/components/marketplace/zone-plan";
 import { VenueDirections } from "@/components/marketplace/venue-directions";
 import {
+  eventIsPublic,
   getEventDetail,
   getRatingBreakdown,
   getSimilarEvents,
 } from "@/lib/queries/event";
+import { TicketTearScreen } from "@/components/brand/ticket-tear";
 import { formatIstDate, formatIstTime, isTodayIst } from "@/lib/ist";
 import { tierRemaining } from "@/lib/availability";
 
@@ -45,11 +48,43 @@ const PROHIBITED = [
   "Weapons of any kind",
 ];
 
+/**
+ * Two halves, and the split is what makes the preloader legal.
+ *
+ * The cheap "does this exist" question is answered **outside** the Suspense
+ * boundary, because once a boundary flushes Next has already committed a 200
+ * and `notFound()` can only change the body, not the status. That is exactly
+ * what a route-level `loading.tsx` did wrong here — it made every dead event
+ * URL answer 200 (D-037).
+ *
+ * Everything expensive then happens *inside* the boundary, so the ticket tear
+ * shows while it loads — and it shows inside the site header and footer rather
+ * than replacing them, which a `loading.tsx` at this depth could not do.
+ */
 export default async function EventPage({
   params,
 }: PageProps<"/[city]/events/[slug]">) {
   const { city: citySlug, slug } = await params;
+  if (!(await eventIsPublic(citySlug, slug))) notFound();
+
+  return (
+    <Suspense fallback={<TicketTearScreen label="Opening the event" />}>
+      <EventDetail citySlug={citySlug} slug={slug} />
+    </Suspense>
+  );
+}
+
+async function EventDetail({
+  citySlug,
+  slug,
+}: {
+  citySlug: string;
+  slug: string;
+}) {
   const event = await getEventDetail(citySlug, slug);
+  // Re-checked rather than assumed: between the existence check above and this
+  // query an admin could have pulled the event. Cheap, and the alternative is
+  // a crash.
   if (!event) notFound();
 
   const [breakdown, similar] = await Promise.all([

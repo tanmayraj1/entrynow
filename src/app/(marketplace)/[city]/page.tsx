@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
@@ -30,6 +31,7 @@ import {
   type FeaturedTab,
 } from "@/lib/queries/marketplace";
 import { formatIstShortDate } from "@/lib/ist";
+import { TicketTearScreen } from "@/components/brand/ticket-tear";
 
 export const revalidate = 300;
 
@@ -63,6 +65,34 @@ export default async function CityHomePage({
   const city = await getCityBySlug(citySlug);
   if (!city) notFound();
 
+  return (
+    <Suspense
+      key={tab}
+      fallback={<TicketTearScreen label="Finding tonight's events" />}
+    >
+      <CityHome citySlug={citySlug} city={city} tab={tab} />
+    </Suspense>
+  );
+}
+
+/**
+ * Everything below the 404 decision.
+ *
+ * Split out so the city lookup — the query that decides whether this is a real
+ * city — runs *outside* the Suspense boundary. Once a boundary flushes, Next
+ * has committed a 200 and `notFound()` can only change the body (D-037). The
+ * eight queries below are what actually take the time, so they belong inside,
+ * where the ticket tear can cover them.
+ */
+async function CityHome({
+  citySlug,
+  city,
+  tab,
+}: {
+  citySlug: string;
+  city: NonNullable<Awaited<ReturnType<typeof getCityBySlug>>>;
+  tab: FeaturedTab;
+}) {
   const [
     categories,
     festivals,

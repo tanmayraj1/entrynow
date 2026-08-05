@@ -3,6 +3,31 @@ import "server-only";
 import { db } from "@/lib/db";
 import { fromPricePaise, tierRemaining, isTierOnSale } from "@/lib/availability";
 
+/**
+ * Does this event exist and may the public see it?
+ *
+ * A single indexed lookup, separate from `getEventDetail` on purpose. The page
+ * has to decide 404-or-not **before** it opens a Suspense boundary — once a
+ * boundary flushes, Next has committed a 200 and `notFound()` can only change
+ * the body, not the status (D-037). So the cheap question is asked outside the
+ * boundary and the expensive one inside it, which is what lets the page both
+ * answer 404 correctly and still show a preloader while it loads.
+ */
+export async function eventIsPublic(
+  citySlug: string,
+  slug: string,
+): Promise<boolean> {
+  const row = await db.event.findFirst({
+    where: {
+      slug,
+      city: { slug: citySlug },
+      status: { in: ["LIVE", "PAUSED"] },
+    },
+    select: { id: true },
+  });
+  return row !== null;
+}
+
 /** Full event detail. Returns null for anything not publicly viewable. */
 export async function getEventDetail(citySlug: string, slug: string) {
   const event = await db.event.findFirst({

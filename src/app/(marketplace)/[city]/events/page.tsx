@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { EmptyStateArt } from "@/components/brand/illustrations";
@@ -17,9 +18,15 @@ import { MobileFilterDrawer } from "@/components/marketplace/mobile-filter-drawe
 import { Button, Money } from "@/components/ui";
 import { getCityBySlug } from "@/lib/queries/marketplace";
 import { parseFilters, searchEvents } from "@/lib/queries/listing";
+import { TicketTearScreen } from "@/components/brand/ticket-tear";
 
 export const metadata: Metadata = { title: "Explore events" };
 
+/**
+ * The city lookup decides 404 and so must stay *outside* the boundary; the
+ * search is what takes the time, so it goes inside it and the ticket tear
+ * shows while it runs. See the note on the event page and D-037.
+ */
 export default async function ListingPage({
   params,
   searchParams,
@@ -31,6 +38,28 @@ export default async function ListingPage({
   if (!city) notFound();
 
   const filters = parseFilters(sp);
+
+  return (
+    <Suspense
+      // Re-keyed on the filters, so changing a facet re-shows the tear rather
+      // than leaving the previous results on screen looking live.
+      key={JSON.stringify(filters)}
+      fallback={<TicketTearScreen label="Searching events" />}
+    >
+      <Listing citySlug={citySlug} city={city} filters={filters} />
+    </Suspense>
+  );
+}
+
+async function Listing({
+  citySlug,
+  city,
+  filters,
+}: {
+  citySlug: string;
+  city: NonNullable<Awaited<ReturnType<typeof getCityBySlug>>>;
+  filters: ReturnType<typeof parseFilters>;
+}) {
   const { events, total, facets } = await searchEvents(city.id, filters);
   const viewer = await getViewerContext();
 
