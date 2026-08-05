@@ -181,3 +181,27 @@ Everything above ships a demo. Taking a rupee needs all of:
    image or KYC documents.
 
 Items 2 and 4 are the next two iterations in the plan.
+
+## Region — why `vercel.json` pins `bom1`
+
+Production TTFB was **1.5–4.4s** while the same pages served locally in
+**80–220ms**. The code was not the problem; the map was:
+
+```
+Ahmedabad user → Mumbai edge (bom1) → function in Washington DC (iad1)
+                                    → database in Singapore (ap-southeast-1)
+```
+
+`x-vercel-id: bom1::iad1::…` shows it on every response — the request entered
+Vercel's network in Mumbai and then executed half a world away. Vercel's default
+function region is `iad1`, and Neon is in `ap-southeast-1`, so **every single
+query crossed the Pacific and came back**. DC↔Singapore is roughly a 220ms round
+trip; the city home page issues eight queries plus the shell's own, so even
+fully parallelised that is seconds of pure distance.
+
+`"regions": ["bom1"]` puts the function in Mumbai: ~60ms to the database instead
+of ~220ms, and next to the people using it for the response leg.
+
+**If you move the database, move this too.** The rule is that the function
+belongs beside the *database*, not beside the user — a page makes many DB round
+trips and exactly one response trip, so latency to Postgres is what multiplies.
