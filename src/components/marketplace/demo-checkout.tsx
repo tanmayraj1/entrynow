@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CreditCard, Landmark, Loader2, Smartphone, Wallet } from "lucide-react";
-import { Button, Field, Input } from "@/components/ui";
+import { Button, Field, Input, Money, StickyActionBar } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { DEMO_CARDS, DEMO_CARD_HINT, DEMO_UPI_SUCCESS } from "@/lib/demo";
 
@@ -41,6 +41,7 @@ export function DemoCheckout({
   const [method, setMethod] = useState<Method>("upi");
   const [reference, setReference] = useState(DEMO_UPI_SUCCESS);
   const [busy, setBusy] = useState(false);
+  const ctaRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function pay() {
@@ -174,16 +175,37 @@ export function DemoCheckout({
         </p>
       )}
 
-      <Button size="lg" fullWidth onClick={pay} disabled={busy}>
-        {busy ? (
-          <span className="flex items-center gap-2">
-            <Loader2 size={16} className="animate-spin" />
-            Contacting the bank…
-          </span>
-        ) : (
-          `Pay ₹${(amountPaise / 100).toLocaleString("en-IN")}`
-        )}
-      </Button>
+      <div ref={ctaRef}>
+        <Button size="lg" fullWidth onClick={pay} disabled={busy}>
+          {busy ? (
+            <span className="flex items-center gap-2">
+              <Loader2 size={16} className="animate-spin" />
+              Contacting the bank…
+            </span>
+          ) : (
+            <span className="flex items-center gap-1.5">
+              Pay <Money paise={amountPaise} />
+            </span>
+          )}
+        </Button>
+      </div>
+
+      {/* Choosing a method expands the form — a card needs four fields — so the
+          Pay button can end up below the fold on exactly the screen where
+          hesitating costs a sale. */}
+      <StickyActionBar
+        watch={ctaRef}
+        left={
+          <>
+            <p className="text-[10.5px] text-ink-muted font-bold">To pay</p>
+            <Money paise={amountPaise} className="text-[17px] font-extrabold" />
+          </>
+        }
+      >
+        <Button size="md" onClick={pay} disabled={busy}>
+          {busy ? "Contacting the bank…" : "Pay now"}
+        </Button>
+      </StickyActionBar>
 
       <p className="text-[11.5px] text-ink-muted text-center leading-relaxed">
         Simulated gateway — no real money moves. The confirmation still arrives

@@ -106,10 +106,19 @@ describe("organizer isolation", () => {
     const bookingsA = await db.booking.count({
       where: bookingsOf(organizerScope(orgA)),
     });
+    // `AND`, not a spread.
+    //
+    // This was written as `{ ...bookingsOf(orgB), event: { organizerId: orgA } }`
+    // — and both halves set the same `event` key, so the literal silently
+    // overwrote the spread and the query reduced to "bookings belonging to A".
+    // It asserted that count was zero, which happened to be true only because
+    // the first-created organizer had no bookings in the seed. The moment one
+    // arrived the test failed, having never once checked what it claimed to.
+    //
+    // Under `AND` the two conditions cannot collapse into each other.
     const crossed = await db.booking.count({
       where: {
-        ...bookingsOf(organizerScope(orgB)),
-        event: { organizerId: orgA },
+        AND: [bookingsOf(organizerScope(orgB)), { event: { organizerId: orgA } }],
       },
     });
     expect(bookingsA).toBeGreaterThanOrEqual(0);

@@ -15,5 +15,6 @@ export {
   type StatusTone,
 } from "./status-pill";
 export { Stepper } from "./stepper";
+export { StickyActionBar } from "./sticky-action-bar";
 export { SectionHead, Tabs, type TabItem } from "./tabs";
 export { EmptyState, Table, Td, Th, Tr } from "./table";

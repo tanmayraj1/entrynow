@@ -95,11 +95,11 @@
     ]
   },
   "counts": {
-    "total": 177,
+    "total": 173,
     "blocker": 0,
     "broken": 0,
     "control": 0,
-    "incomplete": 177,
+    "incomplete": 173,
     "polish": 0
   },
   "findings": [
@@ -1163,34 +1163,6 @@
     {
       "check": "A14",
       "severity": "incomplete",
-      "file": "src/components/marketplace/checkout-button.tsx",
-      "line": 113,
-      "detail": "hardcoded ₹ — money must render through <Money currency=…> so a CAD event does not display rupees"
-    },
-    {
-      "check": "A14",
-      "severity": "incomplete",
-      "file": "src/components/marketplace/checkout-button.tsx",
-      "line": 113,
-      "detail": "hardcoded en-IN — locale follows the content's country (lakh grouping is correct for INR and wrong for CAD)"
-    },
-    {
-      "check": "A14",
-      "severity": "incomplete",
-      "file": "src/components/marketplace/demo-checkout.tsx",
-      "line": 184,
-      "detail": "hardcoded ₹ — money must render through <Money currency=…> so a CAD event does not display rupees"
-    },
-    {
-      "check": "A14",
-      "severity": "incomplete",
-      "file": "src/components/marketplace/demo-checkout.tsx",
-      "line": 184,
-      "detail": "hardcoded en-IN — locale follows the content's country (lakh grouping is correct for INR and wrong for CAD)"
-    },
-    {
-      "check": "A14",
-      "severity": "incomplete",
       "file": "src/components/marketplace/event-card.tsx",
       "line": 134,
       "detail": "hardcoded en-IN — locale follows the content's country (lakh grouping is correct for INR and wrong for CAD)"
@@ -1213,35 +1185,35 @@
       "check": "A14",
       "severity": "incomplete",
       "file": "src/components/marketplace/ticket-picker.tsx",
-      "line": 123,
+      "line": 124,
       "detail": "hardcoded en-IN — locale follows the content's country (lakh grouping is correct for INR and wrong for CAD)"
     },
     {
       "check": "A14",
       "severity": "incomplete",
       "file": "src/components/marketplace/ticket-picker.tsx",
-      "line": 129,
+      "line": 130,
       "detail": "hardcoded en-IN — locale follows the content's country (lakh grouping is correct for INR and wrong for CAD)"
     },
     {
       "check": "A14",
       "severity": "incomplete",
       "file": "src/components/marketplace/ticket-picker.tsx",
-      "line": 196,
+      "line": 197,
       "detail": "hardcoded en-IN — locale follows the content's country (lakh grouping is correct for INR and wrong for CAD)"
     },
     {
       "check": "A15",
       "severity": "incomplete",
       "file": "src/components/marketplace/ticket-picker.tsx",
-      "line": 125,
+      "line": 126,
       "detail": "hardcoded Asia/Kolkata — the zone belongs to the event's city, not to the code reading it"
     },
     {
       "check": "A15",
       "severity": "incomplete",
       "file": "src/components/marketplace/ticket-picker.tsx",
-      "line": 131,
+      "line": 132,
       "detail": "hardcoded Asia/Kolkata — the zone belongs to the event's city, not to the code reading it"
     },
     {

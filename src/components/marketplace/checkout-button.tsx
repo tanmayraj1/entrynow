@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertCircle, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui";
+import { Button, Money, StickyActionBar } from "@/components/ui";
 
 /**
  * The control that takes the hold.
@@ -38,6 +38,7 @@ export function CheckoutButton({
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  const ctaRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [availability, setAvailability] = useState<Availability[] | null>(null);
 
@@ -98,21 +99,43 @@ export function CheckoutButton({
         </div>
       )}
 
-      <Button
-        size="lg"
-        onClick={submit}
-        disabled={disabled || busy}
-        className="w-full sm:w-auto"
+      <div ref={ctaRef}>
+        <Button
+          size="lg"
+          onClick={submit}
+          disabled={disabled || busy}
+          className="w-full sm:w-auto"
+        >
+          {busy ? (
+            <span className="flex items-center gap-2">
+              <Loader2 size={16} className="animate-spin" />
+              Holding your seats…
+            </span>
+          ) : (
+            <span className="flex items-center gap-1.5">
+              Hold seats &amp; pay <Money paise={totalPaise} />
+            </span>
+          )}
+        </Button>
+      </div>
+
+      {/* The review page is long — event summary, line items, fee breakdown,
+          the hold explanation — so on a phone the button that actually starts
+          checkout sits well below the fold. */}
+      <StickyActionBar
+        watch={ctaRef}
+        active={!disabled}
+        left={
+          <>
+            <p className="text-[10.5px] text-ink-muted font-bold">Total</p>
+            <Money paise={totalPaise} className="text-[17px] font-extrabold" />
+          </>
+        }
       >
-        {busy ? (
-          <span className="flex items-center gap-2">
-            <Loader2 size={16} className="animate-spin" />
-            Holding your seats…
-          </span>
-        ) : (
-          `Hold seats & pay ₹${(totalPaise / 100).toLocaleString("en-IN")}`
-        )}
-      </Button>
+        <Button size="md" onClick={submit} disabled={disabled || busy}>
+          {busy ? "Holding…" : "Hold seats & pay"}
+        </Button>
+      </StickyActionBar>
     </div>
   );
 }
