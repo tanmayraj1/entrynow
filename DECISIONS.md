@@ -795,3 +795,58 @@ direction: the portals answer 200 on a refused *row* because their guard is in
 the layout and the ownership check is in the page. Removing the portal
 `loading.tsx` files closed that gap for the organizer portal too — those four
 checks now report a real 404 rather than "not-found body, streamed 200".
+
+## D-038 — Entry Now becomes multi-country, and I7 is superseded
+
+**Conflict:** direct, with spec **I7** — *"Timestamps stored UTC; all business
+logic evaluated in Asia/Kolkata."* Also with the implicit assumption behind
+every `*Paise` column and every `₹` in the UI: that there is one currency.
+
+The product owner is taking the platform to Canada with India retained. That is
+a market decision, and the spec was written for a single-market product, so the
+spec loses — but deliberately and in writing, not by drift.
+
+**What replaces I7:** timestamps are still stored UTC. Business logic is
+evaluated in **the timezone of the event's city**, which is `Asia/Kolkata` for
+every event that exists today and will not be for a Toronto one. The clause is
+marked `relaxed: "D-038"` in `spec-coverage.json` **in the stage that changes the
+behaviour**, not now — a clause that still describes what the code does should
+not be marked relaxed in advance.
+
+**The reassuring discovery**, made while planning and worth recording because it
+determines how risky this is: `src/lib/ist.ts` is already two modules wearing one
+name. Roughly half its exports never touch a zone — they are pure instant math
+on `getTime()`:
+
+```ts
+export function isSessionScannable(session, now, graceMinutes) {
+  const t = now.getTime();
+  return t >= session.startsAt.getTime() && t <= session.endsAt.getTime() + grace;
+}
+```
+
+**That is the D-012 guarantee, and it has no timezone to get wrong.** Same for
+`hoursUntil`, which carries D-013. So the two invariants that decide whether
+someone gets through a gate and whether they get their money back are, by
+construction, immune to this migration. What is exposed is calendar and display
+code — real work, but a different risk class.
+
+**The genuinely new hazard is DST.** `Asia/Kolkata` has no daylight saving, so
+nothing in this codebase has ever run across an offset change. Canada has six
+zones, Newfoundland is UTC−03:30, and Saskatchewan does not observe DST at all.
+`istStartOfDay` round-trips a `TZDate` through `.getTime()`; that is the single
+line most likely to be quietly wrong twice a year.
+
+**Guardrails first (A14–A17).** Four audit checks were added *before* the
+migration that makes them pass, so each stage has a machine-checked definition of
+done rather than a judgement call. They ship at `incomplete` — A14 has 55 real
+violations on day one and a red build on the first commit of a multi-week
+migration is how a team learns to ignore its own harness. Each is **promoted to
+`broken` by the stage that makes it green**, which is what stops the next
+contributor reintroducing a rupee sign.
+
+A16 is the one worth naming: it forbids the scan path from importing any
+timezone-aware function. That converts D-012 from a comment inside `ist.ts` — a
+file this migration deletes — into a build failure. It already found two live
+hits: `src/app/scan/page.tsx` formats the next session time in IST, which is
+correct today and wrong the moment a Toronto gate opens.

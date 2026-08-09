@@ -40,7 +40,7 @@ type Severity = "blocker" | "broken" | "control" | "incomplete" | "polish";
 type Check =
   | "A1" | "A2" | "A3" | "A4" | "A5" | "A6"
   | "A7" | "A8" | "A9" | "A10" | "A11"
-  | "A12" | "A13";
+  | "A12" | "A13" | "A14" | "A15" | "A16" | "A17";
 
 interface Finding {
   check: Check;
@@ -991,6 +991,145 @@ for (const file of files) {
 }
 
 // ---------------------------------------------------------------------------
+// A14–A17 — Multi-country guardrails
+//
+// Added BEFORE the migration that makes them pass, on purpose. Each one is the
+// machine-checked definition of done for a later stage, so "we finished the
+// currency work" stops being a judgement call.
+//
+// They ship at `incomplete`, which is non-fatal. A14 has ~21 real violations on
+// day one and a red build on the first commit of a multi-week migration is how
+// a team learns to ignore its own harness. **Each check is promoted to `broken`
+// in the stage that makes it green** — that is what locks the gain in and stops
+// the next contributor quietly reintroducing a rupee sign.
+// ---------------------------------------------------------------------------
+
+/** Where a hardcoded locale, currency symbol or IANA zone is legitimate. */
+const I18N_ALLOWLIST = [
+  join(SRC, "lib", "money.ts"),
+  join(SRC, "lib", "ist.ts"),
+  join(SRC, "lib", "countries.ts"),
+  join(SRC, "components", "ui", "money.tsx"),
+  // Renders outside the root layout, so no CSS vars and no app helpers exist.
+  join(SRC, "app", "global-error.tsx"),
+];
+
+const inAllowlist = (p: string) => I18N_ALLOWLIST.some((a) => p === a);
+
+for (const file of files) {
+  const raw = readFileSync(file, "utf8");
+  const src = stripComments(raw);
+  const path = rel(file);
+
+  // --- A14: currency and locale only at the formatting boundary ------------
+  if (!inAllowlist(file)) {
+    for (const m of src.matchAll(/₹/g)) {
+      add({
+        check: "A14",
+        severity: "incomplete",
+        file: path,
+        line: lineOf(src, m.index),
+        detail:
+          "hardcoded ₹ — money must render through <Money currency=…> so a " +
+          "CAD event does not display rupees",
+      });
+    }
+    for (const m of src.matchAll(/["'`]en-IN["'`]/g)) {
+      add({
+        check: "A14",
+        severity: "incomplete",
+        file: path,
+        line: lineOf(src, m.index),
+        detail:
+          "hardcoded en-IN — locale follows the content's country (lakh " +
+          "grouping is correct for INR and wrong for CAD)",
+      });
+    }
+  }
+
+  // --- A15: one place may name a timezone ----------------------------------
+  if (!inAllowlist(file)) {
+    for (const m of src.matchAll(/Asia\/Kolkata/g)) {
+      add({
+        check: "A15",
+        severity: "incomplete",
+        file: path,
+        line: lineOf(src, m.index),
+        detail:
+          "hardcoded Asia/Kolkata — the zone belongs to the event's city, " +
+          "not to the code reading it",
+      });
+    }
+  }
+
+  // --- A17: exact fractions, never truncating differences (D-013) ----------
+  for (const m of src.matchAll(/\bdifferenceIn(Hours|Days|Minutes)\b/g)) {
+    add({
+      check: "A17",
+      severity: "incomplete",
+      file: path,
+      line: lineOf(src, m.index),
+      detail:
+        `${m[0]} truncates toward zero — a cancellation 6h30m out reads as 6h ` +
+        "and silently fails a `> 6` check against the attendee (D-013)",
+    });
+  }
+}
+
+// --- A16: the gate may not do calendar arithmetic ---------------------------
+//
+// D-012 in executable form. `isSessionScannable` is an *instant* comparison and
+// must stay one: a Garba night running 8PM–1AM belongs to its start date but
+// stays scannable until it ends, so the moment the scan path starts comparing
+// date keys it stops admitting people after midnight. The rule used to live in
+// a comment inside `ist.ts` — a file the time migration deletes.
+// Two different hazards, so two different messages. A calendar *decision* in
+// the scan path breaks D-012 outright. A calendar *display* is milder but still
+// wrong once events are not all in one zone — staff at a Toronto gate reading
+// an IST time is a queue arguing at the door.
+const ZONED_DECISION = [
+  "istDateKey", "istStartOfDay", "istEndOfDay", "isSameIstDay", "isTodayIst",
+  "sessionDateKey", "isSessionToday",
+  "dateKey", "startOfDayIn", "endOfDayIn", "isTodayIn",
+];
+const ZONED_DISPLAY = [
+  "formatIstDate", "formatIstTime", "formatIstShortDate", "formatIstDateRange",
+  "formatDate", "formatTime",
+];
+const ZONED_SYMBOLS = [...ZONED_DECISION, ...ZONED_DISPLAY];
+
+const SCAN_DIRS = [
+  join(SRC, "lib", "scan"),
+  join(SRC, "app", "scan"),
+  join(SRC, "app", "api", "scan"),
+];
+
+for (const file of files) {
+  if (!SCAN_DIRS.some((d) => file.startsWith(d))) continue;
+  const src = stripComments(readFileSync(file, "utf8"));
+  // Only the import statement matters — a local variable named `dateKey` is
+  // not the hazard.
+  for (const imp of src.matchAll(/import\s*\{([^}]*)\}\s*from\s*["'][^"']*(?:ist|time)["']/g)) {
+    for (const name of imp[1].split(",").map((s) => s.trim().split(/\s+as\s+/)[0])) {
+      if (!ZONED_SYMBOLS.includes(name)) continue;
+      add({
+        check: "A16",
+        severity: "incomplete",
+        file: rel(file),
+        line: lineOf(src, imp.index),
+        detail: ZONED_DECISION.includes(name)
+          ? `the scan path imports ${name} — gate validity is an instant ` +
+            "comparison, never a date-key comparison, or a session running " +
+            "past midnight stops admitting (D-012)"
+          : `the scan path imports ${name}, which formats in one fixed zone — ` +
+            "it must use the event's city zone, or staff at a Toronto gate " +
+            "read an IST time",
+      });
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Report
 // ---------------------------------------------------------------------------
 
@@ -1008,6 +1147,10 @@ const CHECK_NAMES: Record<Check, string> = {
   A11: "Adapters",
   A12: "Tenant scoping",
   A13: "Audit coverage",
+  A14: "Currency & locale",
+  A15: "Timezone literals",
+  A16: "Gate calendar ban",
+  A17: "Exact time deltas",
 };
 
 const ALL_CHECKS = Object.keys(CHECK_NAMES) as Check[];
