@@ -28,6 +28,9 @@ import {
 } from "@/lib/queries/marketplace";
 import { formatIstShortDate } from "@/lib/ist";
 import { TicketTearScreen } from "@/components/brand/ticket-tear";
+import { JsonLd } from "@/components/seo/json-ld";
+import { websiteJsonLd } from "@/lib/seo";
+import { shareMetadata } from "@/lib/site";
 
 export const revalidate = 300;
 
@@ -37,10 +40,14 @@ export async function generateMetadata({
   const { city } = await params;
   const found = await getCityBySlug(city);
   if (!found) return {};
-  return {
-    title: `${found.name}'s festivals, one ticket away`,
+  // The path is relative — `metadataBase` in the root layout makes it
+  // absolute. A city home is reachable as `/` too (the root redirects by
+  // cookie), so saying which address is the real one is not optional.
+  return shareMetadata({
+    title: `${found.name}’s festivals, one ticket away`,
     description: `Garba nights, Diwali melas, concerts and more in ${found.name}. Book digital tickets, scan and enter.`,
-  };
+    path: `/${found.slug}`,
+  });
 }
 
 const TABS: { key: FeaturedTab; label: string }[] = [
@@ -62,12 +69,17 @@ export default async function CityHomePage({
   if (!city) notFound();
 
   return (
-    <Suspense
-      key={tab}
-      fallback={<TicketTearScreen label="Finding tonight's events" />}
-    >
-      <CityHome citySlug={citySlug} city={city} tab={tab} />
-    </Suspense>
+    <>
+      {/* Above the boundary, unlike the event page's Event block: this one is
+          built from the city slug alone, so there is nothing to wait for. */}
+      <JsonLd data={websiteJsonLd(citySlug)} />
+      <Suspense
+        key={tab}
+        fallback={<TicketTearScreen label="Finding tonight's events" />}
+      >
+        <CityHome citySlug={citySlug} city={city} tab={tab} />
+      </Suspense>
+    </>
   );
 }
 

@@ -850,3 +850,48 @@ timezone-aware function. That converts D-012 from a comment inside `ist.ts` — 
 file this migration deletes — into a build failure. It already found two live
 hits: `src/app/scan/page.tsx` formats the next session time in IST, which is
 correct today and wrong the moment a Toronto gate opens.
+
+## D-039 — The demo build is `noindex` by default, and launch is one env var
+
+**Gap, not a conflict:** the spec covers ticketing, not discovery. Nothing in it
+says whether search engines may read the site, so the first version of
+`robots.ts` had to decide.
+
+**It refuses everything while `DEMO_MODE=true`.** Every event, organizer, venue,
+price, rating and review in this database is invented, and all of it is
+published under a real brand name that will later sell real tickets. A crawler
+cannot tell demo data from inventory. Neither can someone who finds *"Rangilo Re
+Garba Mahotsav 2026, from ₹499"* in a search result six months from now and
+turns up at a ground nobody booked.
+
+The asymmetry is what decides it: adding a page to an index takes days, removing
+one takes weeks, and the cost of being wrong in the cautious direction is
+nothing at all. So `isIndexable()` is `!isDemoMode()` — one flag already trusted
+with the fixed OTP and the simulated gateway (D-025), now also gating discovery.
+Turning SEO on at launch is the same switch that turns the fake OTP off, which
+is the correct coupling: this site should become findable at exactly the moment
+it stops being a demo.
+
+**This does not gate link previews**, and the distinction matters because
+sharing the build with reviewers is the whole point of it existing. WhatsApp,
+iMessage, Slack, Discord, X and LinkedIn read Open Graph tags and never consult
+`robots.txt` or `<meta name="robots">`. Share cards work in every build; only
+indexing is withheld.
+
+**Three places had to agree**, and making them agree is most of the work:
+
+- `robots.ts` is `force-dynamic`. Next prerenders it by default, which bakes
+  whatever `DEMO_MODE` was *at build time* into a static file. Being wrong here
+  is expensive in both directions — a launched site silently delisted, or a demo
+  quietly indexed — and the answer costs one env lookup.
+- The root layout also emits `<meta name="robots">`. `robots.txt` governs
+  *crawling*; a crawler that reached a URL from an inbound link has already
+  fetched the page and needs to be told not to *index* it.
+- `sitemap.ts` returns `[]`. A sitemap advertising 74 URLs beside a
+  `Disallow: /` is two files disagreeing about one decision.
+
+**Filtered listings are `noindex, follow` regardless.** Ten facets multiply into
+more URLs than the marketplace has events, all near-duplicates. `?category=` is
+the exception — "comedy in Ahmedabad" is a query someone types, and a page that
+answers it. Everything else is crawled *through* to reach the event pages and
+never listed itself.

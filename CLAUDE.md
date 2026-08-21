@@ -246,3 +246,23 @@ do it **before** selling, not after.
 - **Guest checkout must never reach a claimed account.** `User.phone` is unique,
   so "find or create by phone" is one line away from an account takeover. See
   `src/lib/auth/guest.ts` and D-036.
+- **`min-height` beats a utility's `height`.** `globals.css` gives every
+  `button` a 44px floor under `@media (pointer: coarse)`, so an `h-1.5` dot
+  renders 44×44 on every phone — the carousel's indicators were two large white
+  discs over the CTA. Keep the 44px target and paint the small mark on an inner
+  `<span>`; never shrink the rule.
+- **Satori is not a browser**, and it fails *silently* rather than throwing.
+  Three ways, all found building the share cards (`src/lib/og/card.tsx`): it
+  drops a **`<>` fragment** and everything inside it; it ignores the **`inset`
+  shorthand**, collapsing an overlay to zero size; and it parses only simple
+  `radial-gradient` forms. In every case the card still renders and the build
+  still passes — the element is just not there.
+- **resvg cannot decode a progressive JPEG**, and unlike the above it fails
+  *loudly and late* — mid-stream, so the route 500s and the crawler gets no
+  card at all. `/_next/image` re-encodes to progressive (and to AVIF unless you
+  pin `Accept`), so cover photos are embedded from the original baseline file
+  and checked by `isDecodable()` before they reach the renderer.
+- **Per-route `openGraph` / `twitter` metadata REPLACES the root's, never
+  merges.** Returning `twitter: { title }` from a `generateMetadata` silently
+  discards `card: "summary_large_image"` and turns the 1200×630 card into a
+  thumbnail. Build the blocks with `shareMetadata()` in `src/lib/site.ts`.

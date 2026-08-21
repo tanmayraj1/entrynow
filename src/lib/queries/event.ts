@@ -28,6 +28,60 @@ export async function eventIsPublic(
   return row !== null;
 }
 
+/**
+ * Just enough of an event to draw a share card.
+ *
+ * `getEventDetail` would answer this too, but it pulls reviews, FAQs, the
+ * schedule, the gates and every image along with it. The `opengraph-image`
+ * route is hit by crawlers, several per share, and none of them are going to
+ * read the FAQ.
+ */
+export async function getEventShareMeta(citySlug: string, slug: string) {
+  const event = await db.event.findFirst({
+    where: {
+      slug,
+      city: { slug: citySlug },
+      status: { in: ["LIVE", "PAUSED"] },
+    },
+    select: {
+      title: true,
+      summary: true,
+      coverImageUrl: true,
+      city: { select: { name: true } },
+      category: { select: { name: true } },
+      venue: { select: { name: true, locality: { select: { name: true } } } },
+      sessions: {
+        where: { isActive: true },
+        orderBy: { startsAt: "asc" },
+        select: { startsAt: true, endsAt: true },
+      },
+      tiers: {
+        where: { isActive: true },
+        select: {
+          pricePaise: true,
+          saleStartsAt: true,
+          saleEndsAt: true,
+          isActive: true,
+          quantityTotal: true,
+          quantitySold: true,
+          quantityHeld: true,
+        },
+      },
+    },
+  });
+  if (!event) return null;
+
+  const now = new Date();
+  return {
+    ...event,
+    fromPricePaise: fromPricePaise(event.tiers, now),
+    // The next session that has not finished — the date a share card should
+    // show. A festival that ran last weekend and runs again next weekend must
+    // advertise the one still ahead.
+    nextSession: event.sessions.find((s) => s.endsAt >= now) ?? null,
+  };
+}
+
 /** Full event detail. Returns null for anything not publicly viewable. */
 export async function getEventDetail(citySlug: string, slug: string) {
   const event = await db.event.findFirst({

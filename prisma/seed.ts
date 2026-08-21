@@ -1305,16 +1305,69 @@ async function main() {
         endsAt: ist(2026, 10, 20),
         sortOrder: 0,
       },
+      // --- The generic set ------------------------------------------------
+      //
+      // `cityId: null` on purpose, and it is doing two jobs. It regression-
+      // tests the "All cities" path `getActiveBanners` used to drop on the
+      // floor, and it is what stops a second city from launching with a
+      // one-slide carousel: these are category promotions, true anywhere, with
+      // no date window to expire. Every `href` is stored city-relative, so the
+      // same row sends a Surat visitor to Surat comedy and an Ahmedabad
+      // visitor to Ahmedabad comedy.
+      //
+      // Photographs rather than gradients: a gradient slab reads as a
+      // placeholder next to a photo slide, and the carousel is judged as one
+      // strip. All of these are the same Wikimedia Commons files the events
+      // use, so they are already covered by /legal/image-credits.
       {
-        // cityId deliberately null: the national banner, which regression-tests
-        // the "All cities" path getActiveBanners used to drop on the floor.
         cityId: null,
         title: "Comedy nights every weekend",
         subtitle: "Stand-up, improv and open mics from ₹199",
         gradient: "comedy",
+        imageUrl: "/images/events/comedy-1.jpg",
         href: "events?category=comedy",
         status: "LIVE",
         sortOrder: 1,
+      },
+      {
+        cityId: null,
+        title: "Live music, every scale",
+        subtitle: "Sufi evenings to stadium tours",
+        gradient: "concert",
+        imageUrl: "/images/events/concerts-1.jpg",
+        href: "events?category=concerts",
+        status: "LIVE",
+        sortOrder: 2,
+      },
+      {
+        cityId: null,
+        title: "Eat your way through the weekend",
+        subtitle: "Street food fests, pop-ups and night markets",
+        gradient: "food",
+        imageUrl: "/images/events/food-festivals-1.jpg",
+        href: "events?category=food-festivals",
+        status: "LIVE",
+        sortOrder: 3,
+      },
+      {
+        cityId: null,
+        title: "Under ₹500",
+        subtitle: "Big nights that don't cost a big night out",
+        gradient: "party",
+        imageUrl: "/images/events/parties-1.jpg",
+        href: "events?maxPrice=500",
+        status: "LIVE",
+        sortOrder: 4,
+      },
+      {
+        cityId: null,
+        title: "Match day",
+        subtitle: "League fixtures, city runs and tournaments",
+        gradient: "sports",
+        imageUrl: "/images/events/sports-1.jpg",
+        href: "events?category=sports",
+        status: "LIVE",
+        sortOrder: 5,
       },
       {
         cityId: ahmedabad.id,
@@ -1324,7 +1377,7 @@ async function main() {
         status: "SCHEDULED",
         startsAt: ist(2026, 10, 21),
         endsAt: ist(2026, 11, 12),
-        sortOrder: 2,
+        sortOrder: 6,
       },
       {
         cityId: ahmedabad.id,
@@ -1332,7 +1385,7 @@ async function main() {
         subtitle: "Draft — awaiting artwork",
         gradient: "holi",
         status: "DRAFT",
-        sortOrder: 3,
+        sortOrder: 7,
       },
     ],
   });

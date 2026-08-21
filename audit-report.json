@@ -898,57 +898,50 @@
       "check": "A14",
       "severity": "incomplete",
       "file": "src/app/(marketplace)/[city]/events/[slug]/page.tsx",
-      "line": 192,
+      "line": 210,
       "detail": "hardcoded en-IN — locale follows the content's country (lakh grouping is correct for INR and wrong for CAD)"
     },
     {
       "check": "A14",
       "severity": "incomplete",
       "file": "src/app/(marketplace)/[city]/events/[slug]/page.tsx",
-      "line": 341,
+      "line": 359,
       "detail": "hardcoded en-IN — locale follows the content's country (lakh grouping is correct for INR and wrong for CAD)"
     },
     {
       "check": "A14",
       "severity": "incomplete",
       "file": "src/app/(marketplace)/[city]/events/[slug]/page.tsx",
-      "line": 348,
+      "line": 366,
       "detail": "hardcoded en-IN — locale follows the content's country (lakh grouping is correct for INR and wrong for CAD)"
     },
     {
       "check": "A14",
       "severity": "incomplete",
       "file": "src/app/(marketplace)/[city]/events/page.tsx",
-      "line": 208,
+      "line": 247,
       "detail": "hardcoded en-IN — locale follows the content's country (lakh grouping is correct for INR and wrong for CAD)"
     },
     {
       "check": "A14",
       "severity": "incomplete",
       "file": "src/app/(marketplace)/[city]/festivals/[slug]/page.tsx",
-      "line": 73,
+      "line": 75,
       "detail": "hardcoded ₹ — money must render through <Money currency=…> so a CAD event does not display rupees"
     },
     {
       "check": "A14",
       "severity": "incomplete",
       "file": "src/app/(marketplace)/[city]/festivals/[slug]/page.tsx",
-      "line": 202,
+      "line": 204,
       "detail": "hardcoded ₹ — money must render through <Money currency=…> so a CAD event does not display rupees"
     },
     {
       "check": "A14",
       "severity": "incomplete",
       "file": "src/app/(marketplace)/[city]/festivals/[slug]/page.tsx",
-      "line": 202,
+      "line": 204,
       "detail": "hardcoded ₹ — money must render through <Money currency=…> so a CAD event does not display rupees"
-    },
-    {
-      "check": "A14",
-      "severity": "incomplete",
-      "file": "src/app/(marketplace)/[city]/organizers/[slug]/page.tsx",
-      "line": 150,
-      "detail": "hardcoded en-IN — locale follows the content's country (lakh grouping is correct for INR and wrong for CAD)"
     },
     {
       "check": "A14",
@@ -961,35 +954,42 @@
       "check": "A14",
       "severity": "incomplete",
       "file": "src/app/(marketplace)/[city]/organizers/[slug]/page.tsx",
-      "line": 200,
+      "line": 160,
+      "detail": "hardcoded en-IN — locale follows the content's country (lakh grouping is correct for INR and wrong for CAD)"
+    },
+    {
+      "check": "A14",
+      "severity": "incomplete",
+      "file": "src/app/(marketplace)/[city]/organizers/[slug]/page.tsx",
+      "line": 205,
       "detail": "hardcoded en-IN — locale follows the content's country (lakh grouping is correct for INR and wrong for CAD)"
     },
     {
       "check": "A14",
       "severity": "incomplete",
       "file": "src/app/(marketplace)/[city]/page.tsx",
-      "line": 241,
+      "line": 253,
       "detail": "hardcoded ₹ — money must render through <Money currency=…> so a CAD event does not display rupees"
     },
     {
       "check": "A14",
       "severity": "incomplete",
       "file": "src/app/(marketplace)/[city]/page.tsx",
-      "line": 356,
+      "line": 368,
       "detail": "hardcoded en-IN — locale follows the content's country (lakh grouping is correct for INR and wrong for CAD)"
     },
     {
       "check": "A14",
       "severity": "incomplete",
       "file": "src/app/(marketplace)/[city]/page.tsx",
-      "line": 357,
+      "line": 369,
       "detail": "hardcoded en-IN — locale follows the content's country (lakh grouping is correct for INR and wrong for CAD)"
     },
     {
       "check": "A14",
       "severity": "incomplete",
       "file": "src/app/(marketplace)/[city]/page.tsx",
-      "line": 514,
+      "line": 526,
       "detail": "hardcoded en-IN — locale follows the content's country (lakh grouping is correct for INR and wrong for CAD)"
     },
     {

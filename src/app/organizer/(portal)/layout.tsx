@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { ScanLine } from "lucide-react";
 import { DashShell } from "@/components/dash/dash-shell";
 import { StatusPill } from "@/components/ui";
 import { requireOrganizer } from "@/lib/auth/rbac";
@@ -62,6 +64,25 @@ export default async function OrganizerPortalLayout({
           <StatusPill status={ctx.status} />
         )
       }
+      /**
+       * The scanner again, in the topbar, and the duplication is deliberate.
+       *
+       * On a phone the rail is behind a hamburger, and the phone is exactly
+       * where someone reaches for the scanner — so the rail entry is the one
+       * that is hardest to get at precisely when it is wanted. This sits on
+       * every portal page at both widths; the label collapses on the smallest
+       * screens, the icon does not.
+       */
+      headerRight={
+        <Link
+          href="/scan"
+          className="shrink-0 inline-flex items-center gap-1.5 rounded-[11px] bg-primary px-3 py-2 text-[12.5px] font-extrabold text-white hover:bg-primary-dark hover:text-white transition-colors"
+        >
+          <ScanLine size={15} strokeWidth={2.6} />
+          <span className="hidden sm:inline">Scan tickets</span>
+          <span className="sr-only sm:hidden">Scan tickets</span>
+        </Link>
+      }
       groups={[
         {
           items: [
@@ -72,6 +93,28 @@ export default async function OrganizerPortalLayout({
               exact: true,
             },
             { href: "/organizer/events", label: "Events", icon: "events" },
+          ],
+        },
+        {
+          label: "At the gate",
+          items: [
+            {
+              // The scanner is a separate surface — its own dark theme, its
+              // own PWA manifest, its own service worker — and until now
+              // nothing in the entire app linked to it. Staff were expected to
+              // type the URL, which is not a thing anyone does at 8 PM in a
+              // queue.
+              //
+              // It lives in the rail rather than only in a per-event action
+              // because that is how it is actually used: someone opens the
+              // portal on a phone at the gate and wants the camera, not a
+              // path through two event pages to reach it. `/scan` then asks
+              // which gate — the organizer's own LIVE and PAUSED events are
+              // always in that list, so this never dead-ends.
+              href: "/scan",
+              label: "Gate scanner",
+              icon: "scanner",
+            },
           ],
         },
         {

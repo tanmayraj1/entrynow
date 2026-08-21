@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { shareMetadata } from "@/lib/site";
 import { BadgeCheck, Star } from "lucide-react";
 import { EventCard } from "@/components/marketplace/event-card";
 import { getViewerContext } from "@/lib/queries/viewer";
@@ -32,10 +33,14 @@ export async function generateMetadata({
   const { city, slug } = await params;
   const data = await load(city, slug);
   if (!data) return {};
-  return {
+  return shareMetadata({
     title: data.organizer.name,
-    description: data.organizer.bio ?? undefined,
-  };
+    description:
+      data.organizer.bio ??
+      `Events by ${data.organizer.name} in ${data.city.name} — dates, venues and tickets.`,
+    path: `/${city}/organizers/${slug}`,
+    type: "profile",
+  });
 }
 
 export default async function OrganizerProfilePage({

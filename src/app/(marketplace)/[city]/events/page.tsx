@@ -19,8 +19,47 @@ import { Button, Money } from "@/components/ui";
 import { getCityBySlug } from "@/lib/queries/marketplace";
 import { parseFilters, searchEvents } from "@/lib/queries/listing";
 import { TicketTearScreen } from "@/components/brand/ticket-tear";
+import { shareMetadata } from "@/lib/site";
 
-export const metadata: Metadata = { title: "Explore events" };
+/**
+ * The listing is a crawl trap unless it says otherwise.
+ *
+ * Ten facets — category, locality, festival, size, language, price, verified,
+ * when, date, sort, view — multiply out to more URLs than this marketplace has
+ * events, all of them near-duplicates of each other. Left alone a crawler
+ * spends its whole budget on `?sort=price_desc&view=list` permutations and
+ * never reaches the event pages that are the point.
+ *
+ * So: the bare listing is indexed and canonical to itself, and every filtered
+ * variant is `noindex, follow` — not indexed, but still crawled *through*, so
+ * the events it links to are found. `?category=` is the one exception, because
+ * "comedy in Ahmedabad" is a real query someone types and a real page to
+ * answer it with.
+ */
+export async function generateMetadata({
+  params,
+  searchParams,
+}: PageProps<"/[city]/events">): Promise<Metadata> {
+  const { city } = await params;
+  const sp = await searchParams;
+  const found = await getCityBySlug(city);
+  if (!found) return {};
+
+  const category = typeof sp.category === "string" ? sp.category : undefined;
+  const otherFacets = Object.keys(sp).filter(
+    (k) => k !== "category" && sp[k] !== undefined && sp[k] !== "",
+  );
+  const indexable = otherFacets.length === 0;
+
+  const label = category?.replace(/-/g, " ");
+
+  return shareMetadata({
+    title: label ? `${label} in ${found.name}` : `Events in ${found.name}`,
+    description: `Browse ${label ? `${label} ` : ""}events in ${found.name} — dates, venues, prices and instant digital tickets.`,
+    path: `/${city}/events${category ? `?category=${category}` : ""}`,
+    index: indexable,
+  });
+}
 
 /**
  * The city lookup decides 404 and so must stay *outside* the boundary; the

@@ -15,9 +15,13 @@ import { VenueDirections } from "@/components/marketplace/venue-directions";
 import {
   eventIsPublic,
   getEventDetail,
+  getEventShareMeta,
   getRatingBreakdown,
   getSimilarEvents,
 } from "@/lib/queries/event";
+import { JsonLd } from "@/components/seo/json-ld";
+import { eventJsonLd } from "@/lib/seo";
+import { shareMetadata, SITE_NAME } from "@/lib/site";
 import { TicketTearScreen } from "@/components/brand/ticket-tear";
 import { formatIstDate, formatIstTime, isTodayIst } from "@/lib/ist";
 import { tierRemaining } from "@/lib/availability";
@@ -28,13 +32,22 @@ export async function generateMetadata({
   params,
 }: PageProps<"/[city]/events/[slug]">): Promise<Metadata> {
   const { city, slug } = await params;
-  const e = await getEventDetail(city, slug);
+  // The lean projection, not `getEventDetail`. `generateMetadata` runs on
+  // every request to the page — including the one that then renders it — and
+  // pulling reviews, FAQs and gates twice to print a title is pure waste.
+  const e = await getEventShareMeta(city, slug);
   if (!e) return {};
-  return {
+
+  return shareMetadata({
     title: e.title,
-    description: e.summary ?? undefined,
-    openGraph: { title: e.title, description: e.summary ?? undefined },
-  };
+    description:
+      e.summary ??
+      `${e.title} at ${e.venue?.name ?? e.city.name}. Book digital tickets on ${SITE_NAME}.`,
+    path: `/${city}/events/${slug}`,
+    // `article`, not `website`: this is a single dated thing, and the scrapers
+    // that distinguish them render a richer card for it.
+    type: "article",
+  });
 }
 
 const PROHIBITED = [
@@ -98,6 +111,11 @@ async function EventDetail({
 
   return (
     <div className="pb-32 lg:pb-10">
+      {/* Inside the Suspense boundary, which is fine — a crawler waits for the
+          stream to finish, and putting it in `generateMetadata` instead would
+          mean re-querying the whole event to build it. */}
+      <JsonLd data={eventJsonLd(event, citySlug)} />
+
       {/* ------------------------------------------------------------ Gallery */}
       {/* The same plate the card uses, deliberately: cover art when the
           organizer has uploaded it, otherwise the navy plate with an oversized

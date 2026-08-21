@@ -393,9 +393,12 @@ export async function getPopularOrganizers(cityId: string, take = 6) {
   });
 }
 
+/** Slides past this never get looked at, and each one adds 5s to the cycle. */
+const BANNER_LIMIT = 6;
+
 export async function getActiveBanners(cityId: string) {
   const now = new Date();
-  return db.banner.findMany({
+  const rows = await db.banner.findMany({
     where: {
       status: "LIVE",
       // Each window condition and the city scope live in AND so their ORs
@@ -410,6 +413,18 @@ export async function getActiveBanners(cityId: string) {
     },
     orderBy: { sortOrder: "asc" },
   });
+
+  // City-specific first, then the national fillers — sorted here rather than
+  // in the query because the tie-break is "is cityId null", and expressing
+  // that as an `orderBy` reads as a puzzle. The set is a handful of rows.
+  //
+  // The generic banners exist so a newly-launched city is not a one-slide
+  // carousel, but they must never outrank a promotion someone wrote *for*
+  // this city — which is exactly what a plain `sortOrder` sort would do the
+  // moment a city banner was saved with a higher number.
+  return rows
+    .sort((a, b) => Number(a.cityId === null) - Number(b.cityId === null))
+    .slice(0, BANNER_LIMIT);
 }
 
 /** Platform stats band on the homepage. */

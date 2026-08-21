@@ -2,6 +2,7 @@ import Link from "next/link";
 import { EmptyStateArt } from "@/components/brand/illustrations";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { shareMetadata } from "@/lib/site";
 import { EventCard } from "@/components/marketplace/event-card";
 import { getViewerContext } from "@/lib/queries/viewer";
 import { Button } from "@/components/ui";
@@ -28,12 +29,13 @@ export async function generateMetadata({
   const { city, slug } = await params;
   const data = await load(city, slug);
   if (!data) return {};
-  return {
+  return shareMetadata({
     title: `${data.festival.name} in ${data.city.name}`,
     description:
       data.festival.description ??
       `${data.festival.name} events in ${data.city.name} — dates, venues, tickets.`,
-  };
+    path: `/${city}/festivals/${slug}`,
+  });
 }
 
 export default async function FestivalPage({

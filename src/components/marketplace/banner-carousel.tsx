@@ -107,7 +107,10 @@ export function BannerCarousel({
   return (
     <section
       aria-label="Offers and announcements"
-      className="relative px-4 md:px-6 lg:px-12 mt-4 md:mt-5"
+      // Full-bleed on a phone, guttered from `md`. A 32px gutter costs a
+      // narrow screen ~8% of the banner's width and makes the page's lead
+      // element read as a widget; edge-to-edge is what makes it a hero.
+      className="relative px-0 md:px-6 lg:px-12 mt-0 md:mt-5"
       onPointerEnter={() => (paused.current = true)}
       onPointerLeave={() => (paused.current = false)}
       onPointerDown={() => (paused.current = true)}
@@ -116,7 +119,11 @@ export function BannerCarousel({
       <div
         ref={stripRef}
         className={cn(
-          "flex overflow-x-auto snap-x snap-mandatory rounded-[20px]",
+          "flex overflow-x-auto snap-x snap-mandatory",
+          // Square corners while full-bleed: a rounded corner against the
+          // screen edge shows a sliver of page background and reads as a
+          // rendering fault rather than a radius.
+          "rounded-none md:rounded-[20px]",
           // Scrollbar hidden only once JS is live — without JS it is the
           // only affordance that the strip scrolls.
           enhanced && "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
@@ -138,10 +145,12 @@ export function BannerCarousel({
               className={cn(
                 "relative w-full shrink-0 snap-center overflow-hidden text-white",
                 // Sized by ratio, not fixed heights, so promo artwork crops
-                // predictably at every width. 5:2 on a phone, widening to 3:1
+                // predictably at every width. 2:1 on a phone — squarer than
+                // the desktop band because a narrow screen has the vertical
+                // room to spare and none of the horizontal — widening to 3:1
                 // on a desktop where a tall band would push the page's actual
                 // content off-screen. Artwork should be authored at 1800×600.
-                "aspect-[5/2] md:aspect-[1000/320] lg:aspect-[3/1]",
+                "aspect-[2/1] md:aspect-[1000/320] lg:aspect-[3/1]",
                 "max-h-[420px]",
               )}
               style={
@@ -203,7 +212,20 @@ export function BannerCarousel({
             <ChevronRight size={18} strokeWidth={2.6} />
           </button>
 
-          <div className="absolute inset-x-0 bottom-2.5 flex justify-center gap-1.5">
+          {/* Bottom-*right*, not centred, and each dot is a transparent 44px
+              box around a small pill.
+
+              Two constraints shape this. Globals give every `button` a 44px
+              floor on a coarse pointer, and `min-height` beats a utility's
+              `height` — so a `h-1.5` dot silently inflated into a 44px white
+              disc on every phone. Painting the pill on an inner span keeps the
+              touch target honest and the mark small.
+
+              That 44px box is invisible and sits over the banner, which is one
+              big link, so it has to go where nothing is: the copy and the
+              "Grab the offer" chip live at the left, so the dots take the far
+              corner rather than the centre they would otherwise swallow. */}
+          <div className="absolute bottom-0 right-1 md:right-8 lg:right-14 flex">
             {banners.map((b, i) => (
               <button
                 key={b.id}
@@ -212,10 +234,24 @@ export function BannerCarousel({
                 aria-current={i === active}
                 onClick={() => goTo(i)}
                 className={cn(
-                  "h-1.5 rounded-full transition-all cursor-pointer",
-                  i === active ? "w-5 bg-white" : "w-1.5 bg-white/55",
+                  "grid place-items-center h-11 w-6 cursor-pointer",
+                  // The 44px floor also applies to *width*, which would space
+                  // the pills 44px apart and stop them reading as one control.
+                  // Overlapping the boxes pulls the pitch back to 26px while
+                  // every target stays 44px tall and 44px wide; the overlap is
+                  // 9px of a neighbour's edge, never its pill.
+                  "[@media(pointer:coarse)]:-mx-[9px]",
                 )}
-              />
+              >
+                <span
+                  className={cn(
+                    "h-1.5 rounded-full transition-all",
+                    i === active
+                      ? "w-5 bg-white"
+                      : "w-1.5 bg-white/60 ring-1 ring-black/10",
+                  )}
+                />
+              </button>
             ))}
           </div>
         </>

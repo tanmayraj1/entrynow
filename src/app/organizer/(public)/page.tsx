@@ -1,6 +1,13 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { BarChart3, QrCode, ShieldCheck, Wallet } from "lucide-react";
+import {
+  BarChart3,
+  LayoutDashboard,
+  QrCode,
+  ScanLine,
+  ShieldCheck,
+  Wallet,
+} from "lucide-react";
 import { Button } from "@/components/ui";
 import { getSessionUser } from "@/lib/auth/session";
 import { getBusinessConfig } from "@/lib/config";
@@ -65,13 +72,35 @@ export default async function OrganizerLandingPage() {
           <div className="flex gap-2.5 flex-wrap mt-6">
             {profile ? (
               <>
-                <Link href="/organizer/onboarding">
-                  <Button size="lg">
-                    {profile.status === "VERIFIED"
-                      ? "Go to your portal"
-                      : "Finish setting up"}
-                  </Button>
+                {/* "Go to your portal" used to point at /organizer/onboarding
+                    regardless of status — so the one button a verified
+                    organizer was offered took them back through setup they had
+                    already finished. The label and the destination now agree. */}
+                <Link
+                  href={
+                    profile.status === "VERIFIED"
+                      ? "/organizer/dashboard"
+                      : "/organizer/onboarding"
+                  }
+                  className="inline-flex items-center gap-2 rounded-full bg-white px-6 h-12 text-[15px] font-extrabold text-[#16302B] hover:text-[#16302B] hover:bg-white/90 transition-colors"
+                >
+                  <LayoutDashboard size={17} strokeWidth={2.4} />
+                  {profile.status === "VERIFIED"
+                    ? "Go to your dashboard"
+                    : "Finish setting up"}
                 </Link>
+                {profile.status === "VERIFIED" && (
+                  /* The second door to the gate scanner. Someone standing at a
+                     venue does not navigate via a dashboard, and /organizer is
+                     the address they remember. */
+                  <Link
+                    href="/scan"
+                    className="inline-flex items-center gap-2 rounded-full border border-white/45 px-6 h-12 text-[15px] font-extrabold text-white hover:text-white hover:bg-white/12 transition-colors"
+                  >
+                    <ScanLine size={17} strokeWidth={2.4} />
+                    Scan tickets
+                  </Link>
+                )}
                 <span className="text-[13px] font-semibold opacity-80 self-center">
                   Signed in as {profile.name}
                 </span>
