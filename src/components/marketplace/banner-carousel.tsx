@@ -135,7 +135,15 @@ export function BannerCarousel({
             <Link
               key={b.id}
               href={href}
-              className="relative w-full shrink-0 snap-center overflow-hidden h-[170px] md:h-[230px] lg:h-[270px] text-white"
+              className={cn(
+                "relative w-full shrink-0 snap-center overflow-hidden text-white",
+                // Sized by ratio, not fixed heights, so promo artwork crops
+                // predictably at every width. 5:2 on a phone, widening to 3:1
+                // on a desktop where a tall band would push the page's actual
+                // content off-screen. Artwork should be authored at 1800×600.
+                "aspect-[5/2] md:aspect-[1000/320] lg:aspect-[3/1]",
+                "max-h-[420px]",
+              )}
               style={
                 b.imageUrl
                   ? undefined

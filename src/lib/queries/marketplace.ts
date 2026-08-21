@@ -280,6 +280,79 @@ export async function getFeaturedEvents(
   return (rows as unknown as RawEvent[]).map((e) => toCard(e, now));
 }
 
+/**
+ * Extra home-page rails.
+ *
+ * Deliberately one query with a switch rather than four near-identical
+ * exports: they differ only in a `where` clause and an `orderBy`, and four
+ * copies of `eventCardSelect` is four places to forget a field when the card
+ * grows one.
+ *
+ * Each rail must answer a question a browsing visitor actually asks, or it is
+ * just the trending list wearing a different hat:
+ *
+ *   soon     — "what can I go to this week?"   nearest upcoming session first
+ *   topRated — "what is actually good?"        highest rated, with enough
+ *                                              ratings to mean something
+ *   budget   — "what can I afford tonight?"    anything with a tier under ₹500
+ */
+export type RailKind = "soon" | "topRated" | "budget";
+
+const BUDGET_CEILING_PAISE = 50_000;
+
+export async function getEventRail(
+  cityId: string,
+  kind: RailKind,
+  take = 10,
+): Promise<EventCardData[]> {
+  const now = new Date();
+
+  const where =
+    kind === "soon"
+      ? {
+          cityId,
+          status: LIVE,
+          sessions: { some: { isActive: true, startsAt: { gte: now } } },
+        }
+      : kind === "topRated"
+        ? { cityId, status: LIVE, ratingCount: { gte: 50 } }
+        : {
+            cityId,
+            status: LIVE,
+            tiers: {
+              some: { isActive: true, pricePaise: { lte: BUDGET_CEILING_PAISE } },
+            },
+          };
+
+  const orderBy =
+    kind === "topRated"
+      ? ([{ ratingAvg: "desc" }, { ratingCount: "desc" }] as const)
+      : ([{ trendingScore: "desc" }, { viewCount: "desc" }] as const);
+
+  const rows = await db.event.findMany({
+    where,
+    orderBy: [...orderBy],
+    take,
+    select: eventCardSelect,
+  });
+
+  const cards = (rows as unknown as RawEvent[]).map((e) => toCard(e, now));
+
+  // "Soon" is a date question, and Prisma cannot order a parent by a filtered
+  // child's minimum. The set is already capped at `take`, so sorting the page
+  // in memory is cheaper than the correlated subquery would be.
+  if (kind === "soon") {
+    return cards
+      .filter((c) => c.nextSessionAt !== null)
+      .sort(
+        (a, b) =>
+          new Date(a.nextSessionAt!).getTime() -
+          new Date(b.nextSessionAt!).getTime(),
+      );
+  }
+  return cards;
+}
+
 /** Admin-pinned homepage curation, validated LIVE-only at render (spec G2). */
 export async function getCuratedEvents(cityId: string): Promise<EventCardData[]> {
   const now = new Date();

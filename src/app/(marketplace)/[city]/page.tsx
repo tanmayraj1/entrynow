@@ -14,8 +14,10 @@ import { MapExplorer } from "@/components/marketplace/map-explorer";
 import { BannerCarousel } from "@/components/marketplace/banner-carousel";
 import { getMapPins } from "@/lib/queries/map";
 import { Chip } from "@/components/ui";
+import type { EventCardData } from "@/lib/queries/marketplace";
 import {
   getActiveBanners,
+  getEventRail,
   getCategories,
   getCityBySlug,
   getCityStats,
@@ -99,6 +101,9 @@ async function CityHome({
     stats,
     mapPins,
     viewer,
+    soonRail,
+    topRatedRail,
+    budgetRail,
   ] = await Promise.all([
     getCategories(),
     getFestivalsWithCounts(city.id),
@@ -110,6 +115,9 @@ async function CityHome({
     // client fetch — the list is real content, not a loading state.
     getMapPins(city.id, { limit: 80 }),
     getViewerContext(),
+    getEventRail(city.id, "soon", 10),
+    getEventRail(city.id, "topRated", 10),
+    getEventRail(city.id, "budget", 10),
   ]);
 
 
@@ -206,6 +214,37 @@ async function CityHome({
           />
         )}
       </Section>
+
+      {/* ------------------------------------------------------ Curated rails */}
+      {/* Each answers a different question a browsing visitor actually asks.
+          Re-slicing the same trending list three times would look like more
+          choice while offering none. */}
+      <EventRail
+        title="Happening soon"
+        subtitle="The next few nights out"
+        events={soonRail}
+        citySlug={citySlug}
+        viewer={viewer}
+        href={`/${citySlug}/events?when=next30`}
+      />
+
+      <EventRail
+        title="Top rated"
+        subtitle="What people came back and praised"
+        events={topRatedRail}
+        citySlug={citySlug}
+        viewer={viewer}
+        href={`/${citySlug}/events?sort=rating`}
+      />
+
+      <EventRail
+        title="Under ₹500"
+        subtitle="A good night out that does not cost one"
+        events={budgetRail}
+        citySlug={citySlug}
+        viewer={viewer}
+        href={`/${citySlug}/events?maxPrice=500`}
+      />
 
       {/* ------------------------------------------------- Explore on the map */}
       <Section
@@ -387,6 +426,53 @@ function Section({
       </div>
       {children}
     </section>
+  );
+}
+
+/**
+ * One curated poster rail.
+ *
+ * Renders nothing at all when the rail is empty rather than showing an empty
+ * state: these are *extra* shelves below the main Featured section, and three
+ * "nothing here yet" panels stacked on a young city's home page reads as a
+ * broken product. The Featured section keeps its `EmptyRail`, because that one
+ * is load-bearing — a home page with no events at all must say so.
+ */
+function EventRail({
+  title,
+  subtitle,
+  events,
+  citySlug,
+  viewer,
+  href,
+}: {
+  title: string;
+  subtitle?: string;
+  events: EventCardData[];
+  citySlug: string;
+  viewer: { signedIn: boolean; wishlisted: Set<string> };
+  href: string;
+}) {
+  if (events.length === 0) return null;
+  return (
+    <Section title={title} subtitle={subtitle} action={{ href, label: "See all →" }}>
+      <div className="flex gap-3.5 md:gap-4 overflow-x-auto pb-3 -mx-4 px-4 md:mx-0 md:px-0 snap-x">
+        {events.map((e, i) => (
+          <Reveal
+            key={e.id}
+            delayMs={Math.min(i * 45, 270)}
+            className="shrink-0 w-[168px] sm:w-[190px] md:w-[210px] snap-start"
+          >
+            <EventCard
+              event={e}
+              citySlug={citySlug}
+              signedIn={viewer.signedIn}
+              wishlisted={viewer.wishlisted.has(e.id)}
+            />
+          </Reveal>
+        ))}
+      </div>
+    </Section>
   );
 }
 

@@ -77,7 +77,7 @@ export function BannerForm({ cities }: { cities: { id: string; name: string }[] 
         </Field>
         <Field
           label="Image"
-          hint="A path like /images/events/navratri-1.jpg, or a full https URL. Leave blank to use the gradient."
+          hint="A path like /images/events/navratri-1.jpg, or a full https URL. Author it at 1800×600 — the carousel crops to 3:1 on desktop and 5:2 on a phone. Leave blank to use the gradient."
         >
           <Input name="imageUrl" placeholder="/images/events/navratri-1.jpg" />
         </Field>

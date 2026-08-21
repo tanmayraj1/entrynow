@@ -5,11 +5,22 @@ import { X } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 /**
- * Modal / bottom sheet. Renders as a centred dialog on desktop and a bottom
- * sheet under the 768px breakpoint, matching the mobile responsive rules.
+ * A centred modal dialog, at every width.
  *
- * Uses the native <dialog> element so focus trapping, Escape-to-close and
- * inert-background come from the platform rather than a hand-rolled trap.
+ * Uses the native <dialog> element so focus trapping, Escape-to-close and an
+ * inert background come from the platform rather than a hand-rolled trap.
+ *
+ * **Centring is the browser's, not ours.** A modal `<dialog>` gets
+ * `position: fixed; inset: 0; margin: auto` from the UA stylesheet, which
+ * centres a shrink-to-fit box for free. The previous version overrode all
+ * three — `w-full h-full m-0` for a mobile bottom sheet — and tried to restore
+ * them at `sm:` with `sm:w-auto sm:h-auto sm:m-auto`. Those overrides silently
+ * lost the cascade, so the dialog stayed a full-viewport block with the panel
+ * as its first static child: the popup sat in the **top-left corner** on
+ * desktop, which is what it had been doing.
+ *
+ * So the element is left shrink-to-fit and simply bounded. Nothing here needs
+ * to win an override, which is why it now behaves the same at 390 and 1440.
  */
 export function Modal({
   open,
@@ -38,7 +49,7 @@ export function Modal({
     if (!open && el.open) el.close();
   }, [open]);
 
-  const widths = { sm: "sm:max-w-md", md: "sm:max-w-xl", lg: "sm:max-w-3xl" };
+  const widths = { sm: "max-w-md", md: "max-w-xl", lg: "max-w-3xl" };
 
   return (
     <dialog
@@ -52,17 +63,18 @@ export function Modal({
         if (dismissible && e.target === ref.current) onClose();
       }}
       className={cn(
-        "backdrop:bg-[rgba(22,48,43,.45)] bg-transparent p-0 m-0 max-w-none max-h-none",
-        "w-full h-full sm:w-auto sm:h-auto sm:m-auto",
+        "backdrop:bg-[rgba(22,48,43,.45)] bg-transparent p-0",
+        // Bounded, never sized. `m-auto` is the UA default restated so a
+        // future utility cannot quietly drop it again.
+        "m-auto w-[calc(100vw-2rem)] max-h-[calc(100dvh-2rem)]",
+        widths[size],
       )}
     >
       <div
         className={cn(
           "bg-surface text-ink shadow-[var(--shadow-modal)] w-full",
-          "fixed bottom-0 left-0 right-0 rounded-t-[var(--radius-card-lg)] max-h-[92vh]",
-          "sm:static sm:rounded-[var(--radius-card-lg)] sm:max-h-[85vh]",
-          widths[size],
-          "flex flex-col",
+          "rounded-[var(--radius-card-lg)] max-h-[calc(100dvh-2rem)]",
+          "flex flex-col overflow-hidden",
         )}
       >
         {title && (

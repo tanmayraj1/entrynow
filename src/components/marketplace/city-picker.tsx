@@ -1,8 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Crosshair, Loader2, MapPin } from "lucide-react";
+import { Crosshair, Loader2, Map, MapPin } from "lucide-react";
 import { Input, Modal } from "@/components/ui";
 import { CityGlyph } from "@/components/brand/city-glyph";
 import { cn } from "@/lib/cn";
@@ -194,6 +195,17 @@ export function CityPicker({
           )}
           {locating ? "Finding you…" : "Detect my location"}
         </button>
+
+        {/* The other way to answer "where are you?" — for someone who wants a
+            locality or a landmark rather than a whole city. */}
+        <Link
+          href={`/${citySlug}/events?view=map`}
+          onClick={() => setOpen(false)}
+          className="mt-2.5 flex items-center gap-2 text-[13.5px] font-bold text-ink-muted hover:text-primary"
+        >
+          <Map size={15} strokeWidth={2.6} />
+          Search on the map instead
+        </Link>
 
         {locationError && (
           <p role="status" className="mt-2 text-[12.5px] font-semibold text-ink-muted">
