@@ -11,28 +11,22 @@ import {
 import type { EventCardData } from "@/lib/queries/marketplace";
 
 /**
- * The marketplace event card — a 2:3 portrait poster.
+ * The marketplace event card — a 2:3 poster with its text underneath.
  *
- * Owner-directed redesign from the original landscape card (180px media +
- * white body): full-bleed portrait image with the metadata on a scrim, the
- * shape every Indian ticketing user already knows from movie posters. The
- * source photographs are landscape, so `object-cover` centre-crops them —
- * accepted deliberately when this was chosen: festival and concert shots
- * keep their subject in the middle.
+ * The first portrait version put every field on a scrim over the photograph.
+ * It read well on a dark concert shot and badly on a bright daytime one, which
+ * is the problem with overlaying text on artwork you do not control: the
+ * legibility depends on the picture. So only the things that are *chrome* stay
+ * on the image — the date, the rating, the urgency chip, the wishlist heart,
+ * each with its own opaque backing — and everything that is *content* moved
+ * below it onto the page background, where contrast is guaranteed.
  *
- * Two consequences of putting text ON the image instead of under it:
+ * There is deliberately no card border or panel around the text. The poster is
+ * the object; a box drawn around the caption would compete with it.
  *
- *   - **The title must clamp** (`line-clamp-2`). A body below an image can
- *     grow; an overlay cannot — a long title would climb the poster.
- *   - **The scrim is load-bearing, not decorative.** White text sits on an
- *     unknown photograph; without the gradient it is illegible one card in
- *     three. The same rule as the event page hero.
- *
- * What survives from the old card unchanged: the wishlist heart is a
- * **sibling** of the link (a nested control would be unreachable and a click
- * would navigate — the bug D-018 documents), the gold date badge, the urgency
- * chip vocabulary, and the sold-through bar — now a strip flush with the
- * card's bottom edge.
+ * The wishlist heart stays a **sibling** of the link rather than a child:
+ * nested interactive elements are invalid, unreachable by keyboard, and a tap
+ * on the heart would navigate instead of saving.
  */
 
 const CHIP_STYLES: Record<string, string> = {
@@ -69,15 +63,7 @@ export function EventCard({
   const href = `/${citySlug}/events/${event.slug}`;
 
   return (
-    // The wishlist control must be a sibling of the card link, not a child:
-    // nested interactive elements are invalid, unreachable by keyboard, and a
-    // click on the heart would navigate instead of saving.
-    <div
-      className={cn(
-        "group se-lift relative rounded-[18px] overflow-hidden bg-[#16264c]",
-        className,
-      )}
-    >
+    <div className={cn("group relative flex flex-col", className)}>
       <WishlistButton
         eventId={event.id}
         eventTitle={event.title}
@@ -87,46 +73,40 @@ export function EventCard({
         className="absolute top-2.5 right-2.5 z-10"
       />
 
-      <Link
-        href={href}
-        className="relative block aspect-[2/3] text-white hover:text-white"
-      >
-        {event.coverImageUrl ? (
-          <Image
-            src={event.coverImageUrl}
-            alt=""
-            fill
-            sizes="(max-width: 640px) 45vw, 220px"
-            className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04] motion-reduce:transition-none"
-          />
-        ) : (
-          // No cover art: the navy plate with the oversized category glyph —
-          // deliberately NOT a gradient block (D-019).
-          <span
-            aria-hidden
-            className="absolute -right-8 top-1/4 text-white/[.13]"
-            style={{ color: accent }}
-          >
-            <CategoryGlyph slug={event.categorySlug} size={220} strokeWidth={1.3} />
+      <Link href={href} className="flex flex-col text-ink hover:text-ink">
+        {/* The poster. `se-lift` is on this block alone — the caption below
+            should not float with it. */}
+        <div className="se-lift relative aspect-[2/3] rounded-[14px] overflow-hidden bg-[#16264c]">
+          {event.coverImageUrl ? (
+            <Image
+              src={event.coverImageUrl}
+              alt=""
+              fill
+              sizes="(max-width: 640px) 45vw, 220px"
+              className="object-cover"
+            />
+          ) : (
+            // No cover art: the navy plate with an oversized category glyph —
+            // deliberately not a gradient block (D-019).
+            <span
+              aria-hidden
+              className="absolute -right-8 top-1/4"
+              style={{ color: accent }}
+            >
+              <CategoryGlyph slug={event.categorySlug} size={220} strokeWidth={1.3} />
+            </span>
+          )}
+
+          <span className="absolute top-2.5 left-2.5 bg-gold text-ink text-[11.5px] font-extrabold px-2 py-[3px] rounded-[8px]">
+            {event.dateLabel}
           </span>
-        )}
 
-        {/* Load-bearing scrim — the metadata below sits on an unknown photo. */}
-        <div
-          aria-hidden
-          className="absolute inset-x-0 bottom-0 h-[62%] bg-gradient-to-t from-black/90 via-black/45 to-transparent"
-        />
-
-        <span className="absolute top-2.5 left-2.5 bg-gold text-ink text-[11.5px] font-extrabold px-2 py-[3px] rounded-[8px]">
-          {event.dateLabel}
-        </span>
-
-        {/* Bottom-anchored metadata stack. */}
-        <div className="absolute inset-x-0 bottom-0 flex flex-col gap-1 px-3.5 pb-4">
           {event.chip && (
             <span
               className={cn(
-                "self-start text-white text-[10.5px] font-extrabold px-2 py-[3px] rounded-full mb-0.5",
+                "absolute left-2.5 text-white text-[10.5px] font-extrabold px-2 py-[3px] rounded-full",
+                // Sits above the rating strip when there is one.
+                event.ratingCount > 0 ? "bottom-[38px]" : "bottom-2.5",
                 CHIP_STYLES[event.chip.kind],
               )}
             >
@@ -134,46 +114,53 @@ export function EventCard({
             </span>
           )}
 
-          <h3 className="text-[14.5px] font-extrabold leading-[1.25] line-clamp-2 [text-shadow:0_1px_10px_rgba(0,0,0,.5)]">
+          {/* Rating rides the poster on its own opaque bar, so it never has to
+              compete with whatever the photograph is doing. */}
+          {event.ratingCount > 0 && (
+            <div className="absolute inset-x-0 bottom-0 bg-black/72 backdrop-blur-[2px] px-2.5 py-1.5 flex items-center gap-1.5">
+              <Star size={12} className="fill-gold text-gold shrink-0" />
+              <span className="text-white text-[12px] font-extrabold">
+                {event.ratingAvg.toFixed(1)}
+              </span>
+              <span className="text-white/70 text-[11px] font-semibold">
+                ({event.ratingCount.toLocaleString("en-IN")})
+              </span>
+            </div>
+          )}
+
+          {/* Sold-through, hairline on the poster's bottom edge. */}
+          <span className="absolute inset-x-0 bottom-0 h-[3px] bg-white/25 block">
+            <span
+              className="block h-full"
+              style={{ width: `${soldPct}%`, background: barColor }}
+            />
+          </span>
+        </div>
+
+        {/* Caption — on the page, not on the picture. */}
+        <div className="pt-2.5 flex flex-col gap-[3px]">
+          <h3 className="text-[14px] font-extrabold leading-[1.3] line-clamp-2">
             {event.title}
           </h3>
-
-          <span className="flex items-center gap-1 text-[11.5px] text-white/75 font-semibold">
+          <span className="flex items-center gap-1 text-[12px] text-ink-muted font-semibold">
             <MapPin size={11} strokeWidth={2.2} className="shrink-0" />
             <span className="truncate">
               {event.localityName ?? event.venueName}
             </span>
           </span>
-
-          <div className="flex justify-between items-center gap-2 mt-0.5">
-            <span className="text-[13.5px] font-extrabold">
-              {event.fromPricePaise === null ? (
-                "Free"
-              ) : (
-                <>
-                  <span className="text-white/70 font-semibold text-[11px]">
-                    From{" "}
-                  </span>
-                  <Money paise={event.fromPricePaise} />
-                </>
-              )}
-            </span>
-            {event.ratingCount > 0 && (
-              <span className="flex items-center gap-1 text-[11.5px] font-bold shrink-0">
-                <Star size={11} className="fill-gold text-gold" />
-                {event.ratingAvg.toFixed(1)}
-              </span>
+          <span className="text-[13px] font-extrabold text-ink">
+            {event.fromPricePaise === null ? (
+              "Free"
+            ) : (
+              <>
+                <span className="text-ink-muted font-semibold text-[11.5px]">
+                  From{" "}
+                </span>
+                <Money paise={event.fromPricePaise} />
+              </>
             )}
-          </div>
+          </span>
         </div>
-
-        {/* Sold-through strip, flush with the card's bottom edge. */}
-        <span className="absolute inset-x-0 bottom-0 h-[4px] bg-white/20 block">
-          <span
-            className="block h-full"
-            style={{ width: `${soldPct}%`, background: barColor }}
-          />
-        </span>
       </Link>
     </div>
   );

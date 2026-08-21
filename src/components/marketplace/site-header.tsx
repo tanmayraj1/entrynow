@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Bell, Search } from "lucide-react";
 import { Logo } from "@/components/ui";
-import { CityPicker } from "./city-picker";
+import { CityPicker, type PickerCity } from "./city-picker";
 import { SearchOverlayTrigger } from "./search-overlay";
 import type { SessionUser } from "@/lib/auth/session";
 
@@ -20,7 +20,7 @@ export function SiteHeader({
 }: {
   citySlug: string;
   cityName: string;
-  cities: { slug: string; name: string }[];
+  cities: PickerCity[];
   user: SessionUser | null;
   unreadCount?: number;
 }) {
@@ -90,20 +90,33 @@ export function SiteHeader({
           </div>
 
           <div className="flex items-center gap-2.5 md:gap-3.5">
-            {/* City picker lives in the utility bar on desktop; surface it here
-                on mobile where that bar is hidden. */}
-            <span className="md:hidden">
-              <CityPicker
-                citySlug={citySlug}
-                cityName={cityName}
-                cities={cities}
-                compact
-              />
-            </span>
+            {/* City picker lives in the utility bar on desktop; its trigger is
+                surfaced here on mobile where that bar is hidden. The hiding is
+                on the button, not a wrapper — this instance owns the
+                first-visit prompt, and `Modal` renders in place, so a hidden
+                wrapper would hide the dialog with it. */}
+            <CityPicker
+              citySlug={citySlug}
+              cityName={cityName}
+              cities={cities}
+              compact
+              triggerClassName="md:hidden"
+              autoPrompt
+            />
 
+            {/* The home page used to carry a large search card in its hero.
+                That hero is gone, so search has to be findable here instead —
+                a visible field from `md` up, the round icon on a phone where
+                there is no room for one. Both open the same overlay. */}
             <SearchOverlayTrigger citySlug={citySlug}>
-              <span className="size-[38px] rounded-full bg-primary-tint grid place-items-center">
+              <span className="md:hidden size-[38px] rounded-full bg-primary-tint grid place-items-center">
                 <Search size={17} strokeWidth={2.4} className="text-primary" />
+              </span>
+              <span className="hidden md:flex items-center gap-2.5 w-[240px] lg:w-[330px] h-[38px] rounded-full border border-border bg-bg px-4 text-ink-muted hover:border-primary transition-colors">
+                <Search size={16} strokeWidth={2.4} className="text-primary shrink-0" />
+                <span className="text-[13.5px] font-semibold truncate">
+                  Search events, artists, venues
+                </span>
               </span>
             </SearchOverlayTrigger>
 

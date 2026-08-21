@@ -1,18 +1,12 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { BadgeCheck, Search, Sparkles, Star } from "lucide-react";
+import { BadgeCheck, Star } from "lucide-react";
 import { CategoryGlyph, categoryAccent } from "@/components/brand/category-glyph";
 import { Reveal } from "@/components/brand/reveal";
 import { cn } from "@/lib/cn";
-import {
-  EmptyStateArt,
-  HeroBackdrop,
-  OrnamentBand,
-  StepMedallion,
-} from "@/components/brand/illustrations";
+import { EmptyStateArt, StepMedallion } from "@/components/brand/illustrations";
 import { EventCard } from "@/components/marketplace/event-card";
 import { getViewerContext } from "@/lib/queries/viewer";
 import { FeaturedTabs } from "@/components/marketplace/featured-tabs";
@@ -27,7 +21,6 @@ import {
   getCityStats,
   getFeaturedEvents,
   getFestivalsWithCounts,
-  getLocalities,
   getPopularOrganizers,
   type FeaturedTab,
 } from "@/lib/queries/marketplace";
@@ -104,7 +97,6 @@ async function CityHome({
     organizers,
     banners,
     stats,
-    localities,
     mapPins,
     viewer,
   ] = await Promise.all([
@@ -114,167 +106,21 @@ async function CityHome({
     getPopularOrganizers(city.id),
     getActiveBanners(city.id),
     getCityStats(city.id),
-    getLocalities(city.id),
     // Rendered server-side so the map section has pins before its first
     // client fetch — the list is real content, not a loading state.
     getMapPins(city.id, { limit: 80 }),
     getViewerContext(),
   ]);
 
-  const trendingChips = [
-    { label: "Navratri 2026", href: `/${citySlug}/festivals/navratri-2026` },
-    { label: "This weekend", href: `/${citySlug}/events?when=weekend` },
-    { label: "Under ₹500", href: `/${citySlug}/events?maxPrice=500` },
-    { label: "Near me", href: `/${citySlug}/events?near=1` },
-  ];
 
   return (
     <>
-      {/* ---------------------------------------------------------------- Hero */}
-      {/* Height is a MINIMUM on mobile and fixed only from `md` up. The search
-          form stacks into three fields plus a button below `md`, which with the
-          headline and chips is taller than any fixed height that still looks
-          right on a phone — so a fixed `h-*` here silently clipped the trending
-          chips under `overflow-hidden` (D-027). */}
-      <section className="relative min-h-[440px] md:min-h-0 md:h-[400px] overflow-hidden">
-        <div
-          className="absolute inset-0"
-          style={{ background: "var(--brand-mesh)" }}
-        />
-        {/* Brand photograph, layered between the mesh and the vector backdrop.
-            `object-cover` + `priority` because this is the LCP element — a
-            lazy hero is a blank rectangle for the first second on 4G.
-            The mesh stays underneath so a slow or failed image leaves the
-            original gradient rather than a hole, and the multiply-free
-            scrim below keeps the white headline readable over the bright
-            stage lights in the upper third. */}
-        <Image
-          src="/images/hero-entry-v2.png"
-          alt=""
-          aria-hidden
-          fill
-          priority
-          sizes="100vw"
-          className="absolute inset-0 object-cover object-center"
-        />
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(14,26,56,.62)_0%,rgba(14,26,56,.44)_45%,rgba(14,26,56,.66)_100%)]" />
-        <HeroBackdrop />
-        {/* Bottom scrim so the search card's shadow has something to land on. */}
-        <div className="absolute inset-x-0 bottom-0 h-40 bg-[linear-gradient(180deg,transparent,rgba(14,26,56,.55))]" />
-
-        {/* `pb-14` clears the torana strip absolutely positioned at the bottom
-            edge; without it the chips sit under the garland on a phone. */}
-        <div className="relative min-h-[440px] md:h-full flex flex-col items-center justify-center gap-4 md:gap-5 px-4 md:px-12 pt-8 pb-14 md:py-0 text-center">
-          <div>
-            <p className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3.5 py-1.5 text-[12px] font-bold text-white/90 backdrop-blur-[6px]">
-              <Sparkles size={13} strokeWidth={2.6} className="text-gold" />
-              {stats.liveEvents.toLocaleString("en-IN")} live events in{" "}
-              {city.name} right now
-            </p>
-            <h1 className="text-white text-[26px] md:text-[38px] leading-[1.08] tracking-[-1px] mt-3.5 [text-shadow:0_2px_28px_rgba(0,0,0,.4)]">
-              Garba, comedy, concerts, theatre.
-              <br className="hidden md:block" /> Your ticket in three taps.
-            </h1>
-            <p className="hidden md:block text-white/85 text-[15px] mt-2.5">
-              Every night out in {city.name} — booked, scanned, entered.
-            </p>
-          </div>
-
-          {/* What / Where / When */}
-          <form
-            action={`/${citySlug}/events`}
-            className="bg-surface rounded-[18px] p-2.5 w-full max-w-[860px] shadow-[0_16px_48px_rgba(22,48,43,.35)] flex flex-col md:flex-row items-stretch md:items-center gap-2 md:gap-0"
-          >
-            <label className="flex-[1.3] px-4 py-1.5 md:border-r border-border text-left">
-              <span className="block text-[11px] font-bold text-ink-muted tracking-[0.06em]">
-                WHAT
-              </span>
-              <input
-                name="q"
-                placeholder="Event, artist or venue"
-                className="border-none outline-none text-[14.5px] w-full py-0.5 bg-transparent"
-              />
-            </label>
-            <label className="flex-1 px-4 py-1.5 md:border-r border-border text-left">
-              <span className="block text-[11px] font-bold text-ink-muted tracking-[0.06em]">
-                WHERE
-              </span>
-              <input
-                name="locality"
-                list="locality-options"
-                autoComplete="off"
-                placeholder={`Locality — ${localities
-                  .slice(0, 2)
-                  .map((l) => l.name)
-                  .join(", ")}…`}
-                className="border-none outline-none text-[14.5px] w-full py-0.5 bg-transparent"
-              />
-              {/* Real localities, so the field can be typed or picked. The
-                  query accepts the name or the slug. */}
-              <datalist id="locality-options">
-                {localities.map((l) => (
-                  <option key={l.id} value={l.name} />
-                ))}
-              </datalist>
-            </label>
-            <label className="flex-[.9] px-4 py-1.5 text-left">
-              <span className="block text-[11px] font-bold text-ink-muted tracking-[0.06em]">
-                WHEN
-              </span>
-              <input
-                name="date"
-                type="date"
-                className="border-none outline-none text-[14.5px] w-full py-0.5 bg-transparent"
-              />
-            </label>
-            <button
-              type="submit"
-              className="text-white font-bold text-[15px] px-7 py-3.5 rounded-[13px] flex items-center justify-center gap-2 cursor-pointer shrink-0 transition-[filter] hover:brightness-110"
-              style={{
-                background: "var(--brand-gradient)",
-                boxShadow: "var(--shadow-cta)",
-              }}
-            >
-              <Search size={16} strokeWidth={2.6} />
-              Search
-            </button>
-          </form>
-
-          <div className="flex gap-2.5 flex-wrap justify-center">
-            {trendingChips.map((c) => (
-              <Link
-                key={c.href}
-                href={c.href}
-                className="bg-white/[.14] border border-white/35 text-white text-[13px] font-semibold px-4 py-[7px] rounded-full backdrop-blur-[6px] hover:bg-white/[.28] hover:text-white"
-              >
-                {c.label}
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        {/* Torana across the hero's lower edge — the garland strung over a
-            doorway, which is what a hero on this product is. */}
-        <OrnamentBand className="absolute inset-x-0 bottom-0 h-[30px] opacity-90" />
-      </section>
-
       {/* --------------------------------------------------- Banner carousel */}
-      {/* Replaces the old "Offers for you" grid that sat two-thirds of the way
-          down the page — promoted content earns its slot by being seen. */}
+      {/* The page now opens on promoted content. The photo hero that used to
+          sit here carried the headline, the search card and the trending
+          chips; search moved into the header, where it is reachable from every
+          page rather than only this one. */}
       <BannerCarousel banners={banners} citySlug={citySlug} />
-
-      {/* ------------------------------------------------- Explore on the map */}
-      <Section
-        title="Explore on the map"
-        subtitle="Drag the map — the list follows"
-      >
-        <MapExplorer
-          citySlug={citySlug}
-          cityName={city.name}
-          cityCenter={{ lat: Number(city.lat), lng: Number(city.lng) }}
-          initialPins={mapPins}
-        />
-      </Section>
 
       {/* --------------------------------------------------------- Categories */}
       <Section
@@ -321,37 +167,6 @@ async function CityHome({
         </div>
       </Section>
 
-      {/* -------------------------------------------------- Festival calendar */}
-      <Section
-        title="Festival calendar"
-        subtitle={`Plan ahead — ${city.name}'s year of celebrations`}
-      >
-        <div className="flex gap-3.5 overflow-x-auto pb-2.5">
-          {festivals.map((f) => (
-            <Link
-              key={f.id}
-              href={`/${citySlug}/festivals/${f.slug}`}
-              className="shrink-0 w-[230px] bg-surface border-[1.5px] border-border rounded-[16px] p-4 flex flex-col gap-1.5 text-ink hover:border-primary hover:shadow-[0_8px_24px_rgba(13,138,114,.12)] transition-colors"
-            >
-              <span
-                className="w-[38px] h-1.5 rounded-[3px]"
-                style={{ background: categoryAccent(f.slug) }}
-              />
-              <span className="text-[16.5px] font-extrabold mt-1.5">
-                {f.name}
-              </span>
-              <span className="text-[13px] text-ink-muted font-semibold">
-                {formatIstShortDate(f.startsAt)} – {formatIstShortDate(f.endsAt)}
-              </span>
-              <span className="text-[12.5px] text-primary font-bold">
-                {f.eventCount} {f.eventCount === 1 ? "event" : "events"} in{" "}
-                {city.name}
-              </span>
-            </Link>
-          ))}
-        </div>
-      </Section>
-
       {/* ----------------------------------------------------- Featured events */}
       <Section
         title="Featured events"
@@ -390,6 +205,50 @@ async function CityHome({
             citySlug={citySlug}
           />
         )}
+      </Section>
+
+      {/* ------------------------------------------------- Explore on the map */}
+      <Section
+        title="Explore on the map"
+        subtitle="Drag the map — the list follows"
+      >
+        <MapExplorer
+          citySlug={citySlug}
+          cityName={city.name}
+          cityCenter={{ lat: Number(city.lat), lng: Number(city.lng) }}
+          initialPins={mapPins}
+        />
+      </Section>
+
+      {/* -------------------------------------------------- Festival calendar */}
+      <Section
+        title="Festival calendar"
+        subtitle={`Plan ahead — ${city.name}'s year of celebrations`}
+      >
+        <div className="flex gap-3.5 overflow-x-auto pb-2.5">
+          {festivals.map((f) => (
+            <Link
+              key={f.id}
+              href={`/${citySlug}/festivals/${f.slug}`}
+              className="shrink-0 w-[230px] bg-surface border-[1.5px] border-border rounded-[16px] p-4 flex flex-col gap-1.5 text-ink hover:border-primary hover:shadow-[0_8px_24px_rgba(13,138,114,.12)] transition-colors"
+            >
+              <span
+                className="w-[38px] h-1.5 rounded-[3px]"
+                style={{ background: categoryAccent(f.slug) }}
+              />
+              <span className="text-[16.5px] font-extrabold mt-1.5">
+                {f.name}
+              </span>
+              <span className="text-[13px] text-ink-muted font-semibold">
+                {formatIstShortDate(f.startsAt)} – {formatIstShortDate(f.endsAt)}
+              </span>
+              <span className="text-[12.5px] text-primary font-bold">
+                {f.eventCount} {f.eventCount === 1 ? "event" : "events"} in{" "}
+                {city.name}
+              </span>
+            </Link>
+          ))}
+        </div>
       </Section>
 
       {/* -------------------------------------------------- Popular organizers */}

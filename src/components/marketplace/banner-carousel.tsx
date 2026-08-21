@@ -16,7 +16,10 @@ export interface BannerSlide {
 }
 
 /**
- * The promotional banner carousel under the hero.
+ * The promotional banner carousel — now the first thing on the home page.
+ *
+ * It replaced a photo hero carrying a headline and a search card; search moved
+ * into the header, so promoted content leads instead of decoration.
  *
  * Structured the way `reveal.tsx` taught us to build enhancements: **the
  * markup works with no JavaScript at all.** The slides are a plain
@@ -104,7 +107,7 @@ export function BannerCarousel({
   return (
     <section
       aria-label="Offers and announcements"
-      className="relative px-4 md:px-6 lg:px-12 mt-5 md:mt-7"
+      className="relative px-4 md:px-6 lg:px-12 mt-4 md:mt-5"
       onPointerEnter={() => (paused.current = true)}
       onPointerLeave={() => (paused.current = false)}
       onPointerDown={() => (paused.current = true)}

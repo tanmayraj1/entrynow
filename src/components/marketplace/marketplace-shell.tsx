@@ -47,7 +47,15 @@ export async function MarketplaceShell({
       <SiteHeader
         citySlug={citySlug}
         cityName={city?.name ?? "Ahmedabad"}
-        cities={cities.map((c) => ({ slug: c.slug, name: c.name }))}
+        // Coordinates travel with the list so "detect my location" can snap
+        // to the nearest city we actually serve. Prisma Decimal does not cross
+        // the RSC boundary, hence Number().
+        cities={cities.map((c) => ({
+          slug: c.slug,
+          name: c.name,
+          lat: Number(c.lat),
+          lng: Number(c.lng),
+        }))}
         user={user}
         unreadCount={unreadCount}
       />
