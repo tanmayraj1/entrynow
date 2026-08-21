@@ -115,7 +115,9 @@ async function Listing({
               ))}
             </ul>
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            // Portrait posters are narrower than the old landscape cards, so
+            // the grid takes more columns at every width.
+            <div className="grid gap-3.5 md:gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
               {events.map((e) => (
                 <EventCard
                 key={e.id}

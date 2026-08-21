@@ -173,7 +173,7 @@ export default async function OrganizerProfilePage({
         <section className="pt-8">
           <h2 className="text-[20px] md:text-[24px] mb-3.5">Upcoming events</h2>
           {upcoming.length > 0 ? (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-3.5 md:gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
               {upcoming.map((e) => (
                 <EventCard
                 key={e.id}

@@ -132,11 +132,18 @@ afterAll(async () => {
     where: { ticketId: { in: createdTicketIds } },
   });
   await db.ticket.deleteMany({ where: { eventId } });
+  await db.booking.deleteMany({ where: { eventId } });
   await db.staffAssignment.deleteMany({ where: { id: assignmentId } });
   await db.gate.deleteMany({ where: { eventId } });
   await db.ticketTier.deleteMany({ where: { eventId } });
   await db.eventSession.deleteMany({ where: { eventId } });
   await db.event.deleteMany({ where: { id: eventId } });
+  if (foreignFixture) {
+    await db.ticket.deleteMany({ where: { eventId: foreignFixture.eventId } });
+    await db.booking.deleteMany({ where: { eventId: foreignFixture.eventId } });
+    await db.ticketTier.deleteMany({ where: { eventId: foreignFixture.eventId } });
+    await db.event.deleteMany({ where: { id: foreignFixture.eventId } });
+  }
   await db.$disconnect();
 });
 
@@ -162,11 +169,89 @@ async function makeTicket(opts: { seasonPass?: boolean } = {}) {
 }
 
 let cachedBookingId: string | null = null;
+/**
+ * A booking row for tickets to hang off. Created, not found: this suite used
+ * to `findFirstOrThrow` whatever booking happened to be lying around, which
+ * worked only because manual checkouts had left rows behind — the first run
+ * against a freshly seeded database threw before a single assertion ran. A
+ * test that depends on another surface's leftovers is a test of the leftovers.
+ */
 async function anyBookingId() {
-  cachedBookingId ??= (
-    await db.booking.findFirstOrThrow({ select: { id: true } })
-  ).id;
-  return cachedBookingId;
+  if (cachedBookingId) return cachedBookingId;
+  const existing = await db.booking.findFirst({ select: { id: true } });
+  if (existing) return (cachedBookingId = existing.id);
+  const created = await db.booking.create({
+    data: {
+      id: cuidish(),
+      bookingNumber: `EN9${Date.now().toString().slice(-5)}`,
+      status: "CONFIRMED",
+      userId,
+      eventId,
+      subtotalPaise: 0,
+      bookingFeePaise: 0,
+      gstOnFeePaise: 0,
+      totalPaise: 0,
+      gatewayPayablePaise: 0,
+      commissionPctUsed: 0,
+    },
+    select: { id: true },
+  });
+  return (cachedBookingId = created.id);
+}
+
+
+let foreignFixture: { ticketId: string; qrTokenId: string; eventId: string } | null = null;
+/**
+ * A genuine ACTIVE ticket belonging to a DIFFERENT organizer's event.
+ *
+ * Built, not found — the previous version pulled `findFirstOrThrow({ eventId:
+ * { not: eventId } })` and depended on some other suite or a manual checkout
+ * having left a ticket behind, which a fresh seed does not.
+ */
+async function foreignTicket() {
+  if (foreignFixture) return foreignFixture;
+  const otherOrg = await db.event.findFirstOrThrow({
+    where: { status: "LIVE", id: { not: eventId } },
+    select: { id: true, organizerId: true, categoryId: true, cityId: true, venueId: true },
+  });
+  const stamp = Date.now();
+  const ev = await db.event.create({
+    data: {
+      slug: `__test_foreign_${stamp}`,
+      title: `__test_foreign_${stamp}`,
+      shortCode: "TFO",
+      status: "LIVE",
+      organizerId: otherOrg.organizerId,
+      categoryId: otherOrg.categoryId,
+      cityId: otherOrg.cityId,
+      venueId: otherOrg.venueId,
+      publishedAt: new Date(),
+    },
+    select: { id: true },
+  });
+  const tier = await db.ticketTier.create({
+    data: { eventId: ev.id, name: "__test_foreign", pricePaise: 10_000, quantityTotal: 10 },
+    select: { id: true },
+  });
+  const booking = await db.booking.create({
+    data: {
+      id: cuidish(), bookingNumber: `EN8${Date.now().toString().slice(-5)}`,
+      status: "CONFIRMED", userId, eventId: ev.id,
+      subtotalPaise: 0, bookingFeePaise: 0, gstOnFeePaise: 0,
+      totalPaise: 0, gatewayPayablePaise: 0, commissionPctUsed: 0,
+    },
+    select: { id: true },
+  });
+  const t = await db.ticket.create({
+    data: {
+      id: cuidish(), ticketNumber: `EN-TFO-0001`, bookingId: booking.id,
+      userId, eventId: ev.id, tierId: tier.id, sessionId: null,
+      attendeeName: "Foreign Attendee", status: "ACTIVE",
+    },
+    select: { id: true, qrTokenId: true },
+  });
+  foreignFixture = { ticketId: t.id, qrTokenId: t.qrTokenId, eventId: ev.id };
+  return foreignFixture;
 }
 
 function farFuture() {
@@ -344,10 +429,7 @@ describe("the F1.3 check order", () => {
     // the *scanner* is legitimate, and the ticket is genuine — it simply
     // belongs to somebody else's event. It must not admit, and it must not
     // burn the other event's ticket either.
-    const foreign = await db.ticket.findFirstOrThrow({
-      where: { eventId: { not: eventId }, status: "ACTIVE" },
-      select: { id: true, qrTokenId: true, eventId: true },
-    });
+    const foreign = await foreignTicket();
     const foreignToken = await signQr(
       { jti: foreign.qrTokenId, ev: foreign.eventId },
       farFuture(),
@@ -364,7 +446,7 @@ describe("the F1.3 check order", () => {
     expect(outcome.message).toMatch(/different event/i);
 
     const row = await db.ticket.findUniqueOrThrow({
-      where: { id: foreign.id },
+      where: { id: foreign.ticketId },
       select: { status: true, scannedAt: true },
     });
     expect(row.status).toBe("ACTIVE");
@@ -377,10 +459,7 @@ describe("the F1.3 check order", () => {
     // between it and admission is the `ticket.eventId !== input.eventId`
     // comparison after the lookup. Worth its own test, because that is the
     // line someone would delete as redundant.
-    const foreign = await db.ticket.findFirstOrThrow({
-      where: { eventId: { not: eventId }, status: "ACTIVE" },
-      select: { id: true, qrTokenId: true },
-    });
+    const foreign = await foreignTicket();
 
     const outcome = await scanTicket({
       token: foreign.qrTokenId,
@@ -391,7 +470,7 @@ describe("the F1.3 check order", () => {
 
     expect(outcome.result).toBe("INVALID");
     const row = await db.ticket.findUniqueOrThrow({
-      where: { id: foreign.id },
+      where: { id: foreign.ticketId },
       select: { status: true },
     });
     expect(row.status).toBe("ACTIVE");

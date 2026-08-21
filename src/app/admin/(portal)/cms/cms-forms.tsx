@@ -38,6 +38,13 @@ export function CatalogToggle({
   );
 }
 
+/** The 12 runtime gradients from globals.css — composed as var(--gradient-…),
+ *  so this list has to be maintained by hand; Tailwind cannot see them. */
+const BANNER_GRADIENTS = [
+  "navratri", "diwali", "holi", "concert", "food", "comedy",
+  "theatre", "sports", "party", "workshop", "exhibition", "uttarayan",
+] as const;
+
 export function BannerForm({ cities }: { cities: { id: string; name: string }[] }) {
   return (
     <ActionForm action={upsertBanner} submitLabel="Save banner" size="sm">
@@ -66,6 +73,22 @@ export function BannerForm({ cities }: { cities: { id: string; name: string }[] 
             <option value="DRAFT">Draft</option>
             <option value="SCHEDULED">Scheduled</option>
             <option value="LIVE">Live</option>
+          </Select>
+        </Field>
+        <Field
+          label="Image"
+          hint="A path like /images/events/navratri-1.jpg, or a full https URL. Leave blank to use the gradient."
+        >
+          <Input name="imageUrl" placeholder="/images/events/navratri-1.jpg" />
+        </Field>
+        <Field label="Gradient" hint="The backdrop when no image is set.">
+          <Select name="gradient" defaultValue="">
+            <option value="">Default (Navratri)</option>
+            {BANNER_GRADIENTS.map((g) => (
+              <option key={g} value={g}>
+                {g.charAt(0).toUpperCase() + g.slice(1)}
+              </option>
+            ))}
           </Select>
         </Field>
       </div>

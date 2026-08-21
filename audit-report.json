@@ -95,11 +95,11 @@
     ]
   },
   "counts": {
-    "total": 173,
+    "total": 172,
     "blocker": 0,
     "broken": 0,
     "control": 0,
-    "incomplete": 173,
+    "incomplete": 172,
     "polish": 0
   },
   "findings": [
@@ -919,7 +919,7 @@
       "check": "A14",
       "severity": "incomplete",
       "file": "src/app/(marketplace)/[city]/events/page.tsx",
-      "line": 206,
+      "line": 208,
       "detail": "hardcoded en-IN — locale follows the content's country (lakh grouping is correct for INR and wrong for CAD)"
     },
     {
@@ -968,35 +968,35 @@
       "check": "A14",
       "severity": "incomplete",
       "file": "src/app/(marketplace)/[city]/page.tsx",
-      "line": 126,
+      "line": 127,
       "detail": "hardcoded ₹ — money must render through <Money currency=…> so a CAD event does not display rupees"
     },
     {
       "check": "A14",
       "severity": "incomplete",
       "file": "src/app/(marketplace)/[city]/page.tsx",
-      "line": 170,
+      "line": 171,
       "detail": "hardcoded en-IN — locale follows the content's country (lakh grouping is correct for INR and wrong for CAD)"
     },
     {
       "check": "A14",
       "severity": "incomplete",
       "file": "src/app/(marketplace)/[city]/page.tsx",
-      "line": 479,
+      "line": 458,
       "detail": "hardcoded en-IN — locale follows the content's country (lakh grouping is correct for INR and wrong for CAD)"
     },
     {
       "check": "A14",
       "severity": "incomplete",
       "file": "src/app/(marketplace)/[city]/page.tsx",
-      "line": 480,
+      "line": 459,
       "detail": "hardcoded en-IN — locale follows the content's country (lakh grouping is correct for INR and wrong for CAD)"
     },
     {
       "check": "A14",
       "severity": "incomplete",
       "file": "src/app/(marketplace)/[city]/page.tsx",
-      "line": 590,
+      "line": 569,
       "detail": "hardcoded en-IN — locale follows the content's country (lakh grouping is correct for INR and wrong for CAD)"
     },
     {
@@ -1159,13 +1159,6 @@
       "file": "src/app/styleguide/page.tsx",
       "line": 90,
       "detail": "hardcoded ₹ — money must render through <Money currency=…> so a CAD event does not display rupees"
-    },
-    {
-      "check": "A14",
-      "severity": "incomplete",
-      "file": "src/components/marketplace/event-card.tsx",
-      "line": 134,
-      "detail": "hardcoded en-IN — locale follows the content's country (lakh grouping is correct for INR and wrong for CAD)"
     },
     {
       "check": "A14",

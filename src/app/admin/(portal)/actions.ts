@@ -996,8 +996,15 @@ export async function upsertBanner(
     | "SCHEDULED"
     | "LIVE";
   const cityId = strOrNull(formData.get("cityId"));
+  const imageUrl = strOrNull(formData.get("imageUrl"));
+  const gradient = strOrNull(formData.get("gradient"));
 
   if (title.length < 3) return fail("Give the banner a title.");
+  // A path is fine, an absolute URL is fine; a bare word would produce a
+  // broken <Image> on the homepage carousel, so refuse it here.
+  if (imageUrl && !/^(\/|https?:\/\/)/.test(imageUrl)) {
+    return fail("Image must be a path like /images/… or a full https URL.");
+  }
 
   const ip = await requestIp();
   try {
@@ -1010,7 +1017,7 @@ export async function upsertBanner(
         if (!before) throw new Error("Not found.");
         await tx.banner.update({
           where: { id: bannerId },
-          data: { title, subtitle, href, status, cityId },
+          data: { title, subtitle, href, status, cityId, imageUrl, gradient },
         });
         await writeAudit(tx, {
           actorId: ctx.userId,
@@ -1019,12 +1026,12 @@ export async function upsertBanner(
           entityType: "Banner",
           entityId: bannerId,
           before,
-          after: { title, subtitle, href, status, cityId },
+          after: { title, subtitle, href, status, cityId, imageUrl, gradient },
           ip,
         });
       } else {
         const created = await tx.banner.create({
-          data: { id: cuidish(), title, subtitle, href, status, cityId },
+          data: { id: cuidish(), title, subtitle, href, status, cityId, imageUrl, gradient },
           select: { id: true },
         });
         await writeAudit(tx, {
@@ -1034,7 +1041,7 @@ export async function upsertBanner(
           entityType: "Banner",
           entityId: created.id,
           before: null,
-          after: { title, subtitle, href, status, cityId },
+          after: { title, subtitle, href, status, cityId, imageUrl, gradient },
           ip,
         });
       }

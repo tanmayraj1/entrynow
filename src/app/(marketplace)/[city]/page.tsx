@@ -17,6 +17,7 @@ import { EventCard } from "@/components/marketplace/event-card";
 import { getViewerContext } from "@/lib/queries/viewer";
 import { FeaturedTabs } from "@/components/marketplace/featured-tabs";
 import { MapExplorer } from "@/components/marketplace/map-explorer";
+import { BannerCarousel } from "@/components/marketplace/banner-carousel";
 import { getMapPins } from "@/lib/queries/map";
 import { Chip } from "@/components/ui";
 import {
@@ -135,7 +136,7 @@ async function CityHome({
           headline and chips is taller than any fixed height that still looks
           right on a phone — so a fixed `h-*` here silently clipped the trending
           chips under `overflow-hidden` (D-027). */}
-      <section className="relative min-h-[560px] md:min-h-0 md:h-[560px] overflow-hidden">
+      <section className="relative min-h-[440px] md:min-h-0 md:h-[400px] overflow-hidden">
         <div
           className="absolute inset-0"
           style={{ background: "var(--brand-mesh)" }}
@@ -163,18 +164,18 @@ async function CityHome({
 
         {/* `pb-14` clears the torana strip absolutely positioned at the bottom
             edge; without it the chips sit under the garland on a phone. */}
-        <div className="relative min-h-[560px] md:h-full flex flex-col items-center justify-center gap-5 md:gap-6 px-4 md:px-12 pt-10 pb-14 md:py-0 text-center">
+        <div className="relative min-h-[440px] md:h-full flex flex-col items-center justify-center gap-4 md:gap-5 px-4 md:px-12 pt-8 pb-14 md:py-0 text-center">
           <div>
             <p className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3.5 py-1.5 text-[12px] font-bold text-white/90 backdrop-blur-[6px]">
               <Sparkles size={13} strokeWidth={2.6} className="text-gold" />
               {stats.liveEvents.toLocaleString("en-IN")} live events in{" "}
               {city.name} right now
             </p>
-            <h1 className="text-white text-[28px] md:text-[46px] leading-[1.08] tracking-[-1.2px] mt-4 [text-shadow:0_2px_28px_rgba(0,0,0,.4)]">
+            <h1 className="text-white text-[26px] md:text-[38px] leading-[1.08] tracking-[-1px] mt-3.5 [text-shadow:0_2px_28px_rgba(0,0,0,.4)]">
               Garba, comedy, concerts, theatre.
               <br className="hidden md:block" /> Your ticket in three taps.
             </h1>
-            <p className="text-white/85 text-[14px] md:text-[17px] mt-3">
+            <p className="hidden md:block text-white/85 text-[15px] mt-2.5">
               Every night out in {city.name} — booked, scanned, entered.
             </p>
           </div>
@@ -256,6 +257,11 @@ async function CityHome({
             doorway, which is what a hero on this product is. */}
         <OrnamentBand className="absolute inset-x-0 bottom-0 h-[30px] opacity-90" />
       </section>
+
+      {/* --------------------------------------------------- Banner carousel */}
+      {/* Replaces the old "Offers for you" grid that sat two-thirds of the way
+          down the page — promoted content earns its slot by being seen. */}
+      <BannerCarousel banners={banners} citySlug={citySlug} />
 
       {/* ------------------------------------------------- Explore on the map */}
       <Section
@@ -354,15 +360,22 @@ async function CityHome({
         }
       >
         {featured.length > 0 ? (
-          <div className="grid gap-4 md:gap-[22px] sm:grid-cols-2 lg:grid-cols-3">
+          // A poster rail, not a grid — the BookMyShow home pattern. Native
+          // overflow scroll with snap; the negative margin lets the rail bleed
+          // to the viewport edge on phones so a half-visible card advertises
+          // that it scrolls.
+          <div className="flex gap-3.5 md:gap-4 overflow-x-auto pb-3 -mx-4 px-4 md:mx-0 md:px-0 snap-x">
             {featured.map((e, i) => (
-              <Reveal key={e.id} delayMs={Math.min(i * 45, 270)} className="h-full">
+              <Reveal
+                key={e.id}
+                delayMs={Math.min(i * 45, 270)}
+                className="shrink-0 w-[168px] sm:w-[190px] md:w-[210px] snap-start"
+              >
                 <EventCard
                   event={e}
                   citySlug={citySlug}
                   signedIn={viewer.signedIn}
                   wishlisted={viewer.wishlisted.has(e.id)}
-                  className="h-full"
                 />
               </Reveal>
             ))}
@@ -378,40 +391,6 @@ async function CityHome({
           />
         )}
       </Section>
-
-      {/* ------------------------------------------------------------- Offers */}
-      {banners.length > 0 && (
-        <Section title="Offers for you">
-          <div className="grid gap-4 md:gap-[22px] lg:grid-cols-2">
-            {banners.map((b) => (
-              <Link
-                key={b.id}
-                // Banner hrefs are stored relative to the city (see seed.ts);
-                // prefixing here keeps a visitor inside the city they chose.
-                href={
-                  b.href
-                    ? b.href.startsWith("http")
-                      ? b.href
-                      : `/${citySlug}/${b.href.replace(/^\/+/, "")}`
-                    : `/${citySlug}/events`
-                }
-                className="rounded-[20px] px-7 py-8 text-white flex flex-col gap-1.5 hover:brightness-[1.06] hover:text-white"
-                style={{ background: `var(--gradient-${b.gradient ?? "navratri"})` }}
-              >
-                <span className="text-[12px] font-extrabold tracking-[0.1em] opacity-90">
-                  {b.title.toUpperCase()}
-                </span>
-                <span className="text-[20px] md:text-[26px] font-extrabold tracking-[-0.5px]">
-                  {b.subtitle ?? b.title}
-                </span>
-                <span className="mt-2.5 bg-surface text-ink font-extrabold text-[13.5px] px-4 py-2 rounded-full w-fit">
-                  Grab the offer →
-                </span>
-              </Link>
-            ))}
-          </div>
-        </Section>
-      )}
 
       {/* -------------------------------------------------- Popular organizers */}
       {organizers.length > 0 && (

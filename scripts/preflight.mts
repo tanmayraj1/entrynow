@@ -20,7 +20,10 @@ const { randomUUID, createHash } = await import("node:crypto");
 const { SignJWT } = await import("jose");
 const { db } = await import("../src/lib/db.js");
 
-const BASE = "http://localhost:3000";
+// Overridable because the dev server does not always get port 3000 —
+// pointing these assertions at a stranger's server on 3000 would "test"
+// someone else's app and report nonsense either way.
+const BASE = process.env.PREFLIGHT_URL ?? "http://localhost:3000";
 let fail = 0, warn = 0;
 const ok = (l: string, pass: boolean, d = "") => {
   console.log(`${pass ? "  ok  " : " FAIL "} ${l}${d ? "  — " + d : ""}`); if (!pass) fail++;

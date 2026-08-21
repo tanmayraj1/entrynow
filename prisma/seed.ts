@@ -1294,6 +1294,9 @@ async function main() {
         title: "Navratri 2026 is live",
         subtitle: "Nine nights, twelve grounds, one ticket",
         gradient: "navratri",
+        // Exercises the image slide on the homepage carousel; the gradient
+        // stays as the fallback if the file ever disappears.
+        imageUrl: "/images/events/garba-navratri-1.jpg",
         // Stored relative to the city; the page prefixes the current city so a
         // banner can never navigate a Surat visitor into Ahmedabad.
         href: "festivals/navratri-2026",
@@ -1303,6 +1306,17 @@ async function main() {
         sortOrder: 0,
       },
       {
+        // cityId deliberately null: the national banner, which regression-tests
+        // the "All cities" path getActiveBanners used to drop on the floor.
+        cityId: null,
+        title: "Comedy nights every weekend",
+        subtitle: "Stand-up, improv and open mics from ₹199",
+        gradient: "comedy",
+        href: "events?category=comedy",
+        status: "LIVE",
+        sortOrder: 1,
+      },
+      {
         cityId: ahmedabad.id,
         title: "Diwali melas open soon",
         subtitle: "Early-bird passes from ₹199",
@@ -1310,7 +1324,7 @@ async function main() {
         status: "SCHEDULED",
         startsAt: ist(2026, 10, 21),
         endsAt: ist(2026, 11, 12),
-        sortOrder: 1,
+        sortOrder: 2,
       },
       {
         cityId: ahmedabad.id,
@@ -1318,7 +1332,7 @@ async function main() {
         subtitle: "Draft — awaiting artwork",
         gradient: "holi",
         status: "DRAFT",
-        sortOrder: 2,
+        sortOrder: 3,
       },
     ],
   });

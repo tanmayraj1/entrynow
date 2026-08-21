@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { MapPin, Star, BadgeCheck } from "lucide-react";
+import { MapPin, Star } from "lucide-react";
 import { Money } from "@/components/ui";
 import { WishlistButton } from "./wishlist-button";
 import { cn } from "@/lib/cn";
@@ -11,10 +11,28 @@ import {
 import type { EventCardData } from "@/lib/queries/marketplace";
 
 /**
- * The marketplace event card. Transcribed from the Home prototype: 180px
- * media, gold date badge top-left, urgency ribbon bottom-left, wishlist heart
- * top-right, then category chip + rating, title, organizer, locality, price
- * and a sold-through bar.
+ * The marketplace event card — a 2:3 portrait poster.
+ *
+ * Owner-directed redesign from the original landscape card (180px media +
+ * white body): full-bleed portrait image with the metadata on a scrim, the
+ * shape every Indian ticketing user already knows from movie posters. The
+ * source photographs are landscape, so `object-cover` centre-crops them —
+ * accepted deliberately when this was chosen: festival and concert shots
+ * keep their subject in the middle.
+ *
+ * Two consequences of putting text ON the image instead of under it:
+ *
+ *   - **The title must clamp** (`line-clamp-2`). A body below an image can
+ *     grow; an overlay cannot — a long title would climb the poster.
+ *   - **The scrim is load-bearing, not decorative.** White text sits on an
+ *     unknown photograph; without the gradient it is illegible one card in
+ *     three. The same rule as the event page hero.
+ *
+ * What survives from the old card unchanged: the wishlist heart is a
+ * **sibling** of the link (a nested control would be unreachable and a click
+ * would navigate — the bug D-018 documents), the gold date badge, the urgency
+ * chip vocabulary, and the sold-through bar — now a strip flush with the
+ * card's bottom edge.
  */
 
 const CHIP_STYLES: Record<string, string> = {
@@ -38,7 +56,7 @@ export function EventCard({
   wishlisted?: boolean;
 }) {
   const soldPct = Math.round(event.soldRatio * 100);
-  // Urgency, not decoration: the bar only leaves the calm ink colour once the
+  // Urgency, not decoration: the bar only leaves the calm colour once the
   // number it encodes is actually urgent.
   const barColor =
     event.soldRatio >= 0.9
@@ -56,8 +74,7 @@ export function EventCard({
     // click on the heart would navigate instead of saving.
     <div
       className={cn(
-        "group se-lift relative bg-surface border border-border rounded-[20px] overflow-hidden",
-        "flex flex-col",
+        "group se-lift relative rounded-[18px] overflow-hidden bg-[#16264c]",
         className,
       )}
     >
@@ -67,112 +84,96 @@ export function EventCard({
         initialWishlisted={wishlisted}
         signedIn={signedIn}
         returnTo={href}
-        className="absolute top-3 right-3 z-10"
+        className="absolute top-2.5 right-2.5 z-10"
       />
 
-      <Link href={href} className="flex flex-col grow text-ink hover:text-ink">
-        {/* The poster plate. When an organizer has uploaded cover art it wins;
-            the fallback is a deliberate navy plate with the category glyph
-            oversized behind the type, NOT a gradient block — a wall of
-            gradients was the loudest thing on the page and said nothing about
-            the event (D-019). */}
-        <div className="relative h-[180px] shrink-0 overflow-hidden bg-[#16264c]">
-          {event.coverImageUrl ? (
-            <Image
-              src={event.coverImageUrl}
-              alt=""
-              fill
-              sizes="(max-width: 768px) 100vw, 33vw"
-              className="object-cover"
-            />
-          ) : (
-            <>
-              <span
-                aria-hidden
-                className="absolute -right-5 -bottom-6 text-white/[.13] transition-transform duration-500 ease-out group-hover:scale-105 motion-reduce:transition-none"
-                style={{ color: accent }}
-              >
-                <CategoryGlyph slug={event.categorySlug} size={168} strokeWidth={1.4} />
-              </span>
-              <span
-                aria-hidden
-                className="absolute left-4 bottom-4 h-1 w-10 rounded-full"
-                style={{ background: accent }}
-              />
-              <span className="absolute left-4 bottom-8 right-16 text-white/95 text-[13px] font-extrabold leading-tight line-clamp-2">
-                {event.categoryName}
-              </span>
-            </>
-          )}
-
-          <span className="absolute top-3 left-3 bg-gold text-ink text-[12.5px] font-extrabold px-2.5 py-1 rounded-[9px]">
-            {event.dateLabel}
+      <Link
+        href={href}
+        className="relative block aspect-[2/3] text-white hover:text-white"
+      >
+        {event.coverImageUrl ? (
+          <Image
+            src={event.coverImageUrl}
+            alt=""
+            fill
+            sizes="(max-width: 640px) 45vw, 220px"
+            className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04] motion-reduce:transition-none"
+          />
+        ) : (
+          // No cover art: the navy plate with the oversized category glyph —
+          // deliberately NOT a gradient block (D-019).
+          <span
+            aria-hidden
+            className="absolute -right-8 top-1/4 text-white/[.13]"
+            style={{ color: accent }}
+          >
+            <CategoryGlyph slug={event.categorySlug} size={220} strokeWidth={1.3} />
           </span>
+        )}
 
+        {/* Load-bearing scrim — the metadata below sits on an unknown photo. */}
+        <div
+          aria-hidden
+          className="absolute inset-x-0 bottom-0 h-[62%] bg-gradient-to-t from-black/90 via-black/45 to-transparent"
+        />
+
+        <span className="absolute top-2.5 left-2.5 bg-gold text-ink text-[11.5px] font-extrabold px-2 py-[3px] rounded-[8px]">
+          {event.dateLabel}
+        </span>
+
+        {/* Bottom-anchored metadata stack. */}
+        <div className="absolute inset-x-0 bottom-0 flex flex-col gap-1 px-3.5 pb-4">
           {event.chip && (
             <span
               className={cn(
-                "absolute bottom-3 left-3 text-white text-[11.5px] font-extrabold px-2.5 py-1 rounded-full",
+                "self-start text-white text-[10.5px] font-extrabold px-2 py-[3px] rounded-full mb-0.5",
                 CHIP_STYLES[event.chip.kind],
               )}
             >
               {event.chip.label}
             </span>
           )}
-        </div>
 
-        <div className="flex flex-col gap-[7px] px-[18px] pt-4 pb-[18px] grow">
-          <div className="flex justify-between items-center gap-2">
-            <span className="text-[11.5px] font-extrabold text-primary bg-primary-tint px-2.5 py-[3px] rounded-full truncate">
-              {event.categoryName}
+          <h3 className="text-[14.5px] font-extrabold leading-[1.25] line-clamp-2 [text-shadow:0_1px_10px_rgba(0,0,0,.5)]">
+            {event.title}
+          </h3>
+
+          <span className="flex items-center gap-1 text-[11.5px] text-white/75 font-semibold">
+            <MapPin size={11} strokeWidth={2.2} className="shrink-0" />
+            <span className="truncate">
+              {event.localityName ?? event.venueName}
             </span>
-            {event.ratingCount > 0 && (
-              <span className="flex items-center gap-1 text-[12.5px] font-bold shrink-0">
-                <Star size={13} className="fill-gold text-gold" />
-                {event.ratingAvg.toFixed(1)}
-                <span className="text-ink-muted font-semibold">
-                  ({event.ratingCount.toLocaleString("en-IN")})
-                </span>
-              </span>
-            )}
-          </div>
-
-          <h3 className="text-[16.5px] leading-[1.3]">{event.title}</h3>
-
-          <span className="flex items-center gap-1.5 text-[12.5px] text-ink-muted font-semibold">
-            {event.organizerName}
-            {event.organizerVerified && (
-              <BadgeCheck size={13} className="text-primary shrink-0" />
-            )}
           </span>
 
-          <span className="flex items-center gap-1.5 text-[12.5px] text-ink-muted">
-            <MapPin size={12} strokeWidth={2.2} className="shrink-0" />
-            {event.localityName ?? event.venueName}
-          </span>
-
-          <div className="flex justify-between items-center mt-1 gap-2">
-            <span className="text-[15.5px] font-extrabold text-primary">
+          <div className="flex justify-between items-center gap-2 mt-0.5">
+            <span className="text-[13.5px] font-extrabold">
               {event.fromPricePaise === null ? (
                 "Free"
               ) : (
                 <>
-                  From <Money paise={event.fromPricePaise} />
+                  <span className="text-white/70 font-semibold text-[11px]">
+                    From{" "}
+                  </span>
+                  <Money paise={event.fromPricePaise} />
                 </>
               )}
             </span>
-            <span className="text-[11.5px] text-ink-muted font-semibold">
-              {soldPct}% sold
-            </span>
+            {event.ratingCount > 0 && (
+              <span className="flex items-center gap-1 text-[11.5px] font-bold shrink-0">
+                <Star size={11} className="fill-gold text-gold" />
+                {event.ratingAvg.toFixed(1)}
+              </span>
+            )}
           </div>
-
-          <span className="h-[5px] rounded-[3px] bg-primary-tint overflow-hidden block">
-            <span
-              className="block h-full rounded-[3px]"
-              style={{ width: `${soldPct}%`, background: barColor }}
-            />
-          </span>
         </div>
+
+        {/* Sold-through strip, flush with the card's bottom edge. */}
+        <span className="absolute inset-x-0 bottom-0 h-[4px] bg-white/20 block">
+          <span
+            className="block h-full"
+            style={{ width: `${soldPct}%`, background: barColor }}
+          />
+        </span>
       </Link>
     </div>
   );

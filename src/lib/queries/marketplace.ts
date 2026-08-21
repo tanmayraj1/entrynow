@@ -324,10 +324,16 @@ export async function getActiveBanners(cityId: string) {
   const now = new Date();
   return db.banner.findMany({
     where: {
-      cityId,
       status: "LIVE",
-      OR: [{ startsAt: null }, { startsAt: { lte: now } }],
-      AND: [{ OR: [{ endsAt: null }, { endsAt: { gte: now } }] }],
+      // Each window condition and the city scope live in AND so their ORs
+      // cannot swallow each other. `cityId: null` is the admin form's "All
+      // cities" — an exact `cityId` match here meant a national banner never
+      // rendered on any city home.
+      AND: [
+        { OR: [{ cityId }, { cityId: null }] },
+        { OR: [{ startsAt: null }, { startsAt: { lte: now } }] },
+        { OR: [{ endsAt: null }, { endsAt: { gte: now } }] },
+      ],
     },
     orderBy: { sortOrder: "asc" },
   });
