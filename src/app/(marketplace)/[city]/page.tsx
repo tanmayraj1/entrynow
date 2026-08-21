@@ -157,12 +157,22 @@ async function CityHome({
               <Reveal key={cat.id} delayMs={Math.min(i * 28, 340)} className="shrink-0">
                 <Link
                   href={`/${citySlug}/events?category=${cat.slug}`}
-                  className="group w-[108px] md:w-[126px] flex flex-col items-center gap-2.5 text-ink hover:text-ink"
+                  className="group w-[96px] md:w-[126px] flex flex-col items-center gap-1.5 md:gap-2.5 text-ink hover:text-ink"
                   style={{ ["--accent" as string]: accent }}
                 >
+                  {/* Rectangular on a phone, square from `md`.
+                     
+                      A square plate is right on a desktop, where the rail has
+                      room to spare. On a 390px screen the same shape is 108px
+                      tall before its label, so the twelve categories ate a
+                      third of the first screenful and pushed the events — the
+                      thing people came for — below the fold. A short wide
+                      plate carries the same glyph in half the height. */}
                   <span
                     className={cn(
-                      "relative grid place-items-center w-full aspect-square rounded-[20px]",
+                      "relative grid place-items-center w-full",
+                      "h-[58px] md:h-auto md:aspect-square",
+                      "rounded-[14px] md:rounded-[20px]",
                       "bg-surface border border-border overflow-hidden",
                       "transition-[transform,border-color,box-shadow,background-color] duration-200",
                       "group-hover:-translate-y-1 group-hover:border-[var(--accent)]",
@@ -170,14 +180,17 @@ async function CityHome({
                       "motion-reduce:transition-none motion-reduce:group-hover:translate-y-0",
                     )}
                   >
+                    {/* `size` writes width/height *attributes* on the SVG, which
+                        a CSS class overrides — so the glyph can be responsive
+                        even though the prop cannot be. */}
                     <CategoryGlyph
                       slug={cat.slug}
                       size={44}
                       strokeWidth={2.2}
-                      className="relative text-[var(--accent)] transition-colors duration-200 group-hover:text-white"
+                      className="relative size-[27px] md:size-[44px] text-[var(--accent)] transition-colors duration-200 group-hover:text-white"
                     />
                   </span>
-                  <span className="text-[12.5px] md:text-[13.5px] font-bold text-center leading-tight group-hover:text-[var(--accent)] transition-colors">
+                  <span className="text-[11.5px] md:text-[13.5px] font-bold text-center leading-tight group-hover:text-[var(--accent)] transition-colors">
                     {cat.name}
                   </span>
                 </Link>

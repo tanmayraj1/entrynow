@@ -20,7 +20,8 @@ export default async function AdminOrganizerDetailPage({
 
   const detail = await getOrganizerDetail(id);
   if (!detail) notFound();
-  const { profile, events, unsettledPaise, payouts } = detail;
+  const { profile, events, unsettledPaise, commissionPaise, grossPaise, payouts } =
+    detail;
 
   return (
     <div className="flex flex-col gap-5">
@@ -61,7 +62,30 @@ export default async function AdminOrganizerDetailPage({
         </div>
       )}
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+        <StatCard
+          label="Gross sold"
+          paise={grossPaise}
+          hint="Confirmed bookings, lifetime"
+        />
+        {/* The platform's own revenue from this organizer. The effective rate
+            is shown rather than the configured one: an override, a promo or a
+            mid-life rate change all make the two differ, and the number that
+            settles an argument is the one the ledger actually charged. */}
+        <StatCard
+          label="Commission earned"
+          paise={commissionPaise}
+          hint={
+            grossPaise > 0
+              ? `${((commissionPaise / grossPaise) * 100).toFixed(1)}% effective${
+                  profile.commissionPctOverride !== null
+                    ? ` · ${profile.commissionPctOverride}% override set`
+                    : ""
+                }`
+              : "Nothing sold yet"
+          }
+          tone="positive"
+        />
         <StatCard
           label="Unsettled"
           paise={unsettledPaise}

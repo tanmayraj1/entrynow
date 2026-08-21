@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
 import { AuthForm } from "@/app/auth/auth-form";
+import { signOut } from "@/app/auth/actions";
 
 /**
  * The staff sign-in screen, shared by the organizer and admin doors.
@@ -32,6 +33,7 @@ export function StaffDoor({
   blurb,
   next,
   footnote,
+  signedInAs,
 }: {
   theme: "dash-organizer" | "dash-admin";
   /** Small label above the card — which portal this is. */
@@ -41,6 +43,19 @@ export function StaffDoor({
   /** Where to land after a successful sign-in. */
   next: string;
   footnote?: React.ReactNode;
+  /**
+   * Someone is already signed in, and it is not an account this door admits.
+   *
+   * Offering a way out is not a nicety here, it is the difference between a
+   * recoverable state and a dead end. `requireAdmin` answers a signed-in
+   * non-admin with `notFound()` — deliberately, so the portal cannot be
+   * enumerated — so all they see at /admin is the marketplace 404. If they
+   * find their way to this door, it tells them their account has no admin
+   * role and then offers nothing to do about it: the only sign-out control in
+   * the whole app lives in /account, which is a consumer page they have no
+   * reason to visit and no reason to guess at.
+   */
+  signedInAs?: { name: string | null } | null;
 }) {
   return (
     <div
@@ -60,6 +75,25 @@ export function StaffDoor({
       <div className="w-full max-w-[400px] bg-surface border border-border rounded-[20px] p-6 md:p-8 shadow-[var(--shadow-e2)]">
         <AuthForm next={next} heading={heading} blurb={blurb} showTerms={false} />
       </div>
+
+      {signedInAs && (
+        <form
+          action={signOut}
+          className="flex flex-col items-center gap-1.5 text-center"
+        >
+          <p className="text-[12px] font-semibold text-ink-muted">
+            Signed in as{" "}
+            <span className="text-ink">{signedInAs.name ?? "another account"}</span>
+            , which cannot open this portal.
+          </p>
+          <button
+            type="submit"
+            className="text-[12.5px] font-extrabold text-danger hover:text-danger-dark cursor-pointer"
+          >
+            Sign out and use a different number
+          </button>
+        </form>
+      )}
 
       {footnote && (
         <p className="text-[12px] font-semibold text-ink-muted text-center max-w-[400px] leading-relaxed">

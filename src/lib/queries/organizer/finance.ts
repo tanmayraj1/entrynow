@@ -151,21 +151,80 @@ export async function getRevenueByEvent(organizerId: OrganizerId) {
   });
   if (!grouped.length) return [];
 
-  const events = await db.event.findMany({
-    where: { organizerId, id: { in: grouped.map((g) => g.eventId) } },
-    select: { id: true, title: true, status: true },
-  });
+  const [events, commission] = await Promise.all([
+    db.event.findMany({
+      where: { organizerId, id: { in: grouped.map((g) => g.eventId) } },
+      select: { id: true, title: true, status: true },
+    }),
+    commissionByEvent(organizerId),
+  ]);
   const byId = new Map(events.map((e) => [e.id, e]));
 
   return grouped
-    .map((g) => ({
-      eventId: g.eventId,
-      title: byId.get(g.eventId)?.title ?? "—",
-      status: byId.get(g.eventId)?.status ?? "DRAFT",
-      grossPaise: g._sum.totalPaise ?? 0,
-      bookings: g._count._all,
-    }))
+    .map((g) => {
+      const grossPaise = g._sum.totalPaise ?? 0;
+      const commissionPaise = commission.get(g.eventId) ?? 0;
+      return {
+        eventId: g.eventId,
+        title: byId.get(g.eventId)?.title ?? "—",
+        status: byId.get(g.eventId)?.status ?? "DRAFT",
+        grossPaise,
+        // What the platform charged on this event — commission plus the GST on
+        // it, reported positive because that is how a fee reads on an invoice.
+        commissionPaise,
+        // Gross minus our cut. Not the same as the organizer's ledger balance
+        // for the event: refunds, wallet redemptions and the attendee-paid
+        // booking fee all move that too. Labelled "after commission" in the UI
+        // rather than "payout" for exactly that reason.
+        netPaise: grossPaise - commissionPaise,
+        bookings: g._count._all,
+      };
+    })
     .sort((a, b) => b.grossPaise - a.grossPaise);
+}
+
+/**
+ * Commission charged, grouped by event.
+ *
+ * Raw SQL because the grouping key lives one relation away: commission is
+ * recorded on `LedgerEntry`, which knows its `bookingId`, and the event is on
+ * the booking. Prisma's `groupBy` cannot group by a relation's column, and the
+ * alternatives are both worse — grouping by `bookingId` pulls one row per
+ * booking into memory to fold by hand, and a per-event subquery is N+1.
+ *
+ * The `::bigint` and the `Number()` are a pair, and both are load-bearing.
+ * Postgres widens `SUM` to `bigint` on its own; casting back down to `int`
+ * would be tidier to read and would *throw* — "integer out of range" — the day
+ * one event's commission passes ₹21.4M, which is only a few thousand tickets
+ * at the top end. A BigInt cannot cross the RSC boundary either (it throws on
+ * serialisation), so it is narrowed to a `number` here, at the query layer,
+ * where paise stay exact well past any figure this platform will see.
+ *
+ * Signs are flipped on the way out. Commission legs are negative against the
+ * organizer (money leaving them); the number an operator wants to read is the
+ * positive cost.
+ *
+ * The `account = 'ORGANIZER'` filter is redundant *today* — `organizerId` is
+ * only populated on organizer-side legs — but the redundancy is the point.
+ * Every commission charge also writes a mirrored `PLATFORM` leg of the
+ * opposite sign, so anything that sums these types without naming a side gets
+ * exactly zero back. Stating the side means this query cannot silently start
+ * returning nothing if `organizerId` is ever set on both legs.
+ */
+async function commissionByEvent(
+  organizerId: OrganizerId,
+): Promise<Map<string, number>> {
+  const rows = await db.$queryRaw<{ eventId: string; amountPaise: bigint }[]>`
+    SELECT b."eventId" AS "eventId",
+           SUM(l."amountPaise")::bigint AS "amountPaise"
+      FROM ledger_entries l
+      JOIN bookings b ON b.id = l."bookingId"
+     WHERE l."organizerId" = ${organizerId}
+       AND l."account" = 'ORGANIZER'
+       AND l."type" IN ('COMMISSION', 'GST_COMMISSION')
+     GROUP BY b."eventId"
+  `;
+  return new Map(rows.map((r) => [r.eventId, Math.abs(Number(r.amountPaise))]));
 }
 
 /** Promo codes this organizer owns, plus their own event-scoped ones. */

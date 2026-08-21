@@ -23,7 +23,7 @@ const { randomUUID, createHash } = await import("node:crypto");
 const { SignJWT } = await import("jose");
 const { db } = await import("../src/lib/db.js");
 
-const BASE = "http://localhost:3000";
+const BASE = process.env.E2E_URL ?? "http://localhost:3000";
 
 const user = await db.user.findFirst({ where: { phone: "919812345001" } });
 if (!user) throw new Error("seed user missing");

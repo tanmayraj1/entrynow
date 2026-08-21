@@ -262,6 +262,14 @@ do it **before** selling, not after.
   card at all. `/_next/image` re-encodes to progressive (and to AVIF unless you
   pin `Accept`), so cover photos are embedded from the original baseline file
   and checked by `isDecodable()` before they reach the renderer.
+- **Summing a ledger `type` without naming an `account` returns zero.**
+  Commission is double-entry: every charge writes `PLATFORM +X` *and*
+  `ORGANIZER −X`, which is what makes a booking's rows sum to 0 (I3). So
+  `where: { type: { in: ["COMMISSION", "GST_COMMISSION"] } }` sums both legs and
+  yields 0.00 for every booking — a column of dashes that reads as "no
+  commission configured" rather than as a bug. The organizer-side queries get
+  away without it only because `organizerId` is populated on ORGANIZER legs
+  alone. Any query grouping by *booking* or *event* must say `account`.
 - **Per-route `openGraph` / `twitter` metadata REPLACES the root's, never
   merges.** Returning `twitter: { title }` from a `generateMetadata` silently
   discards `card: "summary_large_image"` and turns the 1200×630 card into a

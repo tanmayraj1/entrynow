@@ -33,11 +33,14 @@ export default async function AdminLoginPage() {
       heading="Admin sign in"
       blurb="Restricted to Entry Now staff. Use your registered mobile number — we'll text you a six-digit code."
       next="/admin"
+      // A signed-in non-admin is exactly who ends up here: `requireAdmin`
+      // answers them with `notFound()`, so /admin looks like a dead URL rather
+      // than a refusal. This door is the only place that can explain it.
+      signedInAs={user && !user.isAdmin ? { name: user.name } : null}
       footnote={
         user ? (
           <>
-            You&apos;re signed in, but this account has no admin role.{" "}
-            <Link href="/">Return to Entry Now</Link>.
+            Not expecting this? <Link href="/">Return to Entry Now</Link>.
           </>
         ) : undefined
       }

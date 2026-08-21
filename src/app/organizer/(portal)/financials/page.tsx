@@ -91,9 +91,13 @@ export default async function OrganizerFinancialsPage({
       )}
 
       <section className="bg-surface border border-border rounded-[var(--radius-card)] overflow-hidden">
-        <h2 className="text-[14px] font-extrabold px-4 py-3 border-b border-border">
-          Revenue by event
-        </h2>
+        <div className="px-4 py-3 border-b border-border">
+          <h2 className="text-[14px] font-extrabold">Revenue by event</h2>
+          <p className="text-[11.5px] font-semibold text-ink-muted mt-0.5">
+            Gross is what attendees paid. Commission is what Entry Now charged
+            on it, including GST on the fee.
+          </p>
+        </div>
         {byEvent.length === 0 ? (
           <EmptyState
             title="No sales yet"
@@ -107,6 +111,8 @@ export default async function OrganizerFinancialsPage({
                 <Th>Status</Th>
                 <Th numeric>Bookings</Th>
                 <Th numeric>Gross</Th>
+                <Th numeric>Commission</Th>
+                <Th numeric>After commission</Th>
               </Tr>
             </thead>
             <tbody>
@@ -118,9 +124,36 @@ export default async function OrganizerFinancialsPage({
                   </Td>
                   <Td numeric>{e.bookings}</Td>
                   <Td numeric>{inr(e.grossPaise)}</Td>
+                  {/* Negative-signed on screen, because this is money out.
+                      The stored ledger legs are already negative; the query
+                      reports magnitude, so the sign belongs here. */}
+                  <Td numeric className="text-ink-muted">
+                    {e.commissionPaise > 0 ? `−${inr(e.commissionPaise)}` : "—"}
+                  </Td>
+                  <Td numeric className="font-extrabold">
+                    {inr(e.netPaise)}
+                  </Td>
                 </Tr>
               ))}
             </tbody>
+            <tfoot>
+              <Tr>
+                <Td className="font-extrabold">Total</Td>
+                <Td />
+                <Td numeric className="font-extrabold">
+                  {byEvent.reduce((s, e) => s + e.bookings, 0)}
+                </Td>
+                <Td numeric className="font-extrabold">
+                  {inr(byEvent.reduce((s, e) => s + e.grossPaise, 0))}
+                </Td>
+                <Td numeric className="font-extrabold text-ink-muted">
+                  −{inr(byEvent.reduce((s, e) => s + e.commissionPaise, 0))}
+                </Td>
+                <Td numeric className="font-extrabold">
+                  {inr(byEvent.reduce((s, e) => s + e.netPaise, 0))}
+                </Td>
+              </Tr>
+            </tfoot>
           </Table>
         )}
       </section>

@@ -1,6 +1,9 @@
 import "server-only";
 
-import type { DisputeStatus, EventStatus, Prisma } from "@/generated/prisma";
+import type { DisputeStatus, EventStatus } from "@/generated/prisma";
+// A value import, not `import type`: `Prisma.join` builds the parameter list
+// for the one raw query below, and a type-only import compiles to nothing.
+import { Prisma } from "@/generated/prisma";
 import { db } from "@/lib/db";
 
 /**
@@ -215,20 +218,43 @@ export async function listOrganizers(opts: {
     }),
   ]);
 
-  // Unsettled balance per organizer, in one grouped query rather than N.
+  // Balance, commission and GMV per organizer — three grouped queries rather
+  // than three per row.
   const balances = new Map<string, number>();
+  const commission = new Map<string, number>();
+  let gmv = new Map<string, number>();
   if (rows.length) {
-    const grouped = await db.ledgerEntry.groupBy({
-      by: ["organizerId"],
-      where: {
-        organizerId: { in: rows.map((r) => r.id) },
-        payoutId: null,
-      },
-      _sum: { amountPaise: true },
-    });
-    for (const g of grouped) {
+    const ids = rows.map((r) => r.id);
+    const [unsettled, fees, gross] = await Promise.all([
+      db.ledgerEntry.groupBy({
+        by: ["organizerId"],
+        where: { organizerId: { in: ids }, payoutId: null },
+        _sum: { amountPaise: true },
+      }),
+      db.ledgerEntry.groupBy({
+        by: ["organizerId"],
+        where: {
+          organizerId: { in: ids },
+          // Name the side — see the note in `listAllBookings`. Summing these
+          // types across both legs yields zero.
+          account: "ORGANIZER",
+          type: { in: ["COMMISSION", "GST_COMMISSION"] },
+        },
+        _sum: { amountPaise: true },
+      }),
+      grossByOrganizer(ids),
+    ]);
+    for (const g of unsettled) {
       if (g.organizerId) balances.set(g.organizerId, g._sum.amountPaise ?? 0);
     }
+    for (const g of fees) {
+      // Commission legs are negative against the organizer; the platform reads
+      // its own revenue as positive.
+      if (g.organizerId) {
+        commission.set(g.organizerId, Math.abs(g._sum.amountPaise ?? 0));
+      }
+    }
+    gmv = gross;
   }
 
   return {
@@ -240,8 +266,37 @@ export async function listOrganizers(opts: {
         ? Number(r.commissionPctOverride)
         : null,
       unsettledPaise: balances.get(r.id) ?? 0,
+      commissionPaise: commission.get(r.id) ?? 0,
+      grossPaise: gmv.get(r.id) ?? 0,
     })),
   };
+}
+
+/**
+ * Confirmed gross, grouped by organizer.
+ *
+ * Raw SQL for the same reason as `commissionByEvent` in the organizer's own
+ * finance queries: the grouping key is one relation away — bookings know their
+ * event, events know their organizer — and Prisma's `groupBy` cannot group by
+ * a relation's column.
+ *
+ * `::bigint` then `Number()`, never `::int`: a cast back down to `int` throws
+ * "integer out of range" once an organizer's lifetime gross passes ₹21.4M,
+ * which is a busy season rather than a milestone. BigInt cannot cross the RSC
+ * boundary, so it is narrowed here.
+ */
+async function grossByOrganizer(ids: string[]): Promise<Map<string, number>> {
+  if (!ids.length) return new Map();
+  const rows = await db.$queryRaw<{ organizerId: string; grossPaise: bigint }[]>`
+    SELECT e."organizerId" AS "organizerId",
+           SUM(b."totalPaise")::bigint AS "grossPaise"
+      FROM bookings b
+      JOIN events e ON e.id = b."eventId"
+     WHERE e."organizerId" IN (${Prisma.join(ids)})
+       AND b.status = 'CONFIRMED'
+     GROUP BY e."organizerId"
+  `;
+  return new Map(rows.map((r) => [r.organizerId, Number(r.grossPaise)]));
 }
 
 export async function getOrganizerDetail(organizerId: string) {
@@ -315,6 +370,20 @@ export async function getOrganizerDetail(organizerId: string) {
 
   if (!profile) return null;
 
+  // Lifetime money, fetched after the existence check so a bad id costs one
+  // query rather than three.
+  const [fees, gross] = await Promise.all([
+    db.ledgerEntry.aggregate({
+      where: {
+        organizerId,
+        account: "ORGANIZER",
+        type: { in: ["COMMISSION", "GST_COMMISSION"] },
+      },
+      _sum: { amountPaise: true },
+    }),
+    grossByOrganizer([organizerId]),
+  ]);
+
   return {
     profile: {
       ...profile,
@@ -328,6 +397,10 @@ export async function getOrganizerDetail(organizerId: string) {
     },
     events,
     unsettledPaise: unsettled._sum.amountPaise ?? 0,
+    // Positive: the platform's revenue from this organizer, not the negative
+    // leg the ledger stores against them.
+    commissionPaise: Math.abs(fees._sum.amountPaise ?? 0),
+    grossPaise: gross.get(organizerId) ?? 0,
     payouts: payouts.map((p) => ({ ...p, amountPaise: Number(p.amountPaise) })),
   };
 }
@@ -630,4 +703,148 @@ export async function listAuditLog(opts: {
   ]);
 
   return { rows, total, pageCount: Math.max(1, Math.ceil(total / perPage)) };
+}
+
+/**
+ * Every booking on the platform, newest first.
+ *
+ * The admin overview counts tickets sold but had nowhere to drill into, so the
+ * one question an operator asks constantly — *"what actually sold, and to
+ * whom"* — could only be answered against the database directly. This is that
+ * list: every organizer's bookings in one place, searchable by booking number,
+ * buyer, event or organizer.
+ *
+ * **Scanned counts come from `Ticket.status`, not from a scan-log count.** A
+ * season pass is scanned once per session and writes a `SessionScan` child
+ * rather than flipping the ticket (spec C7), so counting scan rows would
+ * over-report attendance for exactly the events that sell the most passes.
+ */
+export async function listAllBookings(opts: {
+  q?: string;
+  status?: string;
+  page?: number;
+  perPage?: number;
+}) {
+  const perPage = opts.perPage ?? 25;
+  const page = Math.max(1, opts.page ?? 1);
+  const q = opts.q?.trim();
+
+  const where: Prisma.BookingWhereInput = {
+    ...(opts.status && opts.status !== "ALL"
+      ? { status: opts.status as Prisma.EnumBookingStatusFilter["equals"] }
+      : {}),
+    ...(q
+      ? {
+          OR: [
+            // Booking numbers are printed on the ticket and quoted in support
+            // mail, so they are the most common thing pasted into this box.
+            { bookingNumber: { contains: q, mode: "insensitive" as const } },
+            { buyerName: { contains: q, mode: "insensitive" as const } },
+            { buyerPhone: { contains: q } },
+            { buyerEmail: { contains: q, mode: "insensitive" as const } },
+            { user: { name: { contains: q, mode: "insensitive" as const } } },
+            { user: { phone: { contains: q } } },
+            { user: { email: { contains: q, mode: "insensitive" as const } } },
+            { event: { title: { contains: q, mode: "insensitive" as const } } },
+            {
+              event: {
+                organizer: { name: { contains: q, mode: "insensitive" as const } },
+              },
+            },
+          ],
+        }
+      : {}),
+  };
+
+  const [total, totals, ticketTotal, rows] = await Promise.all([
+    db.booking.count({ where }),
+    // Totals span the whole filter, never just the visible page. A header
+    // reading "₹41,532 across 25 bookings" while the pager says "page 3 of 9"
+    // is describing the page and will be read as the total.
+    db.booking.aggregate({ where, _sum: { totalPaise: true } }),
+    db.ticket.count({ where: { booking: where } }),
+    db.booking.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * perPage,
+      take: perPage,
+      select: {
+        id: true,
+        bookingNumber: true,
+        status: true,
+        totalPaise: true,
+        createdAt: true,
+        confirmedAt: true,
+        // The buyer may be a guest, who has no account name (D-036) — fall
+        // back to the linked user in the page rather than showing a blank.
+        buyerName: true,
+        buyerPhone: true,
+        buyerEmail: true,
+        user: { select: { id: true, name: true, phone: true, email: true } },
+        event: {
+          select: {
+            id: true,
+            title: true,
+            organizer: { select: { id: true, name: true } },
+          },
+        },
+        _count: { select: { tickets: true } },
+      },
+    }),
+  ]);
+
+  // Two grouped queries rather than per-row counts: scanned tickets, and what
+  // the platform earned on each booking.
+  const ids = rows.map((r) => r.id);
+  const scanned = new Map<string, number>();
+  const commission = new Map<string, number>();
+
+  if (ids.length) {
+    const [scans, fees] = await Promise.all([
+      db.ticket.groupBy({
+        by: ["bookingId"],
+        where: { bookingId: { in: ids }, status: "SCANNED" },
+        _count: { _all: true },
+      }),
+      db.ledgerEntry.groupBy({
+        by: ["bookingId"],
+        where: {
+          bookingId: { in: ids },
+          type: { in: ["COMMISSION", "GST_COMMISSION"] },
+          // `account` is not optional here, it is the whole query.
+          //
+          // Commission is double-entry: every charge writes a PLATFORM leg of
+          // +X and an ORGANIZER leg of −X, which is exactly what makes a
+          // booking's entries sum to zero (I3). Filtering by `type` alone sums
+          // both legs and returns 0.00 for every booking — a column of dashes
+          // that looks like "no commission configured" rather than like a bug.
+          //
+          // The organizer-side queries get away without this because they
+          // filter on `organizerId`, which is only populated on ORGANIZER
+          // legs. This one groups by booking, so it must say which side it
+          // means: PLATFORM, because this is the platform's own revenue.
+          account: "PLATFORM",
+        },
+        _sum: { amountPaise: true },
+      }),
+    ]);
+    for (const s of scans) scanned.set(s.bookingId, s._count._all);
+    for (const f of fees) {
+      // Already positive: the PLATFORM leg is the credit side.
+      if (f.bookingId) commission.set(f.bookingId, f._sum.amountPaise ?? 0);
+    }
+  }
+
+  return {
+    total,
+    pageCount: Math.max(1, Math.ceil(total / perPage)),
+    grossPaise: totals._sum.totalPaise ?? 0,
+    ticketTotal,
+    rows: rows.map((r) => ({
+      ...r,
+      ticketCount: r._count.tickets,
+      scannedCount: scanned.get(r.id) ?? 0,
+      commissionPaise: commission.get(r.id) ?? 0,
+    })),
+  };
 }

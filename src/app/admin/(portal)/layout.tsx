@@ -74,6 +74,15 @@ export default async function AdminLayout({
   if (hasPermission(ctx.permissions, "SUPPORT")) {
     review.push(
       { href: "/admin/events", label: "Events", icon: "events" as const },
+      // Under SUPPORT rather than Money on purpose: the question this page
+      // answers most often is "where is this person's ticket", not "what did
+      // we earn". The commission column is there for finance, but support is
+      // who opens it.
+      {
+        href: "/admin/bookings",
+        label: "Bookings & tickets",
+        icon: "ticket" as const,
+      },
       {
         href: "/admin/disputes",
         label: "Disputes",

@@ -30,12 +30,13 @@ export default async function OrganizerLoginPage() {
       heading="Sign in to your portal"
       blurb="Use the mobile number registered to your organisation. We'll text you a six-digit code."
       next="/organizer/dashboard"
+      signedInAs={user && !user.organizer ? { name: user.name } : null}
       footnote={
         user ? (
           <>
-            You&apos;re signed in as an attendee, and this number has no
-            organiser account. <Link href="/organizer">List your event</Link> to
-            start one, or <Link href="/tickets">go to your tickets</Link>.
+            <Link href="/organizer">List your event</Link> to start an
+            organiser account, or{" "}
+            <Link href="/tickets">go to your tickets</Link>.
           </>
         ) : (
           <>

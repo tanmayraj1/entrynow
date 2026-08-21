@@ -90,6 +90,8 @@ export default async function AdminOrganizersPage({
                 <Th>Status</Th>
                 <Th>Plan</Th>
                 <Th numeric>Events</Th>
+                <Th numeric>Gross</Th>
+                <Th numeric>Commission</Th>
                 <Th numeric>Unsettled</Th>
                 <Th>Joined</Th>
               </Tr>
@@ -125,6 +127,20 @@ export default async function AdminOrganizersPage({
                     )}
                   </Td>
                   <Td numeric>{o._count.events}</Td>
+                  {/* What this organizer sold, and what we earned on it. The
+                      commission column is the one an operator checks against a
+                      rate change, so it carries the effective rate underneath
+                      rather than making them divide two numbers. */}
+                  <Td numeric>{inr(o.grossPaise)}</Td>
+                  <Td numeric className="font-extrabold">
+                    {o.commissionPaise > 0 ? inr(o.commissionPaise) : "—"}
+                    {o.grossPaise > 0 && o.commissionPaise > 0 && (
+                      <span className="block text-[11px] font-semibold text-ink-muted">
+                        {((o.commissionPaise / o.grossPaise) * 100).toFixed(1)}%
+                        effective
+                      </span>
+                    )}
+                  </Td>
                   <Td
                     numeric
                     className={o.unsettledPaise < 0 ? "text-danger" : undefined}

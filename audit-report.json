@@ -17,6 +17,7 @@
     "/admin",
     "/admin/approvals",
     "/admin/audit",
+    "/admin/bookings",
     "/admin/cms",
     "/admin/config",
     "/admin/disputes",
@@ -968,28 +969,28 @@
       "check": "A14",
       "severity": "incomplete",
       "file": "src/app/(marketplace)/[city]/page.tsx",
-      "line": 253,
+      "line": 266,
       "detail": "hardcoded ₹ — money must render through <Money currency=…> so a CAD event does not display rupees"
     },
     {
       "check": "A14",
       "severity": "incomplete",
       "file": "src/app/(marketplace)/[city]/page.tsx",
-      "line": 368,
+      "line": 381,
       "detail": "hardcoded en-IN — locale follows the content's country (lakh grouping is correct for INR and wrong for CAD)"
     },
     {
       "check": "A14",
       "severity": "incomplete",
       "file": "src/app/(marketplace)/[city]/page.tsx",
-      "line": 369,
+      "line": 382,
       "detail": "hardcoded en-IN — locale follows the content's country (lakh grouping is correct for INR and wrong for CAD)"
     },
     {
       "check": "A14",
       "severity": "incomplete",
       "file": "src/app/(marketplace)/[city]/page.tsx",
-      "line": 526,
+      "line": 539,
       "detail": "hardcoded en-IN — locale follows the content's country (lakh grouping is correct for INR and wrong for CAD)"
     },
     {
@@ -1031,7 +1032,7 @@
       "check": "A14",
       "severity": "incomplete",
       "file": "src/app/admin/(portal)/organizers/[id]/page.tsx",
-      "line": 76,
+      "line": 100,
       "detail": "hardcoded en-IN — locale follows the content's country (lakh grouping is correct for INR and wrong for CAD)"
     },
     {
