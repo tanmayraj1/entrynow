@@ -3,6 +3,7 @@ import {
   OgCard,
   OG_SIZE,
   OG_CONTENT_TYPE,
+  OG_CACHE_HEADERS,
   fetchImage,
   ogFonts,
 } from "@/lib/og/card";
@@ -90,6 +91,6 @@ export default async function Image({
         image={image}
       />
     ),
-    { ...size, fonts: ogFonts },
+    { ...size, fonts: ogFonts, headers: OG_CACHE_HEADERS },
   );
 }

@@ -1,5 +1,11 @@
 import { ImageResponse } from "next/og";
-import { OgCard, OG_SIZE, OG_CONTENT_TYPE, ogFonts } from "@/lib/og/card";
+import {
+  OgCard,
+  OG_SIZE,
+  OG_CONTENT_TYPE,
+  OG_CACHE_HEADERS,
+  ogFonts,
+} from "@/lib/og/card";
 import { SITE_NAME, SITE_PITCH, SITE_TAGLINE } from "@/lib/site";
 
 /**
@@ -23,6 +29,6 @@ export default function Image() {
         meta={["Garba & Navratri", "Concerts", "Comedy"]}
       />
     ),
-    { ...size, fonts: ogFonts },
+    { ...size, fonts: ogFonts, headers: OG_CACHE_HEADERS },
   );
 }

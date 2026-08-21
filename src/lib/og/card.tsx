@@ -22,6 +22,26 @@ import { siteUrl } from "@/lib/site";
 export const OG_SIZE = { width: 1200, height: 630 };
 export const OG_CONTENT_TYPE = "image/png";
 
+/**
+ * Response headers for a generated card. Pass to `new ImageResponse(…, { headers })`.
+ *
+ * Reading `headers()` to resolve the cover photo's origin makes these routes
+ * fully dynamic, so Next will not cache them — and the default that ships is
+ * `must-revalidate`, meaning every crawler that touches a link re-renders the
+ * card from scratch. The event card is 1.2MB and took ~4s cold; a scraper with
+ * a short fuse gets nothing, and the sender sees a bare link.
+ *
+ * `max-age=0` keeps browsers honest while `s-maxage` lets the CDN answer, which
+ * is the layer that matters: one render per event per day, and every share
+ * after the first is served from the edge. `stale-while-revalidate` means a
+ * card whose price has moved is refreshed in the background rather than making
+ * someone wait for it.
+ */
+export const OG_CACHE_HEADERS = {
+  "cache-control":
+    "public, max-age=0, s-maxage=86400, stale-while-revalidate=604800",
+};
+
 const BRAND_GRADIENT =
   "linear-gradient(100deg, #ff7a1f 0%, #f2454e 52%, #ed2c63 100%)";
 const NAVY = "#16264c";
