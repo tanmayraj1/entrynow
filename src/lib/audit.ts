@@ -46,6 +46,7 @@ export type AuditEntity =
   | "Festival"
   | "City"
   | "Locality"
+  | "Venue"
   | "ConfigSetting"
   | "AdminRole";
 
@@ -77,6 +78,11 @@ export type AuditAction =
   | "payout.freeze"
   | "payout.unfreeze"
   | "refund.issue"
+  // Venues — organizer-added rows only; the platform catalogue is seeded.
+  | "venue.create"
+  | "venue.update"
+  | "venue.retire"
+  | "venue.restore"
   // Content and config
   | "promo.create"
   | "promo.update"

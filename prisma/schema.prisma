@@ -365,6 +365,8 @@ model OrganizerProfile {
   reviewReplies ReviewReply[]
   announcements Announcement[]
   promos    Promo[]
+  /// Venues this organizer added themselves — see `Venue.createdByOrganizerId`.
+  venuesCreated Venue[] @relation("VenuesCreated")
 
   @@index([status])
   @@map("organizer_profiles")
@@ -460,11 +462,29 @@ model Venue {
   directions Json?
   mapUrl     String?
 
+  /// NULL is the platform catalogue — curated rows every organizer can pick.
+  /// A set value means one organizer added this venue for their own event, and
+  /// only they can see or edit it.
+  ///
+  /// The scoping is the point. Venues are otherwise a shared catalogue, so
+  /// letting organizers write into it directly means the first person to type
+  /// "GMDC" creates a near-duplicate that appears in every other organizer's
+  /// dropdown and on the public map, with nobody responsible for it. Keeping
+  /// authorship on the row means the list stays curated, the organizer is
+  /// never blocked, and an admin can promote a good one later by nulling this
+  /// column (D-040).
+  createdByOrganizerId String?
+
+  /// Catalog rows deactivate, never delete — events reference them (spec G2).
+  isActive Boolean @default(true)
+
   city     City      @relation(fields: [cityId], references: [id])
   locality Locality? @relation(fields: [localityId], references: [id])
+  createdBy OrganizerProfile? @relation("VenuesCreated", fields: [createdByOrganizerId], references: [id])
   events   Event[]
 
   @@index([cityId])
+  @@index([cityId, createdByOrganizerId])
   @@map("venues")
 }
 

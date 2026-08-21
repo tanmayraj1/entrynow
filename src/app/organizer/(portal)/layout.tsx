@@ -93,6 +93,7 @@ export default async function OrganizerPortalLayout({
               exact: true,
             },
             { href: "/organizer/events", label: "Events", icon: "events" },
+            { href: "/organizer/venues", label: "Venues", icon: "venue" },
           ],
         },
         {

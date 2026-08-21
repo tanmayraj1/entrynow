@@ -14,6 +14,13 @@ import {
   updateOwnedTier,
 } from "@/lib/queries/organizer/scope";
 import { toPaise } from "@/lib/money";
+import { getGeocodeAdapter } from "@/lib/adapters/geocode";
+import {
+  isNearCity,
+  parseLatLng,
+  MAX_VENUE_DISTANCE_KM,
+  type LatLng,
+} from "@/lib/venue-location";
 import type { Prisma } from "@/generated/prisma";
 
 /**
@@ -1169,4 +1176,289 @@ async function uniqueSlug(title: string): Promise<string> {
     if (!taken) return candidate;
   }
   return `${base}-${Date.now().toString(36)}`;
+}
+
+// ---------------------------------------------------------------------------
+// Venues
+// ---------------------------------------------------------------------------
+
+/**
+ * Resolve the point for a venue an organizer is adding.
+ *
+ * Three sources, in descending order of how much we should trust them:
+ *
+ * 1. **What they pasted.** A Maps link or a coordinate pair is the organizer
+ *    telling us exactly where the gate is. Nothing beats that.
+ * 2. **The geocoder.** Good for a real street address, and `GEOCODE_DRIVER`
+ *    defaults to a small Ahmedabad gazetteer, so it will often find nothing.
+ * 3. **The city centre.** Never silently — the caller surfaces a warning and
+ *    the venue is still editable, because a pin in the middle of Ahmedabad is
+ *    better than refusing to let someone list their event at all.
+ *
+ * A pasted point is checked against the city before it is accepted. A
+ * transposed pair is a perfectly valid coordinate that lands in the Arabian
+ * Sea, so range validation alone catches nothing.
+ */
+async function resolveVenuePoint(input: {
+  pasted: string;
+  name: string;
+  addressLine: string;
+  city: { name: string; lat: number; lng: number };
+}): Promise<{ point: LatLng; source: "pasted" | "geocoded" | "city"; error?: string }> {
+  const city = { lat: input.city.lat, lng: input.city.lng };
+
+  if (input.pasted.trim()) {
+    const parsed = parseLatLng(input.pasted);
+    if (!parsed) {
+      return {
+        point: city,
+        source: "city",
+        error:
+          "That location did not look like a Google Maps link or a “lat, lng” pair.",
+      };
+    }
+    if (!isNearCity(parsed, city)) {
+      return {
+        point: city,
+        source: "city",
+        error: `Those coordinates are more than ${MAX_VENUE_DISTANCE_KM}km from ${input.city.name}. Check they are not the wrong way round.`,
+      };
+    }
+    return { point: parsed, source: "pasted" };
+  }
+
+  try {
+    const hits = await getGeocodeAdapter().search(
+      `${input.name}, ${input.addressLine}, ${input.city.name}`,
+      city,
+    );
+    const hit = hits.find((h) => isNearCity(h.center, city));
+    if (hit) return { point: hit.center, source: "geocoded" };
+  } catch {
+    // Geocoding is an assist, never a gate — fall through to the city centre.
+  }
+
+  return { point: city, source: "city" };
+}
+
+export async function createVenue(
+  _prev: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  const auth = await authorizeOrganizer({ writable: true });
+  if (!auth.ok) return fail(auth.error);
+  const { ctx } = auth;
+
+  const name = String(formData.get("name") ?? "").trim();
+  const addressLine = String(formData.get("addressLine") ?? "").trim();
+  const pincode = String(formData.get("pincode") ?? "").trim();
+  const localityId = String(formData.get("localityId") ?? "").trim();
+  const pasted = String(formData.get("location") ?? "");
+  const cityId = String(formData.get("cityId") ?? "").trim();
+
+  if (name.length < 3) return fail("Give the venue a name of at least 3 characters.");
+  if (addressLine.length < 6) return fail("Add a street address for the venue.");
+  if (pincode && !/^\d{6}$/.test(pincode)) return fail("A pincode is six digits.");
+
+  // The city is a form field, so it is validated against the catalogue rather
+  // than trusted — an arbitrary id here would attach the venue to a city that
+  // does not exist, or one we do not serve.
+  const city = await db.city.findFirst({
+    where: { id: cityId, isActive: true },
+    select: { id: true, name: true, lat: true, lng: true },
+  });
+  if (!city) return fail("Pick a city we operate in.");
+
+  // Same for locality: it must belong to the city that was chosen, or the
+  // event lands in a filter bucket it has nothing to do with.
+  if (localityId) {
+    const loc = await db.locality.findFirst({
+      where: { id: localityId, cityId: city.id },
+      select: { id: true },
+    });
+    if (!loc) return fail("That locality is not in the selected city.");
+  }
+
+  const resolved = await resolveVenuePoint({
+    pasted,
+    name,
+    addressLine,
+    city: { name: city.name, lat: Number(city.lat), lng: Number(city.lng) },
+  });
+  if (resolved.error) return fail(resolved.error);
+
+  const ip = await requestIp();
+
+  try {
+    const id = await db.$transaction(async (tx) => {
+      const created = await tx.venue.create({
+        data: {
+          id: cuidish(),
+          name,
+          addressLine,
+          pincode: pincode || null,
+          cityId: city.id,
+          localityId: localityId || null,
+          lat: resolved.point.lat,
+          lng: resolved.point.lng,
+          // Authorship is what keeps this row out of every other organizer's
+          // dropdown (D-040). Taken from the session, never the form.
+          createdByOrganizerId: ctx.organizerId,
+        },
+        select: { id: true, name: true, addressLine: true, cityId: true },
+      });
+
+      await writeAudit(tx, {
+        actorId: ctx.userId,
+        actorType: "ORGANIZER",
+        action: "venue.create",
+        entityType: "Venue",
+        entityId: created.id,
+        before: null,
+        after: { ...created, pointSource: resolved.source },
+        ip,
+      });
+
+      return created.id;
+    });
+
+    revalidatePath("/organizer/venues");
+    revalidatePath("/organizer/events");
+
+    return ok(
+      resolved.source === "city"
+        ? `“${name}” added, but we could not place it on the map — the pin is on ${city.name} city centre. Paste a Google Maps link to fix it.`
+        : `“${name}” added. Pick it in the venue list above.`,
+      id,
+    );
+  } catch (err) {
+    return toResult(err);
+  }
+}
+
+export async function updateVenue(
+  _prev: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  const auth = await authorizeOrganizer({ writable: true });
+  if (!auth.ok) return fail(auth.error);
+  const { ctx } = auth;
+
+  const venueId = String(formData.get("venueId") ?? "");
+  const name = String(formData.get("name") ?? "").trim();
+  const addressLine = String(formData.get("addressLine") ?? "").trim();
+  const pincode = String(formData.get("pincode") ?? "").trim();
+  const pasted = String(formData.get("location") ?? "");
+
+  if (name.length < 3) return fail("Give the venue a name of at least 3 characters.");
+  if (addressLine.length < 6) return fail("Add a street address for the venue.");
+  if (pincode && !/^\d{6}$/.test(pincode)) return fail("A pincode is six digits.");
+
+  // Ownership is part of the read, so a venue belonging to the platform or to
+  // another organizer is simply not found rather than being edited.
+  const current = await db.venue.findFirst({
+    where: { id: venueId, createdByOrganizerId: ctx.organizerId },
+    select: {
+      id: true,
+      name: true,
+      addressLine: true,
+      pincode: true,
+      lat: true,
+      lng: true,
+      city: { select: { id: true, name: true, lat: true, lng: true } },
+    },
+  });
+  if (!current) return fail("Not found.");
+
+  const city = {
+    name: current.city.name,
+    lat: Number(current.city.lat),
+    lng: Number(current.city.lng),
+  };
+  const resolved = pasted.trim()
+    ? await resolveVenuePoint({ pasted, name, addressLine, city })
+    : { point: { lat: Number(current.lat), lng: Number(current.lng) }, source: "pasted" as const };
+  if ("error" in resolved && resolved.error) return fail(resolved.error);
+
+  const ip = await requestIp();
+
+  try {
+    await db.$transaction(async (tx) => {
+      // `updateMany`, with ownership in the filter. The singular `update`
+      // needs a unique where-clause and there is no `@@unique([id,
+      // createdByOrganizerId])`, so it has nowhere to put the check — the same
+      // reason the rest of the portal uses the plural form.
+      const { count } = await tx.venue.updateMany({
+        where: { id: venueId, createdByOrganizerId: ctx.organizerId },
+        data: {
+          name,
+          addressLine,
+          pincode: pincode || null,
+          lat: resolved.point.lat,
+          lng: resolved.point.lng,
+        },
+      });
+      // Returning here would COMMIT the transaction (D-023). It has to throw.
+      if (count !== 1) throw new NotOwnedError("Venue", venueId);
+
+      await writeAudit(tx, {
+        actorId: ctx.userId,
+        actorType: "ORGANIZER",
+        action: "venue.update",
+        entityType: "Venue",
+        entityId: venueId,
+        before: pick(current, ["name", "addressLine", "pincode"]),
+        after: { name, addressLine, pincode: pincode || null },
+        ip,
+      });
+    });
+
+    revalidatePath("/organizer/venues");
+    return ok("Venue updated.");
+  } catch (err) {
+    return toResult(err);
+  }
+}
+
+/**
+ * Retire a venue. Deactivates, never deletes — live events reference it
+ * (spec G2), and a deleted row would orphan an event mid-sale.
+ */
+export async function setVenueActive(
+  _prev: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  const auth = await authorizeOrganizer({ writable: true });
+  if (!auth.ok) return fail(auth.error);
+  const { ctx } = auth;
+
+  const venueId = String(formData.get("venueId") ?? "");
+  const isActive = String(formData.get("isActive") ?? "") === "true";
+  const ip = await requestIp();
+
+  try {
+    await db.$transaction(async (tx) => {
+      const { count } = await tx.venue.updateMany({
+        where: { id: venueId, createdByOrganizerId: ctx.organizerId },
+        data: { isActive },
+      });
+      if (count !== 1) throw new NotOwnedError("Venue", venueId);
+
+      await writeAudit(tx, {
+        actorId: ctx.userId,
+        actorType: "ORGANIZER",
+        action: isActive ? "venue.restore" : "venue.retire",
+        entityType: "Venue",
+        entityId: venueId,
+        before: { isActive: !isActive },
+        after: { isActive },
+        ip,
+      });
+    });
+
+    revalidatePath("/organizer/venues");
+    return ok(isActive ? "Venue restored." : "Venue retired.");
+  } catch (err) {
+    return toResult(err);
+  }
 }

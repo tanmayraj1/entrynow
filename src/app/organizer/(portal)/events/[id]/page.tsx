@@ -5,7 +5,12 @@ import { ArrowLeft } from "lucide-react";
 import { StatusPill, Table, Td, Th, Tr } from "@/components/ui";
 import { requireOrganizer } from "@/lib/auth/rbac";
 import { getOrganizerEvent } from "@/lib/queries/organizer/events";
-import { db } from "@/lib/db";
+import { listSelectableVenues } from "@/lib/queries/organizer/venues";
+// Localities are global catalogue, not tenant data — so they come from the
+// marketplace queries (cached) rather than the organizer-scoped module, where
+// audit check A12 rightly refuses any query without an organizer in scope.
+import { getLocalities } from "@/lib/queries/marketplace";
+import { AddVenue } from "../../venue-form";
 import { formatIstDate, formatIstTime } from "@/lib/ist";
 import { inr } from "@/lib/money";
 import {
@@ -31,11 +36,14 @@ export default async function OrganizerEventPage({
   // event on the platform for anyone willing to enumerate.
   if (!event) notFound();
 
-  const venues = await db.venue.findMany({
-    where: { cityId: event.city.id },
-    orderBy: { name: "asc" },
-    select: { id: true, name: true },
-  });
+  // Scoped, not `db.venue.findMany`. Venues can now be organizer-owned, and an
+  // unscoped list would put every other organizer's private venues in this
+  // dropdown — leaking that they are running something, and letting an event
+  // point at a row someone else can edit (D-040).
+  const [venues, localities] = await Promise.all([
+    listSelectableVenues(ctx.organizerId, event.city.id),
+    getLocalities(event.city.id),
+  ]);
 
   return (
     <div className="flex flex-col gap-5">
@@ -111,6 +119,17 @@ export default async function OrganizerEventPage({
           venues={venues}
           readOnly={ctx.readOnly}
         />
+        {/* A sibling of the details form, never a child — HTML forms do not
+            nest, and both of these render a real `<form>`. */}
+        {!ctx.readOnly && (
+          <div className="mt-3.5">
+            <AddVenue
+              cityId={event.city.id}
+              cityName={event.city.name}
+              localities={localities.map((l) => ({ ...l, cityId: event.city.id }))}
+            />
+          </div>
+        )}
       </Section>
 
       <Section

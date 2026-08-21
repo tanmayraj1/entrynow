@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { ArrowLeft } from "lucide-react";
 import { requireOrganizer } from "@/lib/auth/rbac";
 import { db } from "@/lib/db";
+import { listSelectableVenues } from "@/lib/queries/organizer/venues";
 import { NewEventForm } from "./new-event-form";
 
 export const metadata: Metadata = { title: "New event" };
@@ -18,7 +19,7 @@ export const metadata: Metadata = { title: "New event" };
 export default async function NewEventPage() {
   const ctx = await requireOrganizer({ allowUnverified: true });
 
-  const [categories, cities, venues] = await Promise.all([
+  const [categories, cities, venues, localities] = await Promise.all([
     db.category.findMany({
       where: { isActive: true },
       orderBy: { sortOrder: "asc" },
@@ -29,7 +30,12 @@ export default async function NewEventPage() {
       orderBy: { sortOrder: "asc" },
       select: { id: true, name: true },
     }),
-    db.venue.findMany({
+    // Scoped to this organizer: platform venues plus their own, never another
+    // organizer's (D-040). No city filter — the wizard lets the city change
+    // while the form is open, so it filters on the client.
+    listSelectableVenues(ctx.organizerId),
+    db.locality.findMany({
+      where: { isActive: true },
       orderBy: { name: "asc" },
       select: { id: true, name: true, cityId: true },
     }),
@@ -56,6 +62,7 @@ export default async function NewEventPage() {
           categories={categories}
           cities={cities}
           venues={venues}
+          localities={localities}
           readOnly={ctx.readOnly}
         />
       </div>

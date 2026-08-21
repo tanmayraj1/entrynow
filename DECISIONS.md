@@ -895,3 +895,56 @@ more URLs than the marketplace has events, all near-duplicates. `?category=` is
 the exception — "comedy in Ahmedabad" is a query someone types, and a page that
 answers it. Everything else is crawled *through* to reach the event pages and
 never listed itself.
+
+## D-040 — Organizers can add their own venues, and only they can see them
+
+**Gap.** Venues were seeded and nothing in the product ever created one. The
+new-event form said so out loud — *"No venues listed in this city yet — pick
+another city, or contact support to add one"* — which means an organizer
+holding a night at a farmhouse, a society ground or a banquet hall that opened
+last month could not list their event at all without a human in the loop. For a
+marketplace whose whole promise is self-serve listing, that is a dead end at the
+first step.
+
+**The tension** is that a venue is otherwise shared catalogue. Two organizers
+genuinely both use GMDC Ground, and the map, the locality filters and the
+directions panel all assume a venue is a real place rather than one seller's
+private record. Letting organizers write into that catalogue directly means the
+first person to type "GMDC" creates a near-duplicate that appears in every other
+organizer's dropdown and on the public map, with nobody responsible for it.
+
+**So authorship lives on the row.** `Venue.createdByOrganizerId` is `NULL` for
+the curated platform catalogue and set for anything an organizer added. The
+picker shows *platform rows plus mine, and nobody else's* — one `OR`, and it is
+the entire security model here. An admin can promote a good one later by nulling
+the column, which is why the shape is authorship rather than a separate table.
+
+Two things follow that are easy to miss:
+
+- **The unscoped `db.venue.findMany` on both event pages became a leak.** It was
+  correct while every venue was public; the moment venues have owners it puts
+  one organizer's private venues in another's dropdown — revealing that they are
+  running something, and letting an event point at a row someone else can edit.
+  Both call sites now go through `listSelectableVenues`, and
+  `tests/portal/venues.test.ts` asserts the negative case directly.
+- **`venue` is deliberately absent from A12's `TENANT_MODELS`**, because it is
+  not one — the platform rows belong to nobody. So the audit will *not* catch a
+  missing ownership filter here the way it does for events. The mutations use
+  `updateMany` with the owner in the `where` and assert `count === 1` anyway,
+  which is the shape that cannot forget.
+
+**Coordinates come from a pasted Maps link, not a form field.** Nobody knows
+their venue's latitude; everybody can open it in Google Maps and hit Share. The
+parser reads `!3d…!4d…` (the *place*) in preference to `@lat,lng` (the *camera*,
+which can be a block away), and falls back to geocoding the address, and finally
+to the city centre — the last case says so in the success message rather than
+quietly dropping a pin in the middle of town.
+
+A pasted point is checked against the city before it is accepted. This is not
+range validation: a transposed pair is a perfectly valid coordinate that lands
+in the Arabian Sea, so `lat/lng ∈ [-90,90]×[-180,180]` catches nothing at all.
+Comparing to the city is what turns a silent wrong pin into an error message.
+
+**Retire, never delete** (spec G2). Live events reference a venue, so retiring
+sets `isActive: false` — it leaves the picker, the existing events keep it, and
+it can be restored.

@@ -5,16 +5,24 @@ import { useRouter } from "next/navigation";
 import { ActionForm, type PortalActionResult } from "@/components/dash/action-form";
 import { Field, Input, Select, Textarea } from "@/components/ui";
 import { createEventDraft } from "../../actions";
+import { AddVenue } from "../../venue-form";
 
 export function NewEventForm({
   categories,
   cities,
   venues,
+  localities,
   readOnly,
 }: {
   categories: { id: string; name: string }[];
   cities: { id: string; name: string }[];
-  venues: { id: string; name: string; cityId: string }[];
+  venues: {
+    id: string;
+    name: string;
+    cityId: string;
+    localityName: string | null;
+  }[];
+  localities: { id: string; name: string; cityId: string }[];
   readOnly: boolean;
 }) {
   const router = useRouter();
@@ -32,7 +40,10 @@ export function NewEventForm({
     [router],
   );
 
+  const cityName = cities.find((c) => c.id === cityId)?.name ?? "the city";
+
   return (
+    <>
     <ActionForm
       action={createEventDraft}
       submitLabel="Create draft"
@@ -92,7 +103,7 @@ export function NewEventForm({
         required
         hint={
           cityVenues.length === 0
-            ? "No venues listed in this city yet — pick another city, or contact support to add one."
+            ? "No venues listed in this city yet — add yours below."
             : undefined
         }
       >
@@ -103,10 +114,20 @@ export function NewEventForm({
           {cityVenues.map((v) => (
             <option key={v.id} value={v.id}>
               {v.name}
+              {v.localityName ? ` · ${v.localityName}` : ""}
             </option>
           ))}
         </Select>
       </Field>
     </ActionForm>
+
+    {/* Outside the form above, deliberately: two `<form>` elements cannot
+        nest, and both of these render one. */}
+    {!readOnly && (
+      <div className="mt-4 pt-4 border-t border-divider">
+        <AddVenue cityId={cityId} cityName={cityName} localities={localities} />
+      </div>
+    )}
+    </>
   );
 }

@@ -262,6 +262,12 @@ do it **before** selling, not after.
   card at all. `/_next/image` re-encodes to progressive (and to AVIF unless you
   pin `Accept`), so cover photos are embedded from the original baseline file
   and checked by `isDecodable()` before they reach the renderer.
+- **`Venue` is shared catalogue *and* tenant data.** `createdByOrganizerId`
+  NULL means the platform curated it; set means one organizer added it and only
+  they may see or edit it (D-040). It is deliberately **not** in A12's
+  `TENANT_MODELS`, so the audit will not catch a missing ownership filter —
+  reads go through `listSelectableVenues`, writes through `updateMany` with the
+  owner in the `where`.
 - **Summing a ledger `type` without naming an `account` returns zero.**
   Commission is double-entry: every charge writes `PLATFORM +X` *and*
   `ORGANIZER −X`, which is what makes a booking's rows sum to 0 (I3). So
