@@ -199,6 +199,15 @@ queue + device-clock replay).
 event-wizard steps beyond the draft (cover image upload needs `STORAGE_DRIVER`)
 · KYC document upload, for the same reason.
 
+`npm run build` is `prisma migrate deploy && next build`. The migrate step is
+not optional garnish: Vercel runs `prisma generate` via `postinstall`, which
+regenerates the *client* from the schema but never touches the database — so a
+migration that adds a column ships a client that selects it against a table
+that does not have it, and every query using that model 500s in production
+while the build goes green. `prisma.config.ts` points the CLI at
+`DIRECT_DATABASE_URL` because `migrate` needs a session-level connection that
+Neon's pooler cannot give.
+
 Deployed at <https://entrynow.vercel.app> — Vercel + Neon + Upstash,
 auto-deploying on push to `main`. `/admin` sits behind HTTP Basic
 (`src/middleware.ts`).
