@@ -285,6 +285,15 @@ do it **before** selling, not after.
   commission configured" rather than as a bug. The organizer-side queries get
   away without it only because `organizerId` is populated on ORGANIZER legs
   alone. Any query grouping by *booking* or *event* must say `account`.
+- **The brand mark exists three times and they must be kept in step.**
+  `src/components/brand/logo.tsx` (the app), `src/app/icon.svg` (tabs and
+  bookmarks) and the rasters from `scripts/make-icons.py` (favicon.ico,
+  apple-icon.png, and the mark embedded in every share card). The icon's "e" is
+  an **outline**, not a `<text>` node — a standalone SVG cannot reach the app's
+  font stack, so `<text>` renders in the platform font and the letterform
+  differs per OS, which is the same failure the no-emoji rule prevents. Both
+  the SVG and the rasters carry the `onDark` swap: on a dark ground the navy
+  half goes white and the counter goes navy, or the ticket loses a half.
 - **Per-route `openGraph` / `twitter` metadata REPLACES the root's, never
   merges.** Returning `twitter: { title }` from a `generateMetadata` silently
   discards `card: "summary_large_image"` and turns the 1200×630 card into a

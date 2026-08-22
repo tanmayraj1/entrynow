@@ -12,11 +12,12 @@ import { siteUrl } from "@/lib/site";
  * single highest-leverage thing on a page nobody has visited yet.
  *
  * Satori is not a browser. It implements flexbox and a subset of CSS: no
- * `grid`, no `gap` shorthand quirks, no `position: sticky`, and every element
- * with more than one child needs an explicit `display: flex`. So the brand's
- * real `<Logo>` cannot be reused here — its mark is an SVG with `<defs>`, a
- * gradient `url(#id)` fill and a `<text>` node, none of which survive the
- * translation. The lockup below is rebuilt from plain boxes to match it.
+ * `grid`, no `inset` shorthand, no React fragments, and every element with more
+ * than one child needs an explicit `display: flex`. So the brand's real
+ * `<Logo>` cannot be reused here — its mark is an SVG with `<defs>`, a gradient
+ * `url(#id)` fill and a `<text>` node, none of which survive the translation.
+ * The mark is therefore pre-rasterised (see `MARK`) and the wordmark is set as
+ * type, which is the one part Satori does faithfully.
  */
 
 export const OG_SIZE = { width: 1200, height: 630 };
@@ -44,7 +45,6 @@ export const OG_CACHE_HEADERS = {
 
 const BRAND_GRADIENT =
   "linear-gradient(100deg, #ff7a1f 0%, #f2454e 52%, #ed2c63 100%)";
-const NAVY = "#16264c";
 const NAVY_DEEP = "#0e1a38";
 const GOLD = "#f5b301";
 
@@ -78,10 +78,26 @@ const FILL = {
  * checked for the glyphs this project actually renders — `₹` above all, plus
  * the en dash, em dash and curly apostrophe the copy is full of.
  */
-const [semiBold, extraBold] = await Promise.all([
+const [semiBold, extraBold, markPng] = await Promise.all([
   readFile(join(process.cwd(), "src/lib/og/fonts/PlusJakartaSans-SemiBold.ttf")),
   readFile(join(process.cwd(), "src/lib/og/fonts/PlusJakartaSans-ExtraBold.ttf")),
+  readFile(join(process.cwd(), "src/lib/og/mark.png")),
 ]);
+
+/**
+ * The ticket mark, pre-rasterised.
+ *
+ * The first version rebuilt the lockup out of flex boxes because Satori cannot
+ * render the real `<Logo>` — its mark is an SVG with `<defs>`, a `url(#id)`
+ * gradient fill and a `<text>` node, none of which survive the translation.
+ * The boxes were a decent likeness and still the wrong answer: the share card
+ * is the brand's most-seen surface, and it was showing an approximation of the
+ * logo rather than the logo.
+ *
+ * A PNG sidesteps Satori entirely — it is drawn once from the same geometry as
+ * `app/icon.svg` and simply placed. 11KB, well inside the budget.
+ */
+const MARK = `data:image/png;base64,${markPng.toString("base64")}`;
 
 export const ogFonts = [
   {
@@ -115,56 +131,15 @@ function clamp(text: string, max: number): string {
 function Lockup() {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
-      {/* The torn ticket, in boxes. White half holding the "e", gradient half
-          holding the stub — the logo's split, at a size where the SVG's
-          perforation dots would disappear anyway. */}
-      <div style={{ display: "flex", alignItems: "center" }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            width: 40,
-            height: 58,
-            borderRadius: "14px 4px 4px 14px",
-            background: "#ffffff",
-            color: NAVY,
-            fontSize: 34,
-            fontWeight: 800,
-            fontStyle: "italic",
-          }}
-        >
-          e
-        </div>
-        <div style={{ width: 5, height: 58, display: "flex" }} />
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            width: 40,
-            height: 58,
-            borderRadius: "4px 14px 14px 4px",
-            backgroundImage: BRAND_GRADIENT,
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              width: 22,
-              height: 9,
-              borderRadius: 5,
-              background: "#ffffff",
-            }}
-          />
-        </div>
-      </div>
-
-      <div style={{ display: "flex", fontSize: 40, fontWeight: 800, letterSpacing: -1.4 }}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={MARK} alt="" width={68} height={68} />
+      <div
+        style={{ display: "flex", fontSize: 40, fontWeight: 800, letterSpacing: -1.4 }}
+      >
         <span style={{ color: "#ffffff" }}>entry</span>
         {/* Gradient text. Satori honours background-clip: text, and the
-            transparent colour is what makes the clip visible — same technique
-            as the real wordmark. */}
+            transparent colour is what makes the clip visible — the same
+            technique as the real wordmark. */}
         <span
           style={{
             backgroundImage: BRAND_GRADIENT,

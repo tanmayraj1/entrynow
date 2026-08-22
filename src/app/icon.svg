@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Entry Now">
+  <!--
+    The Entry Now ticket mark. This slot previously held app/favicon.ico, which
+    was Next.js's scaffolded default: a black circle with a white triangle.
+
+    Drawn rather than shipped as a raster, so one definition stays crisp from a
+    16px tab to a 512px install prompt.
+
+    The "e" is an OUTLINE, not a <text> node. A standalone SVG cannot reach the
+    app's font stack, so <text> would render in whatever the OS supplies and the
+    letterform would differ on a Mac, a Pixel and a Samsung — the same failure
+    the house rule against emoji-as-artwork exists to prevent. The glyph is
+    converted from Plus Jakarta Sans ExtraBold and travels with the file.
+
+    The navy half flips to white under prefers-color-scheme: dark, mirroring the
+    onDark treatment in logo.tsx. Navy on a dark tab strip is a smudge.
+  -->
+  <defs>
+    <linearGradient id="en-mark" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0%" stop-color="#ff7a1f"/>
+      <stop offset="55%" stop-color="#f2454e"/>
+      <stop offset="100%" stop-color="#ed2c63"/>
+    </linearGradient>
+    <style>
+      .navy { fill: #16264c }
+      .counter { fill: #ffffff }
+      @media (prefers-color-scheme: dark) {
+        .navy { fill: #ffffff }
+        .counter { fill: #16264c }
+      }
+    </style>
+  </defs>
+  <g transform="translate(-16.6 -12.35) scale(1.3846)">
+    <g fill="url(#en-mark)">
+      <rect x="6.5" y="41.5" width="7" height="3.6" rx="1.8" opacity=".55"/>
+      <rect x="5.5" y="33.5" width="13" height="3.6" rx="1.8" opacity=".8"/>
+      <rect x="9.5" y="25.5" width="10" height="3.6" rx="1.8" opacity=".65"/>
+    </g>
+    <path class="navy" d="M17.5 22.5a6 6 0 0 1 6-6h11.2v31H23.5a6 6 0 0 1-6-6V22.5Z"/>
+    <path class="counter" d="M24.98 41.31Q22.72 41.31 21.25 40.31Q19.78 39.31 19.20 37.62Q18.62 35.93 19.02 33.88Q19.43 31.74 20.71 30.08Q21.98 28.42 23.78 27.45Q25.58 26.49 27.61 26.49Q29.30 26.49 30.49 27.02Q31.69 27.56 32.40 28.52Q33.11 29.48 33.33 30.74Q33.55 32.00 33.27 33.49Q33.19 33.90 33.07 34.30Q32.95 34.71 32.79 34.99H22.16L22.71 32.13H31.14L29.03 33.49Q29.51 32.37 29.39 31.50Q29.27 30.63 28.66 30.12Q28.04 29.61 27.00 29.61Q25.98 29.61 25.16 30.11Q24.34 30.60 23.79 31.56Q23.23 32.52 23.05 33.90Q22.71 35.10 22.92 36.01Q23.13 36.92 23.84 37.42Q24.55 37.93 25.69 37.93Q26.73 37.93 27.56 37.52Q28.38 37.10 28.93 36.37L31.77 37.85Q31.15 38.89 30.10 39.67Q29.05 40.45 27.75 40.88Q26.44 41.31 24.98 41.31Z"/>
+    <path fill="url(#en-mark)" d="M36.5 16.5h14A6 6 0 0 1 56.5 22.5v6.2a4.4 4.4 0 0 0 0 6.6v6.2a6 6 0 0 1-6 6h-14v-31Z"/>
+    <g class="counter">
+      <circle cx="35.6" cy="19.5" r="1.5"/><circle cx="35.6" cy="24.5" r="1.5"/>
+      <circle cx="35.6" cy="29.5" r="1.5"/><circle cx="35.6" cy="34.5" r="1.5"/>
+      <circle cx="35.6" cy="39.5" r="1.5"/><circle cx="35.6" cy="44.5" r="1.5"/>
+    </g>
+    <!-- The star takes the counter colour, same as the perforations: in
+         logo.tsx it is fill={counter}, which inverts with the theme. -->
+    <path class="counter" d="m46.1 28.9 1 2 2.2.3-1.6 1.5.4 2.2-2-1-2 1 .4-2.2-1.6-1.5 2.2-.3 1-2Z"/>
+  </g>
+</svg>
