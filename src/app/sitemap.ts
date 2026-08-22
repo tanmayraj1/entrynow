@@ -3,15 +3,24 @@ import { db } from "@/lib/db";
 import { absoluteUrl, isIndexable } from "@/lib/site";
 
 /**
- * Every public URL worth crawling.
+ * Every public URL worth crawling — and deliberately not one more.
+ *
+ * The first version listed every city, and every festival in every city, on
+ * the grounds that those routes exist. They do, and most of them are empty:
+ * all 28 live events are in Ahmedabad, so Surat, Vadodara, Rajkot and Mumbai
+ * each contributed a blank home, a blank listing, a blank festival index and
+ * one blank page per festival. Twenty-eight of seventy-four URLs were pages
+ * with nothing on them.
+ *
+ * Submitting those is worse than omitting them. It spends crawl budget on
+ * pages that cannot rank, and a sitemap that is largely thin content
+ * suppresses the pages that would have. So a city, a listing or a festival
+ * appears only once something is actually on sale there — and appears
+ * automatically the moment that changes, because this is derived from the
+ * events rather than from the route table.
  *
  * Regenerated hourly rather than per request: the shape of the marketplace
- * changes when an event goes live, not when someone loads a page, and a
- * sitemap is read by robots on their own schedule anyway.
- *
- * Empty while `DEMO_MODE` is on, to match `robots.ts`. Publishing a list of
- * invented events and then refusing to let anything crawl them would be two
- * files disagreeing about the same decision.
+ * changes when an event goes live, not when someone loads a page.
  */
 
 export const revalidate = 3600;
@@ -22,27 +31,27 @@ const MAX_ROWS = 5000;
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   if (!isIndexable()) return [];
 
-  const [cities, events, festivals, organizers] = await Promise.all([
-    // No `updatedAt` on the catalog tables — a city is not a document, and a
-    // `lastModified` is optional in the format. `now` is the honest answer for
-    // a page whose content is a live query.
-    db.city.findMany({
-      where: { isActive: true },
-      select: { slug: true },
-      orderBy: { sortOrder: "asc" },
-    }),
+  const [events, festivalPairs, organizers] = await Promise.all([
     db.event.findMany({
       where: { status: "LIVE" },
       select: { slug: true, updatedAt: true, city: { select: { slug: true } } },
       orderBy: { updatedAt: "desc" },
       take: MAX_ROWS,
     }),
-    db.festival.findMany({
-      where: { isActive: true },
-      select: { slug: true },
+    // The city/festival combinations that actually have something on. `distinct`
+    // does the cross-product filtering in one query rather than five.
+    db.event.findMany({
+      where: { status: "LIVE", festivalId: { not: null } },
+      select: {
+        city: { select: { slug: true } },
+        festival: { select: { slug: true } },
+      },
+      distinct: ["cityId", "festivalId"],
     }),
+    // A verified organizer with no live events is a profile with an empty
+    // shelf — real, but not a search result anyone benefits from.
     db.organizerProfile.findMany({
-      where: { status: "VERIFIED" },
+      where: { status: "VERIFIED", events: { some: { status: "LIVE" } } },
       select: {
         slug: true,
         updatedAt: true,
@@ -52,6 +61,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }),
   ]);
 
+  const now = new Date();
   const entry = (
     path: string,
     lastModified: Date,
@@ -64,8 +74,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority,
   });
 
-  const now = new Date();
-
   const staticPages = [
     entry("/", now, "daily", 1),
     entry("/organizer", now, "monthly", 0.6),
@@ -77,20 +85,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     entry("/legal/image-credits", now, "monthly", 0.2),
   ];
 
-  const cityPages = cities.flatMap((c) => [
-    entry(`/${c.slug}`, now, "daily", 0.9),
-    entry(`/${c.slug}/events`, now, "daily", 0.8),
-    entry(`/${c.slug}/festivals`, now, "weekly", 0.6),
+  // Derived from the events themselves, so a city earns its pages by having
+  // something on rather than by existing in the catalogue.
+  const citiesWithEvents = [...new Set(events.map((e) => e.city.slug))];
+  const cityPages = citiesWithEvents.flatMap((slug) => [
+    entry(`/${slug}`, now, "daily", 0.9),
+    entry(`/${slug}/events`, now, "daily", 0.8),
+    entry(`/${slug}/festivals`, now, "weekly", 0.6),
   ]);
 
-  // Festivals are city-scoped in the URL but not in the table, so each one is
-  // listed under every city. That is how the routes actually work — dropping
-  // the duplicates would mean sitemapping URLs that only exist for one city.
-  const festivalPages = cities.flatMap((c) =>
-    festivals.map((f) =>
-      entry(`/${c.slug}/festivals/${f.slug}`, now, "weekly", 0.5),
-    ),
-  );
+  const festivalPages = festivalPairs
+    .filter((p) => p.festival !== null)
+    .map((p) =>
+      entry(`/${p.city.slug}/festivals/${p.festival!.slug}`, now, "weekly", 0.5),
+    );
 
   const eventPages = events.map((e) =>
     entry(`/${e.city.slug}/events/${e.slug}`, e.updatedAt, "daily", 0.8),

@@ -56,6 +56,18 @@ export const metadata: Metadata = {
   // Indian phone numbers all over the marketplace copy; Safari turning each
   // one into a blue tel: link fights the type scale for no benefit.
   formatDetection: { telephone: false, address: false },
+  /**
+   * Google Search Console's meta-tag verification.
+   *
+   * Emitted only when `GOOGLE_SITE_VERIFICATION` is set, so the tag never
+   * appears as an empty attribute. This is how you *claim* the property;
+   * claiming is separate from being indexed, and worth doing before launch —
+   * a verified property is what lets you submit the sitemap, watch coverage
+   * and see the first crawl actually happen rather than guessing.
+   */
+  ...(process.env.GOOGLE_SITE_VERIFICATION
+    ? { verification: { google: process.env.GOOGLE_SITE_VERIFICATION } }
+    : {}),
   robots: isIndexable()
     ? { index: true, follow: true }
     : // See `isIndexable`. Demo data must not enter a search index, and the
