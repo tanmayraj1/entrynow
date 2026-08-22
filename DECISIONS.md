@@ -948,3 +948,70 @@ Comparing to the city is what turns a silent wrong pin into an error message.
 **Retire, never delete** (spec G2). Live events reference a venue, so retiring
 sets `isActive: false` — it leaves the picker, the existing events keep it, and
 it can be restored.
+
+## D-041 — Firebase verifies the phone; it does not become the identity
+
+**Conflict:** direct, with spec **A3.otp** — *"OTP 6 digits, 5 min validity,
+max 3 sends/10min/phone, max 5 verify attempts then a 30-min lock."*
+
+**Why the spec loses here.** Every SMS provider that delivers to an Indian
+number goes through TRAI's DLT registry: register the entity, register each
+template, wait days to weeks. That is a queue, not an engineering problem, and
+it sits directly between a finished product and its first real login. Firebase
+phone auth sends through Google's own registered senders, so it skips the
+queue entirely.
+
+Firebase owns the code length, the validity window, the resend throttle and
+the lockout. None of them are configurable. So **A3.otp cannot be satisfied
+while `PHONE_VERIFY_DRIVER=firebase`**, and the clause is marked
+`relaxed: "D-041"` rather than quietly left failing. It is relaxed, not
+deleted: the `otp` driver still implements it in full, it is still the default,
+and it is what runs the moment DLT clears.
+
+**What Firebase is, and is not, allowed to be.** It is a *phone-ownership
+oracle*. It is asked one question — did this browser prove control of this
+number — and its answer feeds `findOrCreateUserByPhone` exactly as a correct
+OTP would. It is never the identity. There is no Firebase UID anywhere in the
+schema, nothing reconciles a Firebase account against a `User` row, and
+sessions, RBAC, the branded `OrganizerId` and the guest-checkout guards (D-036)
+are untouched by the choice.
+
+That distinction is the whole reason this is safe to do. Adopting Firebase Auth
+*as* the identity system would mean two stores that must agree about who
+someone is, which is the shape that produced the near-miss D-036 exists to
+prevent.
+
+**Three checks carry it**, and all three are in `verify()`:
+
+- **`issuer` and `audience` must name our project.** Without them a token
+  minted by any Firebase project on earth verifies against Google's keys and
+  signs someone in. The signature is perfectly valid; it is simply not for us.
+- **`sign_in_provider` must be `phone`.** An email or Google sign-in from the
+  same project also yields a valid token, and accepting one would let anybody
+  who can sign in by any means claim a number they never demonstrated.
+- **`phone_number` must equal the number being claimed.** Otherwise a user
+  verifies their own phone, edits the form field, and is handed someone else's
+  account. `sameNumber()` has its own test for exactly this.
+
+Plus `maxTokenAge: 10 minutes` — Firebase ID tokens live an hour, and a
+sign-in is seconds old, so anything older is a replay rather than a
+verification.
+
+**Verified with `jose`, not `firebase-admin`.** The Admin SDK wants a
+service-account JSON — a real secret, in a repo that is public — and it is a
+heavy import on every cold start. A Firebase ID token is an ordinary RS256 JWT
+signed by Google, and this project already signs its session cookie and its
+ticket QR with `jose`. The entire server-side configuration is
+`FIREBASE_PROJECT_ID`, which is not a secret.
+
+**It is built as a seam because it is expected to be reversed.**
+`PHONE_VERIFY_DRIVER` chooses between `otp` and `firebase`, and the sign-in
+actions, the session model and the `User` table cannot tell which is running.
+When DLT registration clears, MSG91 is a new `SmsAdapter` driver plus
+`PHONE_VERIFY_DRIVER=otp`, and A3.otp goes back to being enforced.
+
+**The costs, stated plainly**, because they do not disappear by being chosen:
+the sign-in screens now load a client SDK and solve an invisible reCAPTCHA;
+there are two verification paths to maintain and test rather than one; and the
+Redis rate limits the spec names no longer govern sends on the Firebase path —
+Google's abuse controls do.

@@ -166,7 +166,8 @@
       "kind": "behaviour",
       "rule": "OTP 6 digits, 5 min validity, max 3 sends/10min/phone, max 5 verify attempts then a 30-min lock",
       "impl": "src/lib/auth/otp.ts",
-      "test": null
+      "test": null,
+      "relaxed": "D-041"
     },
     {
       "id": "A3.refundPolicies",

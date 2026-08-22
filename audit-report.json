@@ -74,8 +74,8 @@
     "/tickets/[ticketNumber]"
   ],
   "completion": {
-    "pct": 45,
-    "specCovered": 60,
+    "pct": 46,
+    "specCovered": 61,
     "specTotal": 132,
     "modelsWritten": 34,
     "modelsTotal": 47,
@@ -96,11 +96,11 @@
     ]
   },
   "counts": {
-    "total": 171,
+    "total": 170,
     "blocker": 0,
     "broken": 0,
     "control": 0,
-    "incomplete": 171,
+    "incomplete": 170,
     "polish": 0
   },
   "findings": [
@@ -208,13 +208,6 @@
       "file": "spec A",
       "line": 0,
       "detail": "I4 untested — Client-submitted prices are never trusted; the server recomputes everything"
-    },
-    {
-      "check": "A8",
-      "severity": "incomplete",
-      "file": "spec A",
-      "line": 0,
-      "detail": "A3.otp untested — OTP 6 digits, 5 min validity, max 3 sends/10min/phone, max 5 verify attempts"
     },
     {
       "check": "A8",

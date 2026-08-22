@@ -285,6 +285,14 @@ do it **before** selling, not after.
   commission configured" rather than as a bug. The organizer-side queries get
   away without it only because `organizerId` is populated on ORGANIZER legs
   alone. Any query grouping by *booking* or *event* must say `account`.
+- **Firebase verifies the phone; it is never the identity** (D-041). It is
+  asked one question — did this browser prove control of this number — and the
+  answer feeds `findOrCreateUserByPhone`. No Firebase UID exists anywhere in
+  the schema. `verify()` must check `issuer`/`audience` (or any project's token
+  works), `sign_in_provider === "phone"` (or an email sign-in claims a number),
+  and that `phone_number` matches the number being claimed (or a user verifies
+  their own and submits someone else's). Verified with `jose`, not
+  `firebase-admin` — no service-account secret in a public repo.
 - **The brand mark exists three times and they must be kept in step.**
   `src/components/brand/logo.tsx` (the app), `src/app/icon.svg` (tabs and
   bookmarks) and the rasters from `scripts/make-icons.py` (favicon.ico,

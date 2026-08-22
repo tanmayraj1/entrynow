@@ -6,7 +6,8 @@ import {
   destroySession,
   findOrCreateUserByPhone,
 } from "@/lib/auth/session";
-import { normalisePhone, sendOtp, verifyOtp } from "@/lib/auth/otp";
+import { normalisePhone } from "@/lib/auth/otp";
+import { getPhoneVerifier } from "@/lib/auth/phone-verification";
 import {
   hashPassword,
   normaliseEmail,
@@ -31,6 +32,12 @@ export interface ActionState {
   devCode?: string;
   phone?: string;
   step?: "phone" | "otp";
+  /**
+   * True when the browser must run the verification itself (the Firebase
+   * driver). The form uses this to decide whether to call the Firebase SDK
+   * rather than trusting the server to have sent anything.
+   */
+  clientDriven?: boolean;
 }
 
 export async function requestOtp(
@@ -47,7 +54,7 @@ export async function requestOtp(
     };
   }
 
-  const result = await sendOtp(phone);
+  const result = await getPhoneVerifier().start(phone);
 
   if (!result.ok) {
     const mins = Math.ceil(result.retryAfterSeconds / 60);
@@ -55,16 +62,21 @@ export async function requestOtp(
       step: "phone",
       phone,
       error:
-        result.reason === "LOCKED"
+        result.message ??
+        (result.reason === "LOCKED"
           ? `Too many wrong codes. Try again in ${mins} minute${mins === 1 ? "" : "s"}.`
-          : `You've asked for too many codes. Try again in ${mins} minute${mins === 1 ? "" : "s"}.`,
+          : `You've asked for too many codes. Try again in ${mins} minute${mins === 1 ? "" : "s"}.`),
     };
   }
 
   return {
     step: "otp",
     phone,
-    notice: `Code sent to +${phone}.`,
+    // With a client-driven verifier the server has sent nothing yet — the
+    // browser is about to. Claiming "code sent" here would be a lie that the
+    // reCAPTCHA challenge immediately contradicts.
+    notice: result.clientDriven ? undefined : `Code sent to +${phone}.`,
+    clientDriven: result.clientDriven,
     devCode: result.devCode,
   };
 }
@@ -74,14 +86,24 @@ export async function confirmOtp(
   formData: FormData,
 ): Promise<ActionState> {
   const phone = String(formData.get("phone") ?? "");
-  const code = String(formData.get("code") ?? "").trim();
+  const verifier = getPhoneVerifier();
+
+  // The proof is a 6-digit code from our own SMS, or — with the Firebase
+  // driver — the ID token the browser earned by completing Firebase's flow.
+  // Only the verifier knows which, so only the verifier validates its shape.
+  const proof = verifier.clientDriven
+    ? String(formData.get("idToken") ?? "")
+    : String(formData.get("code") ?? "").trim();
 
   if (!phone) return { step: "phone", error: "Start again — the number was lost." };
-  if (!/^\d{4,8}$/.test(code)) {
+  if (!proof) {
+    return { step: "otp", phone, error: "Enter the code from your SMS." };
+  }
+  if (!verifier.clientDriven && !/^\d{4,8}$/.test(proof)) {
     return { step: "otp", phone, error: "Enter the code from your SMS." };
   }
 
-  const result = await verifyOtp(phone, code);
+  const result = await verifier.verify(phone, proof);
 
   if (!result.ok) {
     if (result.reason === "LOCKED") {
@@ -99,10 +121,17 @@ export async function confirmOtp(
         error: "That code has expired. Ask for a new one.",
       };
     }
+    if (result.reason === "UNAVAILABLE") {
+      return { step: "phone", phone, error: result.message ?? "Phone sign-in is unavailable." };
+    }
     return {
       step: "otp",
       phone,
-      error: `That code isn't right. ${result.attemptsLeft} attempt${result.attemptsLeft === 1 ? "" : "s"} left.`,
+      error:
+        result.message ??
+        (result.attemptsLeft === undefined
+          ? "That code isn't right. Try again."
+          : `That code isn't right. ${result.attemptsLeft} attempt${result.attemptsLeft === 1 ? "" : "s"} left.`),
     };
   }
 
