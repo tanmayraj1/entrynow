@@ -772,7 +772,7 @@ async function main() {
         title: "Navratri 2026 is live",
         subtitle: "Nine nights, four grounds, one ticket",
         gradient: "navratri",
-        imageUrl: "/images/banners/navratri.jpg",
+        imageUrl: "/images/banners/dandiya.jpg",
         // Stored relative to the city; the page prefixes the current city so a
         // banner can never navigate a Surat visitor into Ahmedabad.
         href: "festivals/navratri-2026",
@@ -786,20 +786,10 @@ async function main() {
         title: "Garba, every night of the season",
         subtitle: "Raas, dandiya and live orchestras from ₹249",
         gradient: "navratri",
-        imageUrl: "/images/banners/diwali.jpg",
+        imageUrl: "/images/banners/garba-night.jpg",
         href: "events?category=garba-navratri",
         status: "LIVE",
         sortOrder: 1,
-      },
-      {
-        cityId: null,
-        title: "Under ₹500",
-        subtitle: "Big nights that don't cost a big night out",
-        gradient: "party",
-        imageUrl: "/images/banners/concerts.jpg",
-        href: "events?maxPrice=500",
-        status: "LIVE",
-        sortOrder: 2,
       },
     ],
   });

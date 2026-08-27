@@ -79,9 +79,8 @@ const POSTERS: Record<string, string> = {
   "sharad-purnima-garba-2026": "/images/posters/dandiya-dhamaka.jpg",
 };
 const BANNERS = [
-  { title: "Navratri 2026 is live", subtitle: "Nine nights, four grounds, one ticket", imageUrl: "/images/banners/navratri.jpg", gradient: "navratri", href: "festivals/navratri-2026", scoped: true, sortOrder: 0 },
-  { title: "Garba, every night of the season", subtitle: "Raas, dandiya and live orchestras from ₹249", imageUrl: "/images/banners/diwali.jpg", gradient: "navratri", href: "events?category=garba-navratri", scoped: false, sortOrder: 1 },
-  { title: "Under ₹500", subtitle: "Big nights that don't cost a big night out", imageUrl: "/images/banners/concerts.jpg", gradient: "party", href: "events?maxPrice=500", scoped: false, sortOrder: 2 },
+  { title: "Navratri 2026 is live", subtitle: "Nine nights, four grounds, one ticket", imageUrl: "/images/banners/dandiya.jpg", gradient: "navratri", href: "festivals/navratri-2026", scoped: true, sortOrder: 0 },
+  { title: "Garba, every night of the season", subtitle: "Raas, dandiya and live orchestras from ₹249", imageUrl: "/images/banners/garba-night.jpg", gradient: "navratri", href: "events?category=garba-navratri", scoped: false, sortOrder: 1 },
 ];
 
 const city = await db.city.findFirst({ where: { slug: "ahmedabad" }, select: { id: true } });
