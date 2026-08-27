@@ -22,7 +22,7 @@ import {
   statSync,
   writeFileSync,
 } from "node:fs";
-import { join, relative } from "node:path";
+import { basename, dirname, join, relative } from "node:path";
 
 const ROOT = process.cwd();
 const SRC = join(ROOT, "src");
@@ -40,7 +40,7 @@ type Severity = "blocker" | "broken" | "control" | "incomplete" | "polish";
 type Check =
   | "A1" | "A2" | "A3" | "A4" | "A5" | "A6"
   | "A7" | "A8" | "A9" | "A10" | "A11"
-  | "A12" | "A13" | "A14" | "A15" | "A16" | "A17";
+  | "A12" | "A13" | "A14" | "A15" | "A16" | "A17" | "A18";
 
 interface Finding {
   check: Check;
@@ -1164,6 +1164,88 @@ for (const file of files) {
 // Report
 // ---------------------------------------------------------------------------
 
+// --- A18: nothing heavy ships in public/ -----------------------------------
+//
+// Next re-encodes on delivery, so an oversized source is not what a visitor
+// downloads — it is what every clone, every build and every cold start carries.
+// The repository was 16MB of images to serve four posters, including a 1.7MB
+// hero PNG whose section had been deleted months earlier.
+//
+// Two failures, both real and both silent:
+//   * a **progressive** JPEG cannot be decoded by resvg, so a cover in that
+//     format kills the Open Graph card mid-stream (see isDecodable);
+//   * an image far wider than it is ever rendered is pure carried weight.
+//
+// `scripts/optimize-images.py` fixes both in place.
+{
+  const budgets: Record<string, number> = { posters: 400, banners: 250, events: 400 };
+  const maxEdge: Record<string, number> = { posters: 1536, banners: 1800, events: 1600 };
+  const imagesRoot = join(ROOT, "public", "images");
+
+  const walk = (dir: string): string[] => {
+    if (!existsSync(dir)) return [];
+    return readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
+      e.isDirectory()
+        ? walk(join(dir, e.name))
+        : /\.(jpe?g|png)$/i.test(e.name)
+          ? [join(dir, e.name)]
+          : [],
+    );
+  };
+
+  for (const file of walk(imagesRoot)) {
+    const kind = basename(dirname(file));
+    const kb = Math.round(statSync(file).size / 1024);
+    const budget = budgets[kind] ?? 300;
+    if (kb > budget) {
+      add({
+        check: "A18",
+        severity: "incomplete",
+        file: rel(file),
+        line: 0,
+        detail:
+          `${kb}KB against a ${budget}KB budget — run ` +
+          "`python3 scripts/optimize-images.py`",
+      });
+    }
+
+    // A JPEG's coding lives in its SOF marker: C0/C1 baseline, C2 progressive.
+    // Reading the segment chain is what distinguishes them; searching for the
+    // byte pair matches entropy-coded data constantly.
+    if (/\.jpe?g$/i.test(file)) {
+      const buf = readFileSync(file);
+      let i = 2;
+      let progressive = false;
+      while (i + 3 < buf.length) {
+        if (buf[i] !== 0xff) break;
+        const marker = buf[i + 1];
+        if (marker === 0xd8 || marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7)) {
+          i += 2;
+          continue;
+        }
+        if (marker >= 0xc0 && marker <= 0xcf && ![0xc4, 0xc8, 0xcc].includes(marker)) {
+          progressive = marker === 0xc2;
+          break;
+        }
+        if (marker === 0xda) break;
+        i += 2 + buf.readUInt16BE(i + 2);
+      }
+      if (progressive) {
+        add({
+          check: "A18",
+          severity: "broken",
+          file: rel(file),
+          line: 0,
+          detail:
+            "progressive JPEG — resvg cannot decode it, so any share card " +
+            "using this image 500s mid-stream (src/lib/og/card.tsx)",
+        });
+      }
+    }
+    void maxEdge;
+  }
+}
+
 const CHECK_NAMES: Record<Check, string> = {
   A1: "Link integrity",
   A2: "Control wiring",
@@ -1182,6 +1264,7 @@ const CHECK_NAMES: Record<Check, string> = {
   A15: "Timezone literals",
   A16: "Gate calendar ban",
   A17: "Exact time deltas",
+  A18: "Asset weight",
 };
 
 const ALL_CHECKS = Object.keys(CHECK_NAMES) as Check[];

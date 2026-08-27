@@ -285,6 +285,12 @@ do it **before** selling, not after.
   commission configured" rather than as a bug. The organizer-side queries get
   away without it only because `organizerId` is populated on ORGANIZER legs
   alone. Any query grouping by *booking* or *event* must say `account`.
+- **Nothing heavy ships in `public/`.** Audit check **A18** enforces a per-kind
+  size budget and fails the build on a *progressive* JPEG, which resvg cannot
+  decode — a progressive cover 500s the share card mid-stream. Run
+  `python3 scripts/optimize-images.py` to fix both in place. Next re-encodes on
+  delivery, so this is about what the repo and the bundle carry, not what a
+  visitor downloads.
 - **`npm run db:seed` does not invalidate the catalog cache.** `getCategories`
   and the other catalogue reads are `unstable_cache` with a 1h TTL and a
   `CATALOG_TAG`; the admin actions call `updateTag`, a raw seed does not. Clear
