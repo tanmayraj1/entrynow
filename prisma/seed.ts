@@ -141,19 +141,20 @@ async function main() {
     { slug: "exhibitions", name: "Exhibitions", gradient: "exhibition", sortOrder: 10 },
     { slug: "workshops", name: "Workshops", gradient: "workshop", sortOrder: 11 },
   ];
-  // Only the categories that have something in them are active.
+  // All twelve are active, including the eleven with nothing in them yet.
   //
-  // The catalogue keeps all twelve — they deactivate, never delete (spec G2),
-  // and an admin turns one back on from /admin/cms the day it has events. But
-  // an active category with no events is a tile on the home page that leads to
-  // an empty listing, which is the same thin-page problem the sitemap avoids.
-  const ACTIVE_CATEGORIES = new Set(["garba-navratri"]);
-  await db.category.createMany({
-    data: categoryData.map((c) => ({
-      ...c,
-      isActive: ACTIVE_CATEGORIES.has(c.slug),
-    })),
-  });
+  // An earlier pass deactivated everything but Garba on the grounds that a
+  // tile leading to an empty listing is thin content. That reasoning is right
+  // for the *sitemap*, which is a submission to a crawler, and wrong for the
+  // *category rail*, which is how a visitor — and an organizer filling in the
+  // event wizard — learns what this marketplace is for. A one-category rail
+  // reads as a Garba-only site, not as a marketplace whose first season is
+  // Garba. Empty categories stay visible and their listings say so.
+  //
+  // Deactivation stays available: `toggleCatalogActive` in the admin CMS is
+  // the way a category is retired, and rows deactivate rather than delete
+  // (spec G2). Nothing here should switch one off on its own.
+  await db.category.createMany({ data: categoryData });
   const categories = await db.category.findMany();
   const cat = (slug: string) => categories.find((c) => c.slug === slug)!;
 

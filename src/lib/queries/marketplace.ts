@@ -187,16 +187,33 @@ function toCard(e: RawEvent, now: Date): EventCardData {
 export const CATALOG_TAG = "catalog";
 const CATALOG_TTL = 3600;
 
+/**
+ * Cache epoch — bump when a catalogue row changes from OUTSIDE the app.
+ *
+ * `updateTag(CATALOG_TAG)` is called by exactly one thing: `toggleCatalogActive`
+ * in the admin CMS. A `db:seed`, a psql session or `scripts/sync-catalogue.mts`
+ * writes the same rows and cannot call it — there is no request context to call
+ * it from — so the marketplace keeps serving the old catalogue for up to an
+ * hour and the write looks like it silently failed (D-042).
+ *
+ * This string is part of every cache key below, so changing it retires the whole
+ * catalogue cache on the next deployment. That makes a cache flush something
+ * you ship in the same commit as the data change, rather than a dashboard
+ * button someone has to remember. Any value works; the date it was bumped is
+ * the most useful one to read later.
+ */
+const CATALOG_EPOCH = "2026-08-27";
+
 export const getCityBySlug = unstable_cache(
   async (slug: string) => db.city.findFirst({ where: { slug, isActive: true } }),
-  ["city-by-slug"],
+  ["city-by-slug", CATALOG_EPOCH],
   { revalidate: CATALOG_TTL, tags: [CATALOG_TAG] },
 );
 
 export const getCities = unstable_cache(
   async () =>
     db.city.findMany({ where: { isActive: true }, orderBy: { sortOrder: "asc" } }),
-  ["cities"],
+  ["cities", CATALOG_EPOCH],
   { revalidate: CATALOG_TTL, tags: [CATALOG_TAG] },
 );
 
@@ -206,7 +223,7 @@ export const getLocalities = unstable_cache(
       where: { cityId, isActive: true },
       orderBy: { name: "asc" },
     }),
-  ["localities"],
+  ["localities", CATALOG_EPOCH],
   { revalidate: CATALOG_TTL, tags: [CATALOG_TAG] },
 );
 
@@ -220,7 +237,7 @@ export const getCategories = unstable_cache(
       where: { isActive: true },
       orderBy: { sortOrder: "asc" },
     }),
-  ["categories"],
+  ["categories", CATALOG_EPOCH],
   { revalidate: CATALOG_TTL, tags: [CATALOG_TAG] },
 );
 

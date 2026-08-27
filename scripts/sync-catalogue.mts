@@ -15,7 +15,7 @@
  *      if it does not exist;
  *   3. pauses events outside Garba/Navratri rather than deleting them — their
  *      tickets stay valid and they can be un-paused (spec B1, D-042);
- *   4. deactivates categories and festivals with nothing live in them;
+ *   4. activates every category, and the festivals that have something live;
  *   5. replaces the home banners with the three current ones.
  *
  * Run `--dry` first. It prints exactly what `--apply` would change.
@@ -123,12 +123,17 @@ for (const e of strays) {
   if (APPLY) await db.event.updateMany({ where: { id: e.id }, data: { status: "PAUSED", pausedAt: new Date() } });
 }
 
-// 4 — categories and festivals with nothing live
+// 4 — every category active, and festivals that have something live.
+//
+// This step used to switch off the eleven categories with no events, which is
+// how the rail collapsed to a single tile. A category is the marketplace's
+// table of contents — it says what may be sold here, not what is on sale this
+// week — so it stays up whether or not it currently holds an event. Only an
+// admin retires one, from /admin/cms. This step never deactivates a category.
 for (const c of await db.category.findMany({ select: { id: true, slug: true, isActive: true } })) {
-  const want = c.slug === KEEP_CATEGORY;
-  if (c.isActive === want) continue;
-  note(`${want ? "activate" : "deactivate"} category "${c.slug}"`);
-  if (APPLY) await db.category.update({ where: { id: c.id }, data: { isActive: want } });
+  if (c.isActive) continue;
+  note(`activate category "${c.slug}"`);
+  if (APPLY) await db.category.update({ where: { id: c.id }, data: { isActive: true } });
 }
 for (const f of await db.festival.findMany({ select: { id: true, slug: true, isActive: true } })) {
   const live = await db.event.count({ where: { festivalId: f.id, status: "LIVE" } });
