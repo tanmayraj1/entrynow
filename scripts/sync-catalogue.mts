@@ -49,12 +49,34 @@ const VENUES = [
   { name: "The Grand Bhagwati Lawns", locality: "bopal", addressLine: "The Grand Bhagwati, Bodakdev", lat: 23.0405, lng: 72.5089 },
   { name: "Riverfront Event Centre", locality: "navrangpura", addressLine: "Sabarmati Riverfront West, Ahmedabad", lat: 23.0402, lng: 72.5762 },
 ];
-/** Poster artwork keyed by the event slug it belongs to. */
+/**
+ * Poster artwork keyed by the event it replaces the cover of.
+ *
+ * Mapped onto the events that already exist rather than creating new ones, so
+ * the 19 bookings and 22 tickets already attached to them are untouched.
+ *
+ * Paired as closely as the artwork allows: "Garba Under The Stars" names
+ * Karnavati Club and Khelaiya Nights is held there; "Navratri Utsav — Garba
+ * Mahotsav" is a multi-night mahotsav and so is Rangilo Re; "Raas Rang" goes to
+ * the raas event. The seeded slugs are listed alongside the curated ones, so
+ * this works against a database that has had the new seed and one that has not.
+ *
+ * Worth stating plainly: the posters carry their OWN venue, date and lead
+ * price, and those will not match the event they now sit on. Replacing covers
+ * without rewriting the events was the explicit instruction; regenerating the
+ * artwork against each event's real details is what closes that gap.
+ */
 const POSTERS: Record<string, string> = {
+  // Curated slugs (present after the new seed).
   "navratri-utsav-garba-mahotsav-2026": "/images/posters/navratri-utsav.jpg",
   "dandiya-dhamaka-garba-night-2026": "/images/posters/dandiya-dhamaka.jpg",
   "garba-under-the-stars-2026": "/images/posters/garba-under-the-stars.jpg",
   "raas-rang-garba-night-2026": "/images/posters/raas-rang-garba-night.jpg",
+  // The originally seeded Garba events, which is what production still has.
+  "rangilo-re-garba-mahotsav-2026": "/images/posters/navratri-utsav.jpg",
+  "khelaiya-nights-2026": "/images/posters/garba-under-the-stars.jpg",
+  "bopal-raas-garba-2026": "/images/posters/raas-rang-garba-night.jpg",
+  "sharad-purnima-garba-2026": "/images/posters/dandiya-dhamaka.jpg",
 };
 const BANNERS = [
   { title: "Navratri 2026 is live", subtitle: "Nine nights, four grounds, one ticket", imageUrl: "/images/banners/navratri.jpg", gradient: "navratri", href: "festivals/navratri-2026", scoped: true, sortOrder: 0 },
@@ -84,10 +106,9 @@ for (const v of VENUES) {
 // 2 — poster artwork onto its event
 for (const [slug, poster] of Object.entries(POSTERS)) {
   const ev = await db.event.findFirst({ where: { slug }, select: { id: true, coverImageUrl: true } });
-  if (!ev) {
-    note(`SKIP poster for "${slug}" — no such event here (run the seed, or create it in the portal)`);
-    continue;
-  }
+  // Both naming schemes are listed, so roughly half will be absent from any
+  // given database. That is expected and not something to report.
+  if (!ev) continue;
   if (ev.coverImageUrl === poster) continue;
   note(`set cover of "${slug}" -> ${poster}`);
   if (APPLY) await db.event.update({ where: { id: ev.id }, data: { coverImageUrl: poster } });
