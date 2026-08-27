@@ -28,7 +28,7 @@ QUALITY = 82
 # Per kind, because a full-bleed poster and a banner strip have no business
 # sharing a budget. These are ceilings on the SOURCE file; what a visitor
 # downloads is whatever /_next/image re-encodes it to, which is far smaller.
-BUDGET_KB = {"posters": 400, "banners": 250, "events": 400}
+BUDGET_KB = {"posters": 400, "banners": 250, "events": 520}
 DEFAULT_BUDGET_KB = 300
 
 ROOT = "public/images"

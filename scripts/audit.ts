@@ -1178,7 +1178,7 @@ for (const file of files) {
 //
 // `scripts/optimize-images.py` fixes both in place.
 {
-  const budgets: Record<string, number> = { posters: 400, banners: 250, events: 400 };
+  const budgets: Record<string, number> = { posters: 400, banners: 250, events: 520 };
   const maxEdge: Record<string, number> = { posters: 1536, banners: 1800, events: 1600 };
   const imagesRoot = join(ROOT, "public", "images");
 
