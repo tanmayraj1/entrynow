@@ -45,11 +45,13 @@ const token = await new SignJWT({ sid, uid: user.id })
   .sign(new TextEncoder().encode(process.env.SESSION_JWT_SECRET!));
 const cookie = `se_session=${token}`;
 
+// Any live event with stock left, rather than a named one — the concurrency
+// test cares that inventory holds, not which event it holds for.
 const event = await db.event.findFirstOrThrow({
-  where: { slug: "gujarat-titans-warmup-fixture-2026" },
-  include: { tiers: true },
+  where: { status: "LIVE", tiers: { some: { isActive: true } } },
+  include: { tiers: { where: { isActive: true }, orderBy: { quantityTotal: "desc" } } },
 });
-const tier = event.tiers.find((t) => t.name === "Lower West")!;
+const tier = event.tiers[0]!;
 
 const before = await db.ticketTier.findUniqueOrThrow({ where: { id: tier.id } });
 console.log(`BEFORE   sold=${before.quantitySold} held=${before.quantityHeld} total=${before.quantityTotal}`);

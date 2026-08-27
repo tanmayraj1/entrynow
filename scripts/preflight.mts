@@ -100,8 +100,14 @@ console.log("\n── AUTHENTICATION ──");
 }
 
 console.log("\n── PRICE TAMPERING (I4) ──");
-const ev = await db.event.findFirstOrThrow({ where: { slug: "the-improv-project-ahmedabad" }, include: { tiers: true } });
-const tier = ev.tiers.find((t) => t.name === "General")!;
+// Any live event with a bookable tier. Naming one by slug tied this security
+// check to the demo catalogue, so curating the events broke price-tamper
+// coverage for an unrelated reason.
+const ev = await db.event.findFirstOrThrow({
+  where: { status: "LIVE", tiers: { some: { isActive: true } } },
+  include: { tiers: { where: { isActive: true } } },
+});
+const tier = ev.tiers[0]!;
 {
   const r = await fetch(`${BASE}/api/bookings`, { method: "POST",
     headers: { "content-type": "application/json", cookie: cookieA },

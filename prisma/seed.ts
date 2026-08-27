@@ -141,10 +141,24 @@ async function main() {
     { slug: "exhibitions", name: "Exhibitions", gradient: "exhibition", sortOrder: 10 },
     { slug: "workshops", name: "Workshops", gradient: "workshop", sortOrder: 11 },
   ];
-  await db.category.createMany({ data: categoryData });
+  // Only the categories that have something in them are active.
+  //
+  // The catalogue keeps all twelve — they deactivate, never delete (spec G2),
+  // and an admin turns one back on from /admin/cms the day it has events. But
+  // an active category with no events is a tile on the home page that leads to
+  // an empty listing, which is the same thin-page problem the sitemap avoids.
+  const ACTIVE_CATEGORIES = new Set(["garba-navratri"]);
+  await db.category.createMany({
+    data: categoryData.map((c) => ({
+      ...c,
+      isActive: ACTIVE_CATEGORIES.has(c.slug),
+    })),
+  });
   const categories = await db.category.findMany();
   const cat = (slug: string) => categories.find((c) => c.slug === slug)!;
 
+  // Navratri is the only one with events; the rest stay in the catalogue,
+  // inactive, ready to be switched on.
   await db.festival.createMany({
     data: [
       {
@@ -160,6 +174,7 @@ async function main() {
       },
       {
         slug: "diwali-2026",
+        isActive: false,
         name: "Diwali 2026",
         tagline: "Lights, melas and mithai",
         startsAt: ist(2026, 11, 7, 17, 0),
@@ -169,6 +184,7 @@ async function main() {
       },
       {
         slug: "uttarayan-2027",
+        isActive: false,
         name: "Uttarayan 2027",
         tagline: "Kite season over the old city",
         startsAt: ist(2027, 1, 14, 6, 0),
@@ -178,6 +194,7 @@ async function main() {
       },
       {
         slug: "holi-2027",
+        isActive: false,
         name: "Holi 2027",
         tagline: "Colour, water and dhol",
         startsAt: ist(2027, 3, 3, 9, 0),
@@ -210,6 +227,11 @@ async function main() {
     { name: "The Terrace, Prahlad Nagar", locality: "prahlad-nagar", addressLine: "Corporate Road, Prahlad Nagar", lat: 23.0102, lng: 72.5062 },
     { name: "Kanoria Arts Centre", locality: "navrangpura", addressLine: "Kanoria Centre for Arts, Navrangpura", lat: 23.0378, lng: 72.5501 },
     { name: "Vastrapur Lake Promenade", locality: "vastrapur", addressLine: "Vastrapur Lake, Vastrapur", lat: 23.0369, lng: 72.5273 },
+    // Named on the supplied Garba posters, so the listing and the artwork
+    // agree about where the event actually is.
+    { name: "YMCA Club Ground", locality: "sg-highway", addressLine: "YMCA Club, S.G. Road", lat: 23.0284, lng: 72.5074 },
+    { name: "The Grand Bhagwati Lawns", locality: "bopal", addressLine: "The Grand Bhagwati, Bodakdev", lat: 23.0405, lng: 72.5089 },
+    { name: "Riverfront Event Centre", locality: "navrangpura", addressLine: "Sabarmati Riverfront West, Ahmedabad", lat: 23.0402, lng: 72.5762 },
   ];
   for (const v of venueData) {
     await db.venue.create({
@@ -396,6 +418,8 @@ async function main() {
     slug: string;
     title: string;
     shortCode: string;
+    /** Supplied artwork under /images/posters. Overrides `coverImageFor`. */
+    poster?: string;
     organizer: string;
     category: string;
     festival?: string;
@@ -413,713 +437,167 @@ async function main() {
     views?: number;
   };
 
+  /**
+   * Garba and Navratri only, for now.
+   *
+   * The catalogue was a wide sample across twelve categories, which was the
+   * right shape for exercising the code and the wrong shape for showing the
+   * product: a cricket fixture and a heritage walk beside four Garba nights
+   * reads as a directory rather than as a Navratri marketplace.
+   *
+   * The first four carry supplied artwork, and their title, venue, dates and
+   * lead price are transcribed FROM that artwork — a poster that advertises
+   * "TICKETS STARTING FROM Rs 349 at The Grand Bhagwati Lawns" against a
+   * listing that says something else is worse than no poster at all.
+   *
+   * The posters read 2025; these are dated 2026 so the events are actually
+   * upcoming. Regenerate the artwork with 2026 to close the gap.
+   */
   const eventSpecs: EventSpec[] = [
     {
-      slug: "rangilo-re-garba-mahotsav-2026",
-      title: "Rangilo Re Garba Mahotsav 2026",
-      shortCode: "GRB",
+      slug: "navratri-utsav-garba-mahotsav-2026",
+      title: "Navratri Utsav — Garba Mahotsav",
+      shortCode: "NVU",
+      poster: "/images/posters/navratri-utsav.jpg",
       organizer: "rangmanch-events",
       category: "garba-navratri",
       festival: "navratri-2026",
-      venue: "GMDC Ground",
+      venue: "Riverfront Event Centre",
       status: "LIVE",
       size: "BIG",
       languages: ["Gujarati", "Hindi"],
       summary:
-        "Nine nights of traditional raas and garba on Ahmedabad's largest ground, with live dhol and a 40-piece orchestra.",
-      nights: { from: [2026, 10, 12], count: 9, start: [19, 30], end: [25, 0] },
+        "Four nights of garba on the riverfront with a live orchestra, a kids' zone and a full food street.",
+      nights: { from: [2026, 10, 9], count: 4, start: [19, 0], end: [25, 0] },
       tiers: [
-        { name: "Season Pass", price: 3999, total: 3000, sold: 2780, tag: "Best value", desc: "All 9 nights, priority lane", seasonPass: true, perUserLimit: 4 },
-        { name: "Single Night", price: 499, total: 12000, sold: 8400, desc: "Any one night, general ring" },
-        { name: "Couple Entry", price: 899, total: 4000, sold: 2600, desc: "Two entries, one night" },
-        { name: "VIP Ring", price: 1499, total: 800, sold: 720, tag: "Filling fast", desc: "Inner ring, seating, separate gate" },
+        { name: "Season Pass", price: 799, total: 2500, sold: 2180, tag: "Best value", desc: "All four nights, priority lane", seasonPass: true, perUserLimit: 4 },
+        { name: "Single Night", price: 249, total: 9000, sold: 6100, desc: "Any one night, general ring" },
+        { name: "Couple Entry", price: 449, total: 3000, sold: 1900, desc: "Two entries, one night" },
+        { name: "VIP Ring", price: 999, total: 600, sold: 540, tag: "Filling fast", desc: "Inner ring, seating, separate gate" },
       ],
-      gates: ["Gate 1 — Season & VIP", "Gate 2 — General & female ring", "Gate 3 — Couples"],
+      gates: ["Gate 1 — Season & VIP", "Gate 2 — General", "Gate 3 — Couples"],
       rating: 4.8,
       ratingCount: 1240,
       views: 48200,
     },
     {
-      slug: "khelaiya-nights-2026",
-      title: "Khelaiya Nights 2026",
-      shortCode: "KHN",
-      organizer: "shree-events",
+      slug: "dandiya-dhamaka-garba-night-2026",
+      title: "Dandiya Dhamaka — Garba Night",
+      shortCode: "DDH",
+      poster: "/images/posters/dandiya-dhamaka.jpg",
+      organizer: "amdavad-nights",
+      category: "garba-navratri",
+      festival: "navratri-2026",
+      venue: "The Grand Bhagwati Lawns",
+      status: "LIVE",
+      size: "MEDIUM",
+      languages: ["Gujarati", "Hindi"],
+      summary:
+        "One big night at Bodakdev with DJ Hari and MC Ketan, dandiya through to closing, food and games.",
+      single: { date: [2026, 10, 10], start: [19, 0], end: [25, 30] },
+      tiers: [
+        { name: "Early Bird", price: 349, total: 1200, sold: 1150, tag: "Few left", desc: "Limited release" },
+        { name: "General", price: 499, total: 2500, sold: 1400, desc: "Full access to the ground" },
+        { name: "Couple Entry", price: 899, total: 900, sold: 520, desc: "Two entries" },
+        { name: "VIP Lounge", price: 1499, total: 200, sold: 160, tag: "Filling fast", desc: "Raised deck, seating, own bar" },
+      ],
+      gates: ["Main Gate", "VIP Gate"],
+      rating: 4.6,
+      ratingCount: 612,
+      views: 21400,
+    },
+    {
+      slug: "garba-under-the-stars-2026",
+      title: "Garba Under The Stars",
+      shortCode: "GUS",
+      poster: "/images/posters/garba-under-the-stars.jpg",
+      organizer: "garba-gujarat",
       category: "garba-navratri",
       festival: "navratri-2026",
       venue: "Karnavati Club Lawns",
       status: "LIVE",
-      size: "BIG",
+      size: "MEDIUM",
       languages: ["Gujarati"],
       summary:
-        "A khelaiya-first ground — strict traditional dress code, live singers, and no film music.",
-      nights: { from: [2026, 10, 12], count: 9, start: [20, 0], end: [25, 30] },
+        "Open-air garba on the Karnavati lawns with a live band, dandiya and food stalls until late.",
+      single: { date: [2026, 10, 11], start: [18, 30], end: [24, 30] },
       tiers: [
-        { name: "Season Pass", price: 4999, total: 1500, sold: 1310, seasonPass: true, perUserLimit: 4 },
-        { name: "Single Night", price: 699, total: 6000, sold: 3900 },
-        { name: "Female Entry", price: 399, total: 3000, sold: 2400, desc: "Women-only ring" },
+        { name: "General", price: 299, total: 2000, sold: 1240, desc: "Full access to the lawns" },
+        { name: "Couple Entry", price: 549, total: 800, sold: 430, desc: "Two entries" },
+        { name: "Front Circle", price: 899, total: 300, sold: 240, tag: "Filling fast", desc: "Nearest the band, seating" },
       ],
-      gates: ["Gate 1 — Main", "Gate 2 — Female ring"],
-      rating: 4.6,
-      ratingCount: 860,
-      views: 21400,
+      gates: ["Lawn Gate", "Members Gate"],
+      rating: 4.5,
+      ratingCount: 388,
+      views: 15600,
     },
     {
-      slug: "bopal-raas-garba-2026",
-      title: "Bopal Raas Garba 2026",
-      shortCode: "BRG",
-      organizer: "garba-gujarat",
+      slug: "raas-rang-garba-night-2026",
+      title: "Raas Rang — Garba Night",
+      shortCode: "RRG",
+      poster: "/images/posters/raas-rang-garba-night.jpg",
+      organizer: "shree-events",
       category: "garba-navratri",
       festival: "navratri-2026",
-      venue: "Bopal Party Plot",
+      venue: "YMCA Club Ground",
       status: "LIVE",
       size: "MEDIUM",
       languages: ["Gujarati", "Hindi"],
-      summary: "Neighbourhood garba with a family ring and a food street on the perimeter.",
-      nights: { from: [2026, 10, 12], count: 9, start: [19, 0], end: [24, 30] },
+      summary:
+        "Tradition, rhythm, togetherness — a full night of raas on S.G. Road with a live DJ, rain dance and food court.",
+      single: { date: [2026, 10, 12], start: [18, 0], end: [24, 30] },
       tiers: [
-        { name: "Season Pass", price: 2499, total: 900, sold: 610, seasonPass: true },
-        { name: "Single Night", price: 349, total: 4000, sold: 1850 },
-        { name: "Family Pack (4)", price: 1199, total: 800, sold: 430, desc: "Four entries, one night" },
+        { name: "General", price: 299, total: 2200, sold: 980, desc: "Full access to the ground" },
+        { name: "Couple Entry", price: 549, total: 900, sold: 360, desc: "Two entries" },
+        { name: "Rain Dance Zone", price: 699, total: 500, sold: 310, desc: "Separate arena, changing rooms" },
+        { name: "VIP Ring", price: 1199, total: 250, sold: 190, tag: "Filling fast", desc: "Inner ring, seating" },
       ],
-      gates: ["Gate 1 — Main", "Gate 2 — Family"],
+      gates: ["Gate A — General", "Gate B — VIP & Couples"],
       rating: 4.4,
-      ratingCount: 412,
+      ratingCount: 233,
       views: 9800,
     },
     {
+      // No supplied artwork, so this one falls back to the licensed Wikimedia
+      // photography and keeps a second organizer visible in the listings.
       slug: "sharad-purnima-garba-2026",
       title: "Sharad Purnima Garba 2026",
       shortCode: "SPG",
-      organizer: "amdavad-nights",
+      organizer: "garba-gujarat",
       category: "garba-navratri",
-      venue: "Thaltej Open Grounds",
-      status: "LIVE",
-      size: "MEDIUM",
-      languages: ["Gujarati"],
-      summary: "One full-moon night of garba with doodh-poha served at midnight.",
-      single: { date: [2026, 10, 25], start: [20, 0], end: [25, 30] },
-      tiers: [
-        { name: "General", price: 599, total: 2000, sold: 1420 },
-        { name: "Couple", price: 999, total: 600, sold: 480 },
-      ],
-      gates: ["Main Gate"],
-      rating: 4.2,
-      ratingCount: 233,
-      views: 5100,
-    },
-    {
-      slug: "diwali-mela-riverfront-2026",
-      title: "Diwali Mela — Riverfront 2026",
-      shortCode: "DML",
-      organizer: "rangmanch-events",
-      category: "diwali",
-      festival: "diwali-2026",
-      venue: "Maninagar Riverfront Lawn",
-      status: "LIVE",
-      size: "BIG",
-      languages: ["Gujarati", "Hindi", "English"],
-      summary:
-        "Six evenings of stalls, rangoli competitions, folk stages and a nightly lamp float on the river.",
-      nights: { from: [2026, 11, 7], count: 6, start: [17, 30], end: [23, 0] },
-      tiers: [
-        { name: "Entry Pass", price: 199, total: 15000, sold: 6200 },
-        { name: "Family Pack (4)", price: 699, total: 3000, sold: 1100 },
-        { name: "Premium Lawn", price: 899, total: 900, sold: 320, desc: "Reserved lawn seating, river view" },
-      ],
-      gates: ["North Gate", "South Gate"],
-      rating: 4.5,
-      ratingCount: 318,
-      views: 14300,
-    },
-    {
-      slug: "amdavad-food-fest-2026",
-      title: "Amdavad Food Fest 2026",
-      shortCode: "AFF",
-      organizer: "shree-events",
-      category: "food-festivals",
-      venue: "Prahlad Nagar Garden Amphitheatre",
-      status: "LIVE",
-      size: "MEDIUM",
-      languages: ["Gujarati", "Hindi", "English"],
-      summary:
-        "Sixty stalls from Manek Chowk to Law Garden, plus a Kathiyawadi thali pavilion.",
-      nights: { from: [2026, 9, 18], count: 3, start: [17, 0], end: [23, 0] },
-      tiers: [
-        { name: "Entry", price: 149, total: 8000, sold: 5100 },
-        { name: "Entry + ₹300 food credit", price: 399, total: 3000, sold: 2300, tag: "Popular" },
-      ],
-      gates: ["Main Gate"],
-      rating: 4.3,
-      ratingCount: 190,
-      views: 8700,
-    },
-    {
-      slug: "hasya-samrat-comedy-night",
-      title: "Hasya Samrat — Gujarati Comedy Night",
-      shortCode: "HSC",
-      organizer: "amdavad-nights",
-      category: "comedy",
-      venue: "Town Hall",
-      status: "LIVE",
-      size: "SMALL",
-      languages: ["Gujarati"],
-      summary: "Three Gujarati stand-ups, ninety minutes, strictly no phones.",
-      single: { date: [2026, 8, 29], start: [20, 0], end: [21, 45] },
-      tiers: [
-        { name: "Silver", price: 399, total: 300, sold: 280 },
-        { name: "Gold", price: 799, total: 120, sold: 118, tag: "Almost gone" },
-      ],
-      gates: ["Main Gate"],
-      rating: 4.7,
-      ratingCount: 96,
-      views: 3200,
-    },
-    {
-      slug: "sufi-night-satellite",
-      title: "Sufi Night — Satellite",
-      shortCode: "SUF",
-      organizer: "swara-productions",
-      category: "concerts",
-      venue: "Satellite Community Hall",
-      status: "IN_REVIEW",
-      size: "SMALL",
-      languages: ["Hindi", "Urdu"],
-      summary: "An intimate qawwali evening with a seven-piece ensemble.",
-      single: { date: [2026, 9, 12], start: [19, 30], end: [22, 30] },
-      tiers: [
-        { name: "General", price: 799, total: 250 },
-        { name: "Front Row", price: 1499, total: 50 },
-      ],
-      rating: 0,
-      ratingCount: 0,
-    },
-    {
-      slug: "uttarayan-kite-carnival-2027",
-      title: "Uttarayan Kite Carnival 2027",
-      shortCode: "UKC",
-      organizer: "garba-gujarat",
-      category: "uttarayan",
-      festival: "uttarayan-2027",
-      venue: "Bopal Party Plot",
-      status: "LIVE",
-      size: "MEDIUM",
-      languages: ["Gujarati", "Hindi"],
-      summary: "Terrace-style kite flying with undhiyu, jalebi and a night-kite finale.",
-      nights: { from: [2027, 1, 14], count: 2, start: [7, 0], end: [21, 0] },
-      tiers: [
-        { name: "Day Pass", price: 449, total: 2500, sold: 380 },
-        { name: "Day Pass + Kite Kit", price: 899, total: 1200, sold: 210 },
-      ],
-      gates: ["Main Gate"],
-      views: 2100,
-    },
-    {
-      slug: "holi-rangotsav-2027",
-      title: "Holi Rangotsav 2027",
-      shortCode: "HRG",
-      organizer: "rangmanch-events",
-      category: "holi",
-      festival: "holi-2027",
-      venue: "Thaltej Open Grounds",
-      status: "LIVE",
-      size: "BIG",
-      languages: ["Gujarati", "Hindi", "English"],
-      summary: "Organic colours, rain dance, dhol and a Punjabi live set.",
-      single: { date: [2027, 3, 3], start: [10, 0], end: [17, 0] },
-      tiers: [
-        { name: "Early Bird", price: 699, total: 4000, sold: 900, tag: "Limited" },
-        { name: "General", price: 999, total: 6000, sold: 400 },
-        { name: "Couple", price: 1799, total: 1500, sold: 120 },
-      ],
-      gates: ["Gate 1", "Gate 2"],
-      views: 4400,
-    },
-    {
-      slug: "navratri-workshop-basics",
-      title: "Garba Basics — 3-Day Workshop",
-      shortCode: "GBW",
-      organizer: "garba-gujarat",
-      category: "workshops",
-      venue: "Satellite Community Hall",
-      status: "LIVE",
-      size: "SMALL",
-      languages: ["Gujarati", "English"],
-      summary: "Learn taali, be-taali and hinch before the nine nights begin.",
-      nights: { from: [2026, 10, 2], count: 3, start: [18, 30], end: [20, 30] },
-      tiers: [{ name: "Full Workshop", price: 1200, total: 60, sold: 44, perUserLimit: 2 }],
-      gates: ["Main Gate"],
-      rating: 4.9,
-      ratingCount: 31,
-      views: 900,
-    },
-    {
-      slug: "monsoon-unplugged-navrangpura",
-      title: "Monsoon Unplugged",
-      shortCode: "MSU",
-      organizer: "amdavad-nights",
-      category: "concerts",
-      venue: "Town Hall",
-      status: "DRAFT",
-      size: "SMALL",
-      languages: ["Hindi", "English"],
-      summary: "An acoustic indie evening — line-up to be announced.",
-      single: { date: [2026, 9, 5], start: [19, 0], end: [22, 0] },
-      tiers: [{ name: "General", price: 599, total: 200 }],
-    },
-    {
-      slug: "old-city-heritage-walk",
-      title: "Old City Heritage Walk",
-      shortCode: "OCH",
-      organizer: "utsav-collective",
-      category: "workshops",
-      venue: "Town Hall",
-      status: "PAUSED",
-      size: "SMALL",
-      languages: ["Gujarati", "English"],
-      summary: "A dawn walk through the pols of the walled city.",
-      single: { date: [2026, 9, 20], start: [6, 30], end: [9, 0] },
-      tiers: [{ name: "Walk Pass", price: 299, total: 40, sold: 12 }],
-      gates: ["Meeting Point"],
-    },
-
-    // -----------------------------------------------------------------------
-    // Beyond the festival calendar — theatre, sports, nightlife, exhibitions.
-    // The catalogue has to be wider than Navratri or the category rail leads
-    // to eight empty pages for ten months of the year.
-    // -----------------------------------------------------------------------
-    {
-      slug: "mareez-ni-gazal-natak",
-      title: "Mareez Ni Gazal — Gujarati Natak",
-      shortCode: "MNG",
-      organizer: "rangmanch-events",
-      category: "theatre",
-      venue: "Natarani Amphitheatre",
-      status: "LIVE",
-      size: "MEDIUM",
-      languages: ["Gujarati"],
-      summary:
-        "A two-act play on the poet Mareez, staged in the round with live sarangi. Winner of three Gujarat Sangeet Natak Akademi awards.",
-      nights: { from: [2026, 8, 21], count: 3, start: [19, 30], end: [22, 0] },
-      tiers: [
-        { name: "Front Stalls", price: 899, total: 120, sold: 96, tag: "Filling fast", desc: "Rows A–D, centre block" },
-        { name: "Rear Stalls", price: 549, total: 240, sold: 130 },
-        { name: "Student", price: 249, total: 60, sold: 44, desc: "Valid college ID required at the gate" },
-      ],
-      gates: ["Main Entrance", "Stalls Left"],
-      rating: 4.7,
-      ratingCount: 318,
-      views: 9400,
-    },
-    {
-      slug: "the-improv-project-ahmedabad",
-      title: "The Improv Project — Unscripted",
-      shortCode: "TIP",
-      organizer: "amdavad-nights",
-      category: "theatre",
-      venue: "Kanoria Arts Centre",
-      status: "LIVE",
-      size: "SMALL",
-      languages: ["English", "Hindi"],
-      summary:
-        "Nothing is written down. Six performers, your suggestions, ninety minutes.",
-      single: { date: [2026, 8, 16], start: [20, 0], end: [21, 30] },
-      tiers: [
-        { name: "General", price: 399, total: 90, sold: 61 },
-        { name: "Front Row", price: 649, total: 20, sold: 18, tag: "Almost gone", desc: "You will be picked on" },
-      ],
-      gates: ["Studio Door"],
-      rating: 4.5,
-      ratingCount: 142,
-      views: 5200,
-    },
-    {
-      slug: "amdavad-premier-league-final-2026",
-      title: "Amdavad Premier League — Final",
-      shortCode: "APL",
-      organizer: "shree-events",
-      category: "sports",
-      venue: "Sardar Patel Stadium Complex",
-      status: "LIVE",
-      size: "BIG",
-      languages: ["Gujarati", "Hindi", "English"],
-      summary:
-        "The city's T20 club final under lights, with the trophy presentation on the ground at close of play.",
-      single: { date: [2026, 8, 30], start: [18, 0], end: [22, 30] },
-      tiers: [
-        { name: "General Stand", price: 299, total: 8000, sold: 6200 },
-        { name: "Covered Stand", price: 799, total: 2500, sold: 2180, tag: "Filling fast" },
-        { name: "Pavilion", price: 2499, total: 400, sold: 388, tag: "Few left", desc: "Padded seating, dedicated entry, buffet" },
-      ],
-      gates: ["Gate A — General", "Gate B — Covered", "Gate C — Pavilion"],
-      rating: 4.4,
-      ratingCount: 512,
-      views: 31800,
-    },
-    {
-      slug: "riverfront-night-run-2026",
-      title: "Riverfront Night Run 2026",
-      shortCode: "RNR",
-      organizer: "garba-gujarat",
-      category: "sports",
-      venue: "Vastrapur Lake Promenade",
-      status: "LIVE",
-      size: "MEDIUM",
-      languages: ["Gujarati", "English"],
-      summary:
-        "10K, 5K and a 3K family walk, flagged off after sundown. Timing chip, tee and finisher medal included.",
-      single: { date: [2026, 9, 13], start: [19, 0], end: [23, 0] },
-      tiers: [
-        { name: "10K Timed", price: 899, total: 1200, sold: 740, desc: "Chip-timed, cut-off 90 minutes" },
-        { name: "5K Timed", price: 649, total: 1500, sold: 980 },
-        { name: "3K Family Walk", price: 349, total: 800, sold: 410, desc: "Under-12s free with a paying adult" },
-      ],
-      gates: ["Start Arch", "Bib Collection"],
-      rating: 4.6,
-      ratingCount: 289,
-      views: 14200,
-    },
-    {
-      slug: "terrace-sundowner-sessions",
-      title: "Terrace Sundowner Sessions",
-      shortCode: "TSS",
-      organizer: "amdavad-nights",
-      category: "parties",
-      venue: "The Terrace, Prahlad Nagar",
-      status: "LIVE",
-      size: "MEDIUM",
-      languages: ["English", "Hindi"],
-      summary:
-        "Open-air house and disco from 6 PM, city skyline on three sides. Strictly 21+, valid ID at the door.",
-      nights: { from: [2026, 8, 15], count: 4, start: [18, 0], end: [23, 30] },
-      tiers: [
-        { name: "Entry", price: 799, total: 500, sold: 340, desc: "Cover redeemable against the bar" },
-        { name: "Couple Entry", price: 1299, total: 250, sold: 190 },
-        { name: "Cabana", price: 6999, total: 12, sold: 11, tag: "Few left", desc: "Seats six, bottle service, reserved" },
-      ],
-      gates: ["Lift Lobby", "Cabana Deck"],
-      rating: 4.3,
-      ratingCount: 176,
-      views: 18600,
-    },
-    {
-      slug: "navratri-after-party-2026",
-      title: "Navratri After-Party — Dhol to Deep House",
-      shortCode: "NAP",
-      organizer: "rangmanch-events",
-      category: "parties",
       festival: "navratri-2026",
-      venue: "The Terrace, Prahlad Nagar",
-      status: "LIVE",
-      size: "MEDIUM",
-      languages: ["Gujarati", "Hindi", "English"],
-      summary:
-        "When the ground closes at 1 AM, this opens. Dhol players hand over to a deep-house set until sunrise.",
-      nights: { from: [2026, 10, 16], count: 3, start: [25, 30], end: [29, 0] },
-      tiers: [
-        { name: "After-Party Entry", price: 999, total: 600, sold: 420 },
-        { name: "Garba Ticket Holder", price: 599, total: 400, sold: 300, desc: "Show any Navratri ground ticket at the door" },
-      ],
-      gates: ["Lift Lobby"],
-      rating: 4.2,
-      ratingCount: 94,
-      views: 12300,
-    },
-    {
-      slug: "amdavad-design-biennale-2026",
-      title: "Amdavad Design Biennale",
-      shortCode: "ADB",
-      organizer: "shree-events",
-      category: "exhibitions",
-      venue: "Kanoria Arts Centre",
-      status: "LIVE",
-      size: "MEDIUM",
-      languages: ["English", "Gujarati"],
-      summary:
-        "Forty studios, one hall: textile, type, furniture and craft from across Gujarat. Guided walk-throughs every hour.",
-      nights: { from: [2026, 9, 4], count: 5, start: [11, 0], end: [20, 0] },
-      tiers: [
-        { name: "Day Pass", price: 249, total: 2000, sold: 860 },
-        { name: "Five-Day Pass", price: 799, total: 400, sold: 210, tag: "Best value", seasonPass: true, perUserLimit: 4 },
-        { name: "Guided Walk-through", price: 599, total: 150, sold: 128, tag: "Filling fast", desc: "Curator-led, 45 minutes" },
-      ],
-      gates: ["Hall 1", "Hall 2"],
-      rating: 4.5,
-      ratingCount: 203,
-      views: 8800,
-    },
-
-    // -----------------------------------------------------------------------
-    // Booking-engine test matrix.
-    //
-    // Every category needs at least one event whose TIER SHAPE is distinct,
-    // because the checkout behaves differently for each: a free tier skips the
-    // gateway, a single-seat tier is the concurrency test, a stadium block has
-    // a dozen tiers at once, a strict per-user cap exercises C4.2a, and a
-    // timed sale window exercises the on-sale guard. One garba event does not
-    // test any of that.
-    // -----------------------------------------------------------------------
-    {
-      slug: "kankaria-carnival-free-entry-2026",
-      title: "Kankaria Carnival — Free Entry Day",
-      shortCode: "KCF",
-      organizer: "garba-gujarat",
-      category: "exhibitions",
-      venue: "Vastrapur Lake Promenade",
-      status: "LIVE",
-      size: "MEDIUM",
-      languages: ["Gujarati", "Hindi"],
-      summary:
-        "Open day at the carnival — free entry, registration required for crowd control. Tests the wallet-only/zero-value checkout path.",
-      single: { date: [2026, 8, 24], start: [16, 0], end: [22, 0] },
-      tiers: [
-        // Zero-price: gatewayPayable is 0, so the gateway is skipped entirely
-        // (spec C4.5).
-        { name: "Free Entry", price: 0, total: 2000, sold: 640, desc: "No charge — register to reserve a slot", perUserLimit: 4 },
-        { name: "Fast Lane", price: 199, total: 300, sold: 210, tag: "Skip the queue" },
-      ],
-      gates: ["Main Gate", "Fast Lane"],
-      rating: 4.1,
-      ratingCount: 88,
-      views: 7400,
-    },
-    {
-      slug: "the-last-seat-comedy-special",
-      title: "The Last Seat — Stand-up Special",
-      shortCode: "TLS",
-      organizer: "amdavad-nights",
-      category: "comedy",
-      venue: "Kanoria Arts Centre",
-      status: "LIVE",
-      size: "SMALL",
-      languages: ["Hindi", "English"],
-      summary:
-        "A deliberately tiny room. Forty seats, one show, no encore — the venue everyone finds sold out.",
-      single: { date: [2026, 8, 28], start: [20, 30], end: [22, 0] },
-      tiers: [
-        // Deliberately near-exhausted: two seats left is the concurrency
-        // scenario a demo can actually reproduce by opening two tabs.
-        { name: "General", price: 799, total: 40, sold: 38, tag: "2 left", desc: "Unreserved seating", perUserLimit: 2 },
-        { name: "Front Table", price: 1499, total: 8, sold: 8, desc: "Sold out — exercises the SOLD_OUT branch" },
-      ],
-      gates: ["Studio Door"],
-      rating: 4.9,
-      ratingCount: 61,
-      views: 11200,
-    },
-    {
-      slug: "gujarat-titans-warmup-fixture-2026",
-      title: "Gujarat Warm-up Fixture — Full Stadium Tiering",
-      shortCode: "GWF",
-      organizer: "shree-events",
-      category: "sports",
-      venue: "Sardar Patel Stadium Complex",
-      status: "LIVE",
-      size: "BIG",
-      languages: ["Gujarati", "Hindi", "English"],
-      summary:
-        "Eight stands, eight prices, one match. The widest tier spread in the catalogue — use this to test multi-tier orders and per-tier availability.",
-      single: { date: [2026, 9, 27], start: [19, 0], end: [23, 0] },
-      tiers: [
-        { name: "Upper North", price: 199, total: 6000, sold: 3100 },
-        { name: "Upper South", price: 199, total: 6000, sold: 2400 },
-        { name: "Lower East", price: 499, total: 4000, sold: 3600, tag: "Filling fast" },
-        { name: "Lower West", price: 499, total: 4000, sold: 1800 },
-        { name: "Club Stand", price: 1299, total: 1200, sold: 1140, tag: "Few left" },
-        { name: "Corporate Box (4)", price: 9999, total: 40, sold: 34, desc: "Seats four, catered", perUserLimit: 2 },
-        { name: "Media Enclosure", price: 0, total: 120, sold: 96, desc: "Accredited press only", perUserLimit: 1 },
-        { name: "Accessible Seating", price: 199, total: 60, sold: 22, desc: "Step-free access, companion seat included", perUserLimit: 2 },
-      ],
-      gates: ["Gate 1 — North", "Gate 2 — South", "Gate 3 — Club", "Gate 4 — Boxes"],
-      rating: 4.5,
-      ratingCount: 744,
-      views: 52000,
-    },
-    {
-      slug: "diwali-mela-early-bird-2026",
-      title: "Diwali Mela — Early Bird Windows",
-      shortCode: "DEB",
-      organizer: "rangmanch-events",
-      category: "diwali",
-      festival: "diwali-2026",
-      venue: "Maninagar Riverfront Lawn",
-      status: "LIVE",
-      size: "MEDIUM",
-      languages: ["Gujarati", "Hindi"],
-      summary:
-        "Three price windows that open and close on a schedule — the event to test tier sale windows and the on-sale guard.",
-      nights: { from: [2026, 11, 7], count: 3, start: [17, 0], end: [23, 0] },
-      tiers: [
-        { name: "Early Bird", price: 299, total: 500, sold: 500, desc: "Window closed — sold out" },
-        { name: "Standard", price: 449, total: 1500, sold: 620 },
-        { name: "Gate Price", price: 599, total: 800, sold: 0, desc: "On sale from the day of the mela" },
-        { name: "Family Pack (4)", price: 1499, total: 200, sold: 88, tag: "Best value", perUserLimit: 1 },
-      ],
-      gates: ["Main Gate", "Family Gate"],
-      rating: 4.3,
-      ratingCount: 176,
-      views: 13400,
-    },
-    {
-      slug: "holi-rangotsav-strict-cap-2027",
-      title: "Holi Rangotsav — Strict Entry Cap",
-      shortCode: "HSC",
-      organizer: "shree-events",
-      category: "holi",
-      festival: "holi-2027",
-      venue: "Bopal Party Plot",
-      status: "LIVE",
-      size: "MEDIUM",
-      languages: ["Gujarati", "Hindi"],
-      summary:
-        "Two tickets per person, no exceptions — the event to test the per-user limit across separate bookings (spec C4.2a).",
-      single: { date: [2027, 3, 3], start: [9, 0], end: [15, 0] },
-      tiers: [
-        { name: "Entry + Colours", price: 699, total: 900, sold: 410, perUserLimit: 2, desc: "Organic colours and rain dance included" },
-        { name: "Entry + Colours + Lunch", price: 1099, total: 400, sold: 260, perUserLimit: 2 },
-      ],
-      gates: ["Main Gate"],
-      rating: 4.4,
-      ratingCount: 212,
-      views: 16800,
-    },
-    {
-      slug: "chai-aur-charcha-workshop-series",
-      title: "Chai aur Charcha — Weekly Workshop Series",
-      shortCode: "CAC",
-      organizer: "amdavad-nights",
-      category: "workshops",
-      venue: "Kanoria Arts Centre",
-      status: "LIVE",
-      size: "SMALL",
-      languages: ["Gujarati", "English"],
-      summary:
-        "Six Saturdays, one craft each. Season pass or single session — the event to test season-pass ticketing against per-night entry.",
-      nights: { from: [2026, 8, 22], count: 6, start: [10, 0], end: [13, 0] },
-      tiers: [
-        { name: "Series Pass", price: 2499, total: 60, sold: 41, tag: "Best value", desc: "All six Saturdays", seasonPass: true, perUserLimit: 2 },
-        { name: "Single Session", price: 549, total: 240, sold: 128, desc: "Any one Saturday" },
-      ],
-      gates: ["Studio Door"],
-      rating: 4.7,
-      ratingCount: 96,
-      views: 6300,
-    },
-    {
-      slug: "uttarayan-terrace-passes-2027",
-      title: "Uttarayan Terrace Passes",
-      shortCode: "UTP",
-      organizer: "garba-gujarat",
-      category: "uttarayan",
-      festival: "uttarayan-2027",
-      venue: "The Terrace, Prahlad Nagar",
-      status: "LIVE",
-      size: "SMALL",
-      languages: ["Gujarati", "Hindi"],
-      summary:
-        "Rooftop kite flying with breakfast, both days. Small inventory across two dates — good for testing session-scoped tickets.",
-      nights: { from: [2027, 1, 14], count: 2, start: [7, 0], end: [18, 0] },
-      tiers: [
-        { name: "Terrace Pass", price: 1299, total: 120, sold: 74, desc: "Includes kites, firki and breakfast" },
-        { name: "Terrace Pass + Dinner", price: 1899, total: 60, sold: 51, tag: "Filling fast" },
-        { name: "Child (under 12)", price: 499, total: 60, sold: 18, perUserLimit: 4 },
-      ],
-      gates: ["Lift Lobby"],
-      rating: 4.6,
-      ratingCount: 134,
-      views: 9200,
-    },
-    {
-      slug: "street-food-crawl-old-city-2026",
-      title: "Old City Street Food Crawl",
-      shortCode: "SFC",
-      organizer: "rangmanch-events",
-      category: "food-festivals",
-      venue: "Town Hall",
-      status: "LIVE",
-      size: "SMALL",
-      languages: ["Gujarati", "Hindi", "English"],
-      summary:
-        "Eight stops, three hours, one very full stomach. Capped at twenty per walk so it stays a walk.",
-      nights: { from: [2026, 8, 19], count: 4, start: [18, 30], end: [21, 30] },
-      tiers: [
-        { name: "Crawl Ticket", price: 899, total: 80, sold: 62, desc: "All eight tastings included", perUserLimit: 4 },
-        { name: "Crawl + Recipe Booklet", price: 1099, total: 40, sold: 31 },
-      ],
-      gates: ["Meeting Point"],
-      rating: 4.8,
-      ratingCount: 158,
-      views: 10400,
-    },
-    {
-      slug: "sufi-night-tiered-seating-2026",
-      title: "Sufi Night — Tiered Seating",
-      shortCode: "SNT",
-      organizer: "swara-productions",
-      category: "concerts",
-      venue: "Natarani Amphitheatre",
-      status: "LIVE",
-      size: "MEDIUM",
-      languages: ["Hindi", "Urdu"],
-      summary:
-        "Qawwali under the open sky, seated in four rings. Every ring a different price and a different gate.",
-      single: { date: [2026, 9, 19], start: [20, 0], end: [23, 30] },
-      tiers: [
-        { name: "Ring 1 — Floor Cushions", price: 2499, total: 80, sold: 76, tag: "Few left" },
-        { name: "Ring 2 — Chairs", price: 1499, total: 200, sold: 142 },
-        { name: "Ring 3 — Terrace", price: 899, total: 300, sold: 118 },
-        { name: "Standing", price: 499, total: 400, sold: 96 },
-      ],
-      gates: ["Ring 1 & 2", "Ring 3 & Standing"],
-      rating: 4.7,
-      ratingCount: 268,
-      views: 22400,
-    },
-    {
-      slug: "midnight-mashup-two-rooms-2026",
-      title: "Midnight Mashup — Two Rooms",
-      shortCode: "MMR",
-      organizer: "amdavad-nights",
-      category: "parties",
-      venue: "The Terrace, Prahlad Nagar",
-      status: "LIVE",
-      size: "MEDIUM",
-      languages: ["Hindi", "English", "Punjabi"],
-      summary:
-        "Bollywood downstairs, techno upstairs, one wristband for both. Couples and stag priced separately, as every Indian club does.",
-      nights: { from: [2026, 8, 21], count: 2, start: [22, 0], end: [27, 0] },
-      tiers: [
-        { name: "Stag (M)", price: 1499, total: 200, sold: 172, perUserLimit: 1 },
-        { name: "Stag (F)", price: 499, total: 200, sold: 88, perUserLimit: 1 },
-        { name: "Couple", price: 1799, total: 150, sold: 121, tag: "Filling fast" },
-        { name: "Table for 6", price: 14999, total: 10, sold: 7, desc: "Includes two bottles", perUserLimit: 1 },
-      ],
-      gates: ["Lift Lobby", "Table Host"],
-      rating: 4.0,
-      ratingCount: 143,
-      views: 19800,
-    },
-    {
-      slug: "natak-matinee-school-rate-2026",
-      title: "Natak Matinee — School Rate",
-      shortCode: "NMS",
-      organizer: "rangmanch-events",
-      category: "theatre",
-      venue: "Natarani Amphitheatre",
+      venue: "Thaltej Open Grounds",
       status: "LIVE",
       size: "SMALL",
       languages: ["Gujarati"],
       summary:
-        "A weekday matinee priced for school groups, with a bulk tier that only makes sense above ten seats.",
-      single: { date: [2026, 8, 26], start: [11, 0], end: [13, 0] },
+        "The full-moon night that closes the season — traditional raas, no DJ, dinner included.",
+      single: { date: [2026, 10, 25], start: [20, 0], end: [26, 0] },
       tiers: [
-        { name: "Student", price: 149, total: 300, sold: 186, desc: "ID required", perUserLimit: 10 },
-        { name: "Teacher / Guardian", price: 299, total: 60, sold: 24, perUserLimit: 4 },
-        { name: "General", price: 499, total: 100, sold: 31 },
+        { name: "Entry + Dinner", price: 649, total: 700, sold: 410, desc: "Includes the community dinner" },
+        { name: "Entry Only", price: 349, total: 900, sold: 500, desc: "Garba access" },
       ],
-      gates: ["Main Entrance"],
-      rating: 4.6,
-      ratingCount: 74,
-      views: 4100,
+      gates: ["Main Gate"],
+      rating: 4.7,
+      ratingCount: 156,
+      views: 6400,
+    },
+    {
+      // One draft, so the organizer portal has something in every status.
+      slug: "khelaiya-nights-2027",
+      title: "Khelaiya Nights 2027",
+      shortCode: "KHN",
+      organizer: "rangmanch-events",
+      category: "garba-navratri",
+      venue: "Bopal Party Plot",
+      status: "DRAFT",
+      size: "MEDIUM",
+      languages: ["Gujarati"],
+      summary: "Next season's headline night. Not yet announced.",
+      single: { date: [2027, 10, 2], start: [19, 30], end: [25, 0] },
+      tiers: [
+        { name: "General", price: 399, total: 1500, sold: 0, desc: "Full access" },
+      ],
     },
   ];
 
@@ -1139,7 +617,7 @@ async function main() {
         cityId: ahmedabad.id,
         venueId: venue(spec.venue).id,
         summary: spec.summary,
-        coverImageUrl: coverImageFor(spec.category),
+        coverImageUrl: spec.poster ?? coverImageFor(spec.category),
         description: `${spec.summary}\n\nGates open 45 minutes before start. Entry is by QR only — please carry a screenshot in case of poor network at the venue.`,
         size: spec.size,
         languages: spec.languages,
@@ -1240,7 +718,7 @@ async function main() {
   // -------------------------------------------------------------------------
   console.log("Promos…");
   const garba = await db.event.findUniqueOrThrow({
-    where: { slug: "rangilo-re-garba-mahotsav-2026" },
+    where: { slug: "navratri-utsav-garba-mahotsav-2026" },
   });
   await db.promo.createMany({
     data: [
@@ -1292,100 +770,36 @@ async function main() {
       {
         cityId: ahmedabad.id,
         title: "Navratri 2026 is live",
-        subtitle: "Nine nights, twelve grounds, one ticket",
+        subtitle: "Nine nights, four grounds, one ticket",
         gradient: "navratri",
-        // Exercises the image slide on the homepage carousel; the gradient
-        // stays as the fallback if the file ever disappears.
-        imageUrl: "/images/events/garba-navratri-1.jpg",
+        imageUrl: "/images/banners/navratri.jpg",
         // Stored relative to the city; the page prefixes the current city so a
         // banner can never navigate a Surat visitor into Ahmedabad.
         href: "festivals/navratri-2026",
         status: "LIVE",
         startsAt: ist(2026, 8, 1),
-        endsAt: ist(2026, 10, 20),
+        endsAt: ist(2026, 10, 30),
         sortOrder: 0,
       },
-      // --- The generic set ------------------------------------------------
-      //
-      // `cityId: null` on purpose, and it is doing two jobs. It regression-
-      // tests the "All cities" path `getActiveBanners` used to drop on the
-      // floor, and it is what stops a second city from launching with a
-      // one-slide carousel: these are category promotions, true anywhere, with
-      // no date window to expire. Every `href` is stored city-relative, so the
-      // same row sends a Surat visitor to Surat comedy and an Ahmedabad
-      // visitor to Ahmedabad comedy.
-      //
-      // Photographs rather than gradients: a gradient slab reads as a
-      // placeholder next to a photo slide, and the carousel is judged as one
-      // strip. All of these are the same Wikimedia Commons files the events
-      // use, so they are already covered by /legal/image-credits.
       {
         cityId: null,
-        title: "Comedy nights every weekend",
-        subtitle: "Stand-up, improv and open mics from ₹199",
-        gradient: "comedy",
-        imageUrl: "/images/events/comedy-1.jpg",
-        href: "events?category=comedy",
+        title: "Garba, every night of the season",
+        subtitle: "Raas, dandiya and live orchestras from ₹249",
+        gradient: "navratri",
+        imageUrl: "/images/banners/diwali.jpg",
+        href: "events?category=garba-navratri",
         status: "LIVE",
         sortOrder: 1,
-      },
-      {
-        cityId: null,
-        title: "Live music, every scale",
-        subtitle: "Sufi evenings to stadium tours",
-        gradient: "concert",
-        imageUrl: "/images/events/concerts-1.jpg",
-        href: "events?category=concerts",
-        status: "LIVE",
-        sortOrder: 2,
-      },
-      {
-        cityId: null,
-        title: "Eat your way through the weekend",
-        subtitle: "Street food fests, pop-ups and night markets",
-        gradient: "food",
-        imageUrl: "/images/events/food-festivals-1.jpg",
-        href: "events?category=food-festivals",
-        status: "LIVE",
-        sortOrder: 3,
       },
       {
         cityId: null,
         title: "Under ₹500",
         subtitle: "Big nights that don't cost a big night out",
         gradient: "party",
-        imageUrl: "/images/events/parties-1.jpg",
+        imageUrl: "/images/banners/concerts.jpg",
         href: "events?maxPrice=500",
         status: "LIVE",
-        sortOrder: 4,
-      },
-      {
-        cityId: null,
-        title: "Match day",
-        subtitle: "League fixtures, city runs and tournaments",
-        gradient: "sports",
-        imageUrl: "/images/events/sports-1.jpg",
-        href: "events?category=sports",
-        status: "LIVE",
-        sortOrder: 5,
-      },
-      {
-        cityId: ahmedabad.id,
-        title: "Diwali melas open soon",
-        subtitle: "Early-bird passes from ₹199",
-        gradient: "diwali",
-        status: "SCHEDULED",
-        startsAt: ist(2026, 10, 21),
-        endsAt: ist(2026, 11, 12),
-        sortOrder: 6,
-      },
-      {
-        cityId: ahmedabad.id,
-        title: "Holi Rangotsav 2027",
-        subtitle: "Draft — awaiting artwork",
-        gradient: "holi",
-        status: "DRAFT",
-        sortOrder: 7,
+        sortOrder: 2,
       },
     ],
   });

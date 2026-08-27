@@ -285,6 +285,10 @@ do it **before** selling, not after.
   commission configured" rather than as a bug. The organizer-side queries get
   away without it only because `organizerId` is populated on ORGANIZER legs
   alone. Any query grouping by *booking* or *event* must say `account`.
+- **`npm run db:seed` does not invalidate the catalog cache.** `getCategories`
+  and the other catalogue reads are `unstable_cache` with a 1h TTL and a
+  `CATALOG_TAG`; the admin actions call `updateTag`, a raw seed does not. Clear
+  `.next/cache` after seeding or the home page serves the old catalogue (D-042).
 - **Firebase verifies the phone; it is never the identity** (D-041). It is
   asked one question — did this browser prove control of this number — and the
   answer feeds `findOrCreateUserByPhone`. No Firebase UID exists anywhere in

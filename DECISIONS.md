@@ -1015,3 +1015,53 @@ the sign-in screens now load a client SDK and solve an invisible reCAPTCHA;
 there are two verification paths to maintain and test rather than one; and the
 Redis rate limits the spec names no longer govern sends on the Firebase path —
 Google's abuse controls do.
+
+## D-042 — The demo catalogue narrows to Garba, and the harness stops naming events
+
+**Product call, not a conflict.** The seed carried a wide sample across twelve
+categories — a cricket fixture, a heritage walk, a comedy night — which was the
+right shape for exercising the code and the wrong shape for showing the
+product. Beside four Garba nights it read as a directory rather than as a
+Navratri marketplace. It is now Garba and Navratri only.
+
+**Supplied poster artwork drives the data, not the other way round.** Four
+posters were provided, branded `entrynow.in` and carrying their own venue,
+date and lead price. The event rows were written *from* them: Riverfront Event
+Centre at ₹249, The Grand Bhagwati Lawns at ₹349, Karnavati Club at ₹299,
+YMCA Club Ground at ₹299. A poster that advertises one price against a listing
+that says another is worse than no poster — so the artwork is the source and
+`EventSpec.poster` overrides the category-cycling fallback.
+
+Three venues the posters name were not in the catalogue and were added. The
+posters read **2025** and the events are dated **2026**, so they are actually
+upcoming; regenerating the artwork with 2026 closes the last gap.
+
+**Eleven categories and three festivals were deactivated, not deleted**
+(spec G2). An active category with no events is a tile on the home page leading
+to an empty listing — the same thin-content problem the sitemap was fixed to
+avoid (D-039). They stay in the catalogue and an admin turns one back on from
+`/admin/cms` the day it has something in it.
+
+**The harness stopped naming individual events**, which is the durable half of
+this. `scripts/audit.ts`, `scripts/preflight.mts` and `scripts/e2e-booking.mts`
+each hardcoded a demo slug, so curating the catalogue failed a route check, a
+price-tampering check and the concurrency test for reasons that had nothing to
+do with routing, pricing or concurrency. All three now resolve a subject at
+run time — any event on the listing, any live event with a bookable tier. A
+harness that breaks when the demo data changes trains people to ignore it.
+
+**One thing a raw seed does not do:** invalidate the catalog cache.
+`getCategories` and friends are wrapped in `unstable_cache` with a one-hour TTL
+and a `CATALOG_TAG`, and the admin actions call `updateTag` when they write.
+`npm run db:seed` writes underneath all of that, so the home page kept showing
+twelve categories until the cache expired. Clear `.next/cache` after a seed, or
+make the change through `/admin/cms` where the tag is updated for you.
+
+**Rejected: third-party posters.** Images were also supplied from Pinterest.
+Several were other companies' finished event posters — one named its performers
+and its promoter, one carried another studio's logo, one advertised
+*"Passes Available On BookMyShow"*. Putting those on this marketplace would
+misrepresent whose events they are, use performers' likenesses without
+permission, and in one case advertise a competitor on our own listings. They
+are also incompatible with D-026, which requires artist, licence and source for
+every image and attributes them at `/legal/image-credits`.

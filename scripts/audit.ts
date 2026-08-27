@@ -648,7 +648,11 @@ const PROBES: { url: string; expect: number; note?: string }[] = [
   { url: "/ahmedabad/events?near=1", expect: 200 },
   { url: "/ahmedabad/events?category=garba-navratri", expect: 200 },
   { url: "/ahmedabad/events?q=garba", expect: 200 },
-  { url: "/ahmedabad/events/rangilo-re-garba-mahotsav-2026", expect: 200 },
+  // `{event}` is resolved against the live listing when the crawl runs. It was
+  // a hardcoded slug, which meant curating the catalogue — removing one demo
+  // event — failed the route check for a reason that had nothing to do with
+  // routing.
+  { url: "/ahmedabad/events/{event}", expect: 200 },
   { url: "/ahmedabad/festivals", expect: 200 },
   { url: "/ahmedabad/festivals/navratri-2026", expect: 200 },
   { url: "/ahmedabad/organizers/rangmanch-events", expect: 200 },
@@ -678,8 +682,35 @@ const LEAKS: { re: RegExp; what: string }[] = [
   { re: /₹\d{6,}(?![\d,])/, what: "unformatted paise amount" },
 ];
 
+/** The slug of any event currently on the listing, for the `{event}` probe. */
+async function anyEventSlug(): Promise<string | null> {
+  try {
+    const res = await fetch(`${BASE_URL}/ahmedabad/events`);
+    if (!res.ok) return null;
+    const m = /\/ahmedabad\/events\/([a-z0-9-]+)/.exec(await res.text());
+    return m?.[1] ?? null;
+  } catch {
+    return null;
+  }
+}
+
 async function crawl() {
-  for (const probe of PROBES) {
+  const eventSlug = await anyEventSlug();
+
+  for (let probe of PROBES) {
+    if (probe.url.includes("{event}")) {
+      if (!eventSlug) {
+        add({
+          check: "A4",
+          severity: "broken",
+          file: probe.url,
+          line: 0,
+          detail: "no event found on /ahmedabad/events to probe a detail page with",
+        });
+        continue;
+      }
+      probe = { ...probe, url: probe.url.replace("{event}", eventSlug) };
+    }
     let res: Response;
     try {
       res = await fetch(BASE_URL + probe.url, { redirect: "manual" });
