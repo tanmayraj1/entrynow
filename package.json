@@ -22,7 +22,8 @@
     "preflight": "tsx scripts/preflight.mts",
     "e2e": "tsx scripts/e2e-demo.mts",
     "postinstall": "prisma generate",
-    "check:firebase": "dotenv -e .env -- tsx scripts/check-firebase.mts"
+    "check:firebase": "dotenv -e .env -- tsx scripts/check-firebase.mts",
+    "sync:catalogue": "tsx scripts/sync-catalogue.mts"
   },
   "dependencies": {
     "@date-fns/tz": "^1.5.0",
