@@ -1065,3 +1065,52 @@ misrepresent whose events they are, use performers' likenesses without
 permission, and in one case advertise a competitor on our own listings. They
 are also incompatible with D-026, which requires artist, licence and source for
 every image and attributes them at `/legal/image-credits`.
+
+## D-043 — Indexing is its own switch, not a consequence of demo mode
+
+**Conflict.** D-039 made the build `noindex` while `DEMO_MODE=true`, on sound
+reasoning: a demo catalogue is invented data published under a real brand, and
+someone who finds "Rangilo Re Garba Mahotsav 2026, from ₹499" in a search
+result may turn up at a ground that was never booked. De-indexing a page is far
+slower than indexing one, so the default was off and "launch" was one env var.
+
+What that missed is that **production needs `DEMO_MODE=true` for a reason that
+has nothing to do with the catalogue**: no payment gateway account exists yet,
+so checkout runs on the sandbox adapter and its test-card screen. Demo mode is
+therefore not a temporary state that ends at launch — it is the payment
+configuration — and tying indexing to it meant the site could not be listed
+without also opening the fixed OTP.
+
+The symptom was silent and total. `robots.txt` served `Disallow: /`, every page
+carried `<meta name="robots" content="noindex, nofollow, nocache">`, and
+`/sitemap.xml` returned an empty `<urlset>`. Google had the URL from links and
+showed it with **"No information is available for this page"**; Search Console
+could not fetch the sitemap. Three separate-looking failures, one cause.
+
+**Decision.** `SEARCH_INDEXING` decides, three-valued:
+
+| Value | Meaning | Where |
+|---|---|---|
+| `on` | index, whatever demo mode says | Production |
+| `off` | never index | Preview and staging deployments |
+| unset | follow `DEMO_MODE` | local, and the cautious default |
+
+The `off` value is not redundant with the unset default. A Vercel Preview
+deployment inherits Production's env vars unless overridden, so without an
+explicit `off` on the Preview scope every branch build would invite indexing
+and compete with the real site for its own brand name.
+
+D-039's caution survives as the unset default and as the meaning of turning it
+on: `SEARCH_INDEXING=on` is a statement that the catalogue is real enough to
+stand behind, not a formality. The events currently listed are real Garba
+nights at real Ahmedabad venues; the bookings against them are seeded.
+
+**Also changed, in the same pass.** The sitemap was rewritten to be
+comprehensive rather than minimal — it now carries the filtered category
+listings (`?category=…`, a distinct URL and the phrase people actually search),
+each event's poster as an `<image:image>` node, and a `lastModified` derived
+from the newest event in that city rather than `now`, because a file that
+claims everything changed on every crawl teaches Google to ignore the field.
+It still lists nothing empty and nothing behind a login, and it no longer lists
+`/`, which 307s to a city and comes back in Search Console as "Page with
+redirect — excluded".

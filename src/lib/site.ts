@@ -58,27 +58,64 @@ export function siteUrl(): string {
   return base.replace(/\/+$/, "");
 }
 
-/** Absolute URL for a site-relative path. */
+/**
+ * Absolute URL for a site-relative path.
+ *
+ * An input that is already absolute is returned untouched. Cover images are
+ * the reason: most are repo paths like `/images/posters/x.jpg`, but nothing
+ * stops an organizer pasting a full URL, and prefixing the origin to one would
+ * put `https://entrynow.in/https://…` in the sitemap — a dead link in the one
+ * file whose job is to be a list of live ones.
+ */
 export function absoluteUrl(path: string): string {
+  if (/^https?:\/\//i.test(path)) return path;
   return `${siteUrl()}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
 /**
  * Whether search engines should index this build.
  *
- * **Demo mode means no.** Every event, organizer, venue, price and review in
- * this database is invented, and it is all written under a real brand name. A
- * crawler cannot tell the difference, and neither can someone who later finds
- * "Rangilo Re Garba Mahotsav 2026, from ₹499" in a search result and turns up
- * at a ground that was never booked. Removing a page from an index is far
- * slower than adding one, so the default is off and the launch is one env var.
+ * **`SEARCH_INDEXING` decides; demo mode is only the default.**
  *
- * This does **not** affect link previews. WhatsApp, iMessage, Slack, Discord
- * and X read Open Graph tags and ignore `robots` entirely, so sharing the
- * build with reviewers keeps working exactly as it should.
+ * These began as one switch, and that was wrong. Demo mode answers "may an
+ * unverified login work here" — it is on in production because the payment
+ * screen still needs its test cards. Indexing answers "should Google list
+ * this". Tying the second to the first meant the launch could not be
+ * announced without also opening the fixed OTP, so the site shipped with
+ * `robots.txt: Disallow: /`, `noindex` on every page and an empty sitemap:
+ * Google held the URL with "No information is available for this page", and
+ * Search Console could not fetch anything.
+ *
+ * So the override is explicit and three-valued:
+ *
+ *   - `SEARCH_INDEXING=on`   — index, whatever demo mode says. Live launch.
+ *   - `SEARCH_INDEXING=off`  — never index. Preview and staging deployments.
+ *   - unset                  — follow demo mode, the old behaviour.
+ *
+ * The unset default stays cautious for a reason worth keeping in view: every
+ * event, organizer, venue and price in a demo database is invented and
+ * published under a real brand, and someone who finds "Rangilo Re Garba
+ * Mahotsav 2026, from ₹499" in a search result may turn up at a ground that
+ * was never booked. Removing a page from an index is far slower than adding
+ * one. Turning this on is a statement that the catalogue is real enough to
+ * stand behind.
+ *
+ * None of this affects link previews. WhatsApp, iMessage, Slack, Discord and
+ * X read Open Graph tags and ignore `robots` entirely.
  */
 export function isIndexable(): boolean {
-  return !isDemoMode();
+  switch (process.env.SEARCH_INDEXING?.trim().toLowerCase()) {
+    case "on":
+    case "true":
+    case "1":
+      return true;
+    case "off":
+    case "false":
+    case "0":
+      return false;
+    default:
+      return !isDemoMode();
+  }
 }
 
 /**
