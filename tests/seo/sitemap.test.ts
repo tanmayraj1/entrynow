@@ -15,23 +15,21 @@ import { isIndexable } from "@/lib/site";
  * These run against the seeded database, where every event is in Ahmedabad,
  * so the empty cities are a real fixture rather than a contrived one.
  *
- * `DEMO_MODE` is forced off for the duration. Left alone, `isIndexable()`
- * returns false against the repo's own `.env`, the sitemap comes back empty,
- * and all four assertions pass by having nothing to check — a suite that
- * cannot fail, which is worse than no suite at all.
+ * Indexing is forced ON for the duration. Left alone, `isIndexable()` returns
+ * false off Vercel, the sitemap comes back empty, and every assertion below
+ * passes by having nothing to check — a suite that cannot fail, which is worse
+ * than no suite at all.
  */
 
-const ORIGINAL_DEMO = process.env.DEMO_MODE;
 const ORIGINAL_INDEXING = process.env.SEARCH_INDEXING;
-beforeAll(() => {
-  process.env.DEMO_MODE = "false";
-  delete process.env.SEARCH_INDEXING;
-});
-afterAll(() => {
-  process.env.DEMO_MODE = ORIGINAL_DEMO;
+const restoreIndexing = () => {
   if (ORIGINAL_INDEXING === undefined) delete process.env.SEARCH_INDEXING;
   else process.env.SEARCH_INDEXING = ORIGINAL_INDEXING;
+};
+beforeAll(() => {
+  process.env.SEARCH_INDEXING = "on";
 });
+afterAll(restoreIndexing);
 
 describe("sitemap", () => {
   it("omits cities that have no live events", async () => {
@@ -127,33 +125,56 @@ describe("sitemap", () => {
  * wrong either way is expensive and neither way is visible from inside the app.
  */
 describe("indexing switch", () => {
-  const ORIGINAL = process.env.SEARCH_INDEXING;
+  const ORIGINAL_VERCEL_ENV = process.env.VERCEL_ENV;
+  /**
+   * Restore the suite fixture, NOT the process's original value.
+   *
+   * Restoring the original left `SEARCH_INDEXING` unset for whatever ran next,
+   * `isIndexable()` went false off Vercel, and every later sitemap came back
+   * empty — two coverage tests failed on an assertion about a sitemap that had
+   * nothing to do with them. The failure was loud here only because those
+   * tests assert on presence; a suite written the other way round would have
+   * gone green on an empty list.
+   */
   afterEach(() => {
-    if (ORIGINAL === undefined) delete process.env.SEARCH_INDEXING;
-    else process.env.SEARCH_INDEXING = ORIGINAL;
+    process.env.SEARCH_INDEXING = "on";
+    if (ORIGINAL_VERCEL_ENV === undefined) delete process.env.VERCEL_ENV;
+    else process.env.VERCEL_ENV = ORIGINAL_VERCEL_ENV;
   });
 
-  it("indexes when SEARCH_INDEXING=on, even in demo mode", () => {
-    process.env.DEMO_MODE = "true";
+  it("indexes the production deployment with nothing configured", () => {
+    delete process.env.SEARCH_INDEXING;
+    process.env.DEMO_MODE = "true"; // production runs this on, permanently
+    process.env.VERCEL_ENV = "production";
+    expect(isIndexable()).toBe(true);
+  });
+
+  it("never indexes a preview deployment", () => {
+    delete process.env.SEARCH_INDEXING;
+    process.env.VERCEL_ENV = "preview";
+    expect(isIndexable()).toBe(false);
+  });
+
+  it("never indexes off-Vercel, where there is no production alias", () => {
+    delete process.env.SEARCH_INDEXING;
+    delete process.env.VERCEL_ENV;
+    expect(isIndexable()).toBe(false);
+  });
+
+  it("indexes when SEARCH_INDEXING=on, wherever it is running", () => {
+    delete process.env.VERCEL_ENV;
     process.env.SEARCH_INDEXING = "on";
     expect(isIndexable()).toBe(true);
   });
 
-  it("refuses when SEARCH_INDEXING=off, even outside demo mode", () => {
-    process.env.DEMO_MODE = "false";
+  it("refuses when SEARCH_INDEXING=off, even in production", () => {
+    process.env.VERCEL_ENV = "production";
     process.env.SEARCH_INDEXING = "off";
     expect(isIndexable()).toBe(false);
   });
 
-  it("falls back to demo mode when unset", () => {
-    delete process.env.SEARCH_INDEXING;
-    process.env.DEMO_MODE = "true";
-    expect(isIndexable()).toBe(false);
-    process.env.DEMO_MODE = "false";
-    expect(isIndexable()).toBe(true);
-  });
-
   it("blocks everything in robots.txt when not indexable, and allows when it is", () => {
+    process.env.VERCEL_ENV = "preview";
     process.env.SEARCH_INDEXING = "off";
     expect(robots().rules).toEqual([{ userAgent: "*", disallow: "/" }]);
 

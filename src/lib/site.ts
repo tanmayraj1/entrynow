@@ -7,7 +7,6 @@
  */
 
 import type { Metadata } from "next";
-import { isDemoMode } from "@/lib/demo";
 
 export const SITE_NAME = "Entry Now";
 
@@ -75,30 +74,41 @@ export function absoluteUrl(path: string): string {
 /**
  * Whether search engines should index this build.
  *
- * **`SEARCH_INDEXING` decides; demo mode is only the default.**
+ * **The production deployment is indexed. Nothing else is.**
  *
- * These began as one switch, and that was wrong. Demo mode answers "may an
- * unverified login work here" — it is on in production because the payment
- * screen still needs its test cards. Indexing answers "should Google list
- * this". Tying the second to the first meant the launch could not be
- * announced without also opening the fixed OTP, so the site shipped with
- * `robots.txt: Disallow: /`, `noindex` on every page and an empty sitemap:
- * Google held the URL with "No information is available for this page", and
- * Search Console could not fetch anything.
+ * This used to key off `DEMO_MODE`, and that conflated two unrelated
+ * questions. Demo mode answers "may an unverified login work here" — and it is
+ * on in production, permanently, because no payment gateway account exists yet
+ * and checkout runs the sandbox adapter's test-card screen. Indexing answers
+ * "is this the copy of the site the public should find". Tying the second to
+ * the first meant the live site served `Disallow: /`, `noindex` on every page
+ * and an empty sitemap: Google held the URL with "No information is available
+ * for this page" and Search Console reported "Page cannot be crawled: Blocked
+ * by robots.txt". Three symptoms, one switch, and no way to throw it without
+ * also opening the fixed OTP.
  *
- * So the override is explicit and three-valued:
+ * `VERCEL_ENV` answers the real question directly. It is `production` on
+ * exactly one deployment — the one serving entrynow.in — and `preview` on
+ * every branch build. That distinction is the whole point: a preview must
+ * never be indexed, or `entrynow-a1b2c3.vercel.app` competes with the real
+ * site for the brand's own name, and the duplicate is the one Google may keep.
+ * Making that the default rather than an env var means nobody has to remember
+ * to set it per-scope in a dashboard, which is precisely the kind of thing
+ * that does not get remembered.
  *
- *   - `SEARCH_INDEXING=on`   — index, whatever demo mode says. Live launch.
- *   - `SEARCH_INDEXING=off`  — never index. Preview and staging deployments.
- *   - unset                  — follow demo mode, the old behaviour.
+ * `SEARCH_INDEXING` overrides in both directions and is the escape hatch:
  *
- * The unset default stays cautious for a reason worth keeping in view: every
- * event, organizer, venue and price in a demo database is invented and
- * published under a real brand, and someone who finds "Rangilo Re Garba
- * Mahotsav 2026, from ₹499" in a search result may turn up at a ground that
- * was never booked. Removing a page from an index is far slower than adding
- * one. Turning this on is a statement that the catalogue is real enough to
- * stand behind.
+ *   - `on`  — index anyway. A staging host that should be findable, or a
+ *             deployment somewhere other than Vercel, where `VERCEL_ENV` is
+ *             undefined and this would otherwise refuse.
+ *   - `off` — never index. Pulls the live site out without a rollback.
+ *   - unset — production yes, everything else no.
+ *
+ * What is deliberately no longer here is a demo-data guard. It was worth
+ * having — a catalogue of invented events published under a real brand can
+ * send someone to a ground that was never booked, and de-indexing is far
+ * slower than indexing. It is now a judgement the operator makes by deciding
+ * what to publish, not one this function makes on their behalf (D-043).
  *
  * None of this affects link previews. WhatsApp, iMessage, Slack, Discord and
  * X read Open Graph tags and ignore `robots` entirely.
@@ -114,7 +124,7 @@ export function isIndexable(): boolean {
     case "0":
       return false;
     default:
-      return !isDemoMode();
+      return process.env.VERCEL_ENV === "production";
   }
 }
 

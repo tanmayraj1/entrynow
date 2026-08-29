@@ -1087,23 +1087,39 @@ carried `<meta name="robots" content="noindex, nofollow, nocache">`, and
 showed it with **"No information is available for this page"**; Search Console
 could not fetch the sitemap. Three separate-looking failures, one cause.
 
-**Decision.** `SEARCH_INDEXING` decides, three-valued:
+**Decision.** `VERCEL_ENV === "production"` decides; `SEARCH_INDEXING`
+overrides.
 
-| Value | Meaning | Where |
+| `SEARCH_INDEXING` | Result | Where |
 |---|---|---|
-| `on` | index, whatever demo mode says | Production |
-| `off` | never index | Preview and staging deployments |
-| unset | follow `DEMO_MODE` | local, and the cautious default |
+| unset | index iff `VERCEL_ENV === "production"` | everywhere, and correct |
+| `on` | index regardless | staging that should be findable; non-Vercel hosts |
+| `off` | never index | pulling the live site out without a rollback |
 
-The `off` value is not redundant with the unset default. A Vercel Preview
-deployment inherits Production's env vars unless overridden, so without an
-explicit `off` on the Preview scope every branch build would invite indexing
-and compete with the real site for its own brand name.
+**The first attempt made this an env var and that was the wrong shape.** It
+required setting `on` on the Production scope *and* `off` on Preview — because
+a Vercel Preview inherits Production's variables unless overridden, so a single
+`on` would have invited Google into every branch build to compete with the real
+site for the brand's own name. Two dashboard settings, in the right scopes, on
+a deployment that was already silently delisted once. That is precisely the
+kind of configuration that does not get made, and its failure is invisible from
+inside the app.
 
-D-039's caution survives as the unset default and as the meaning of turning it
-on: `SEARCH_INDEXING=on` is a statement that the catalogue is real enough to
-stand behind, not a formality. The events currently listed are real Garba
-nights at real Ahmedabad venues; the bookings against them are seeded.
+`VERCEL_ENV` answers the question directly and needs nobody to remember
+anything: it is `production` on exactly one deployment. The env var stays as an
+escape hatch in both directions, including for a host where `VERCEL_ENV` does
+not exist at all.
+
+**What was given up.** D-039's demo-data guard is gone, not relocated. It was
+worth having — a catalogue of invented events published under a real brand can
+send someone to a ground that was never booked, and de-indexing is far slower
+than indexing. But it was never really protecting against that: it was
+protecting against `DEMO_MODE`, which production needs on permanently for the
+test-card payment screen, so it fired on exactly the deployment where the risk
+was accepted and nowhere else. What content is fit to publish is a judgement
+the operator makes by deciding what to publish. The events listed today are
+real Garba nights at real Ahmedabad venues; the bookings against them are
+seeded, and that was weighed and accepted when this was turned on.
 
 **Also changed, in the same pass.** The sitemap was rewritten to be
 comprehensive rather than minimal — it now carries the filtered category
