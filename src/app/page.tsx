@@ -41,7 +41,16 @@ import { shareMetadata, SITE_NAME } from "@/lib/site";
 
 export const revalidate = 300;
 
-const TITLE = "Book event tickets online in India";
+/**
+ * The brand is spelled out here, unlike every other page.
+ *
+ * `title.template` in the root layout appends "· Entry Now" to child segments
+ * — and `app/page.tsx` is not a child segment, it is the same segment the
+ * template is defined in, so Next does not apply it. The homepage shipped
+ * titled "Book event tickets online in India" with no brand anywhere in it,
+ * on the one page most likely to be returned for a search of the brand name.
+ */
+const TITLE = `Book event tickets online in India · ${SITE_NAME}`;
 const DESCRIPTION =
   "Book Garba and Navratri passes, concerts, comedy and melas across India. " +
   "Instant digital tickets — one QR each, scanned at the gate.";
