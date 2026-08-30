@@ -49,7 +49,15 @@ export interface EventCardData {
   lng: number;
 }
 
-const eventCardSelect = {
+/**
+ * Exported for `queries/national.ts`, which widens the row with its city.
+ *
+ * The city is NOT added here. Two joined columns on every card query in the
+ * app — featured rail, listing grid, map, festival page, organizer page — to
+ * serve one page that is none of them is the wrong trade; the national page
+ * spreads this select instead and pays for the join only where it is read.
+ */
+export const eventCardSelect = {
   id: true,
   slug: true,
   title: true,
@@ -81,7 +89,7 @@ const eventCardSelect = {
   },
 } as const;
 
-type RawEvent = {
+export type RawEvent = {
   id: string;
   slug: string;
   title: string;
@@ -128,7 +136,7 @@ function dateLabel(sessions: { startsAt: Date }[]): string {
   return `${fmt(first)} – ${fmt(last)}`;
 }
 
-function toCard(e: RawEvent, now: Date): EventCardData {
+export function toCard(e: RawEvent, now: Date): EventCardData {
   const upcoming = e.sessions.filter((s) => s.endsAt >= now);
   const next = upcoming[0] ?? null;
   const active = e.tiers.filter((t) => t.isActive);

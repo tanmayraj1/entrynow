@@ -96,11 +96,11 @@
     ]
   },
   "counts": {
-    "total": 170,
+    "total": 171,
     "blocker": 0,
     "broken": 0,
     "control": 0,
-    "incomplete": 170,
+    "incomplete": 171,
     "polish": 0
   },
   "findings": [
@@ -885,28 +885,28 @@
       "check": "A14",
       "severity": "incomplete",
       "file": "src/app/(marketplace)/[city]/events/[slug]/page.tsx",
-      "line": 210,
+      "line": 225,
       "detail": "hardcoded en-IN — locale follows the content's country (lakh grouping is correct for INR and wrong for CAD)"
     },
     {
       "check": "A14",
       "severity": "incomplete",
       "file": "src/app/(marketplace)/[city]/events/[slug]/page.tsx",
-      "line": 359,
+      "line": 374,
       "detail": "hardcoded en-IN — locale follows the content's country (lakh grouping is correct for INR and wrong for CAD)"
     },
     {
       "check": "A14",
       "severity": "incomplete",
       "file": "src/app/(marketplace)/[city]/events/[slug]/page.tsx",
-      "line": 366,
+      "line": 381,
       "detail": "hardcoded en-IN — locale follows the content's country (lakh grouping is correct for INR and wrong for CAD)"
     },
     {
       "check": "A14",
       "severity": "incomplete",
       "file": "src/app/(marketplace)/[city]/events/page.tsx",
-      "line": 247,
+      "line": 301,
       "detail": "hardcoded en-IN — locale follows the content's country (lakh grouping is correct for INR and wrong for CAD)"
     },
     {
@@ -955,28 +955,28 @@
       "check": "A14",
       "severity": "incomplete",
       "file": "src/app/(marketplace)/[city]/page.tsx",
-      "line": 266,
+      "line": 275,
       "detail": "hardcoded ₹ — money must render through <Money currency=…> so a CAD event does not display rupees"
     },
     {
       "check": "A14",
       "severity": "incomplete",
       "file": "src/app/(marketplace)/[city]/page.tsx",
-      "line": 381,
+      "line": 390,
       "detail": "hardcoded en-IN — locale follows the content's country (lakh grouping is correct for INR and wrong for CAD)"
     },
     {
       "check": "A14",
       "severity": "incomplete",
       "file": "src/app/(marketplace)/[city]/page.tsx",
-      "line": 382,
+      "line": 391,
       "detail": "hardcoded en-IN — locale follows the content's country (lakh grouping is correct for INR and wrong for CAD)"
     },
     {
       "check": "A14",
       "severity": "incomplete",
       "file": "src/app/(marketplace)/[city]/page.tsx",
-      "line": 539,
+      "line": 548,
       "detail": "hardcoded en-IN — locale follows the content's country (lakh grouping is correct for INR and wrong for CAD)"
     },
     {
@@ -1235,42 +1235,42 @@
       "check": "A14",
       "severity": "incomplete",
       "file": "src/lib/queries/marketplace.ts",
-      "line": 111,
+      "line": 119,
       "detail": "hardcoded en-IN — locale follows the content's country (lakh grouping is correct for INR and wrong for CAD)"
     },
     {
       "check": "A14",
       "severity": "incomplete",
       "file": "src/lib/queries/marketplace.ts",
-      "line": 117,
+      "line": 125,
       "detail": "hardcoded en-IN — locale follows the content's country (lakh grouping is correct for INR and wrong for CAD)"
     },
     {
       "check": "A14",
+      "severity": "incomplete",
+      "file": "src/lib/queries/marketplace.ts",
+      "line": 130,
+      "detail": "hardcoded en-IN — locale follows the content's country (lakh grouping is correct for INR and wrong for CAD)"
+    },
+    {
+      "check": "A15",
       "severity": "incomplete",
       "file": "src/lib/queries/marketplace.ts",
       "line": 122,
-      "detail": "hardcoded en-IN — locale follows the content's country (lakh grouping is correct for INR and wrong for CAD)"
-    },
-    {
-      "check": "A15",
-      "severity": "incomplete",
-      "file": "src/lib/queries/marketplace.ts",
-      "line": 114,
       "detail": "hardcoded Asia/Kolkata — the zone belongs to the event's city, not to the code reading it"
     },
     {
       "check": "A15",
       "severity": "incomplete",
       "file": "src/lib/queries/marketplace.ts",
-      "line": 119,
+      "line": 127,
       "detail": "hardcoded Asia/Kolkata — the zone belongs to the event's city, not to the code reading it"
     },
     {
       "check": "A15",
       "severity": "incomplete",
       "file": "src/lib/queries/marketplace.ts",
-      "line": 124,
+      "line": 132,
       "detail": "hardcoded Asia/Kolkata — the zone belongs to the event's city, not to the code reading it"
     },
     {
@@ -1279,6 +1279,13 @@
       "file": "src/lib/refunds.ts",
       "line": 273,
       "detail": "hardcoded ₹ — money must render through <Money currency=…> so a CAD event does not display rupees"
+    },
+    {
+      "check": "A14",
+      "severity": "incomplete",
+      "file": "src/lib/seo.ts",
+      "line": 68,
+      "detail": "hardcoded en-IN — locale follows the content's country (lakh grouping is correct for INR and wrong for CAD)"
     },
     {
       "check": "A16",

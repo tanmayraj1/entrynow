@@ -22,9 +22,12 @@ import { db } from "@/lib/db";
 export async function MarketplaceShell({
   citySlug,
   children,
+  autoPromptCity = true,
 }: {
   citySlug: string;
   children: React.ReactNode;
+  /** See `SiteHeader`. The national home page turns this off. */
+  autoPromptCity?: boolean;
 }) {
   const [city, cities, categories, user] = await Promise.all([
     getCityBySlug(citySlug),
@@ -58,6 +61,7 @@ export async function MarketplaceShell({
         }))}
         user={user}
         unreadCount={unreadCount}
+        autoPromptCity={autoPromptCity}
       />
       {/* The dock is sticky, so it overlays the last screenful. `--dock-h` is
           what stops the footer's final rows — and any page's last CTA — from

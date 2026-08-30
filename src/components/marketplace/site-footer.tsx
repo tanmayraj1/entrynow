@@ -1,11 +1,26 @@
 import Link from "next/link";
 import { Logo } from "@/components/ui";
+import { getCategories, getCities } from "@/lib/queries/marketplace";
+import { SUPPORT_EMAIL, SUPPORT_PHONE_LABEL } from "@/lib/site";
 
-export function SiteFooter({ citySlug }: { citySlug: string }) {
+/**
+ * The footer is on every page, which makes it the site's crawl map.
+ *
+ * The category and city bands below are not decoration. Every listing on this
+ * site sits behind a filter or a city segment, so a crawler following links
+ * alone reaches almost none of them — the sitemap declares those URLs but a
+ * declaration is not a path. These two rows give every category and every city
+ * one real internal link from every page on the site, which is what makes them
+ * reachable rather than merely listed.
+ */
+export async function SiteFooter({ citySlug }: { citySlug: string }) {
+  const [categories, cities] = await Promise.all([getCategories(), getCities()]);
+
   const columns = [
     {
       title: "Discover",
       links: [
+        { href: "/", label: "All cities" },
         { href: `/${citySlug}/events`, label: "All events" },
         { href: `/${citySlug}/festivals/navratri-2026`, label: "Navratri 2026" },
         { href: `/${citySlug}/events?category=garba-navratri`, label: "Garba" },
@@ -40,11 +55,12 @@ export function SiteFooter({ citySlug }: { citySlug: string }) {
               gradient half stays as it is, which is the whole point of it. */}
           <Logo size="md" onDark />
           <p className="text-[13px] text-white/70 max-w-xs leading-relaxed">
-            Communal and cultural events across India — Garba nights, Diwali
-            melas, concerts and more. Book digital tickets, scan and enter.
+            Book event tickets across India — Garba and Navratri nights,
+            concerts, comedy, food fests and melas. One QR per ticket, scanned
+            at the gate.
           </p>
           <p className="text-[12.5px] text-white/60 mt-2">
-            support@entrynow.in · 1800-121-ENTRY
+            {SUPPORT_EMAIL} · {SUPPORT_PHONE_LABEL}
           </p>
         </div>
 
@@ -64,6 +80,41 @@ export function SiteFooter({ citySlug }: { citySlug: string }) {
             ))}
           </div>
         ))}
+      </div>
+
+      <div className="border-t border-white/10 px-4 md:px-6 lg:px-12 py-6 flex flex-col gap-4">
+        <div>
+          <p className="text-[11.5px] font-extrabold tracking-[0.08em] text-white/50">
+            BOOK BY CATEGORY
+          </p>
+          <div className="mt-2.5 flex flex-wrap gap-x-4 gap-y-2">
+            {categories.map((c) => (
+              <Link
+                key={c.slug}
+                href={`/${citySlug}/events?category=${c.slug}`}
+                className="text-[12.5px] text-white/70 hover:text-white"
+              >
+                {c.name}
+              </Link>
+            ))}
+          </div>
+        </div>
+        <div>
+          <p className="text-[11.5px] font-extrabold tracking-[0.08em] text-white/50">
+            BOOK BY CITY
+          </p>
+          <div className="mt-2.5 flex flex-wrap gap-x-4 gap-y-2">
+            {cities.map((c) => (
+              <Link
+                key={c.slug}
+                href={`/${c.slug}`}
+                className="text-[12.5px] text-white/70 hover:text-white"
+              >
+                {c.name}
+              </Link>
+            ))}
+          </div>
+        </div>
       </div>
 
       <div className="border-t border-white/10 px-4 md:px-6 lg:px-12 py-5 flex flex-wrap items-center justify-between gap-3">

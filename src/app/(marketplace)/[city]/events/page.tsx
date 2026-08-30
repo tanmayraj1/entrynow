@@ -16,10 +16,12 @@ import { MapView } from "@/components/marketplace/map-view";
 import { ViewSwitcher } from "@/components/marketplace/view-switcher";
 import { MobileFilterDrawer } from "@/components/marketplace/mobile-filter-drawer";
 import { Button, Money } from "@/components/ui";
-import { getCityBySlug } from "@/lib/queries/marketplace";
+import { getCategories, getCityBySlug } from "@/lib/queries/marketplace";
 import { parseFilters, searchEvents } from "@/lib/queries/listing";
 import { TicketTearScreen } from "@/components/brand/ticket-tear";
-import { shareMetadata } from "@/lib/site";
+import { shareMetadata, SITE_NAME } from "@/lib/site";
+import { JsonLd } from "@/components/seo/json-ld";
+import { breadcrumbJsonLd, itemListJsonLd } from "@/lib/seo";
 
 /**
  * The listing is a crawl trap unless it says otherwise.
@@ -51,11 +53,29 @@ export async function generateMetadata({
   );
   const indexable = otherFacets.length === 0;
 
-  const label = category?.replace(/-/g, " ");
+  /**
+   * The category's real name, not its slug with the hyphens taken out.
+   *
+   * `garba-navratri`.replace(/-/g," ") gave "garba navratri in Ahmedabad" — a
+   * lowercase slug fragment as the title of the single page most likely to be
+   * searched for by name. The catalogue read is cached and already warm from
+   * the header, so this costs nothing.
+   */
+  const named = category
+    ? (await getCategories()).find((c) => c.slug === category)?.name
+    : undefined;
+
+  // "Book Garba & Navratri tickets in Ahmedabad" — the phrase someone types,
+  // in the order they type it, with the city last where it reads naturally.
+  const title = named
+    ? `Book ${named} tickets in ${found.name}`
+    : `Book event tickets in ${found.name}`;
 
   return shareMetadata({
-    title: label ? `${label} in ${found.name}` : `Events in ${found.name}`,
-    description: `Browse ${label ? `${label} ` : ""}events in ${found.name} — dates, venues, prices and instant digital tickets.`,
+    title,
+    description: named
+      ? `${named} in ${found.name} — dates, venues, prices and instant digital tickets. One QR per ticket, scanned at the gate.`
+      : `Every event on sale in ${found.name} — Garba nights, concerts, comedy and melas. Book online and get one QR per ticket.`,
     path: `/${city}/events${category ? `?category=${category}` : ""}`,
     index: indexable,
   });
@@ -106,14 +126,48 @@ async function Listing({
     getViewerContext(),
   ]);
 
+  const categoryName = filters.category
+    ? facets.categories.find((c) => c.slug === filters.category)?.name
+    : undefined;
+
   const heading = filters.q
     ? `“${filters.q}” in ${city.name}`
-    : filters.category
-      ? `${facets.categories.find((c) => c.slug === filters.category)?.name ?? "Events"} in ${city.name}`
+    : categoryName
+      ? `${categoryName} in ${city.name}`
       : `Events in ${city.name}`;
 
   return (
     <div className="px-4 md:px-6 lg:px-12 py-6">
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: SITE_NAME, path: "/" },
+          { name: city.name, path: `/${citySlug}` },
+          { name: "Events", path: `/${citySlug}/events` },
+          ...(categoryName
+            ? [
+                {
+                  name: categoryName,
+                  path: `/${citySlug}/events?category=${filters.category}`,
+                },
+              ]
+            : []),
+        ])}
+      />
+      {/* What makes this page a *set of events* rather than one document that
+          mentions several. URLs only — the descriptions live on the events'
+          own pages, and inlining them here would put two competing copies of
+          each entity in the graph. */}
+      {events.length > 0 && (
+        <JsonLd
+          data={itemListJsonLd(
+            heading,
+            events.map((e) => ({
+              name: e.title,
+              path: `/${citySlug}/events/${e.slug}`,
+            })),
+          )}
+        />
+      )}
       <div className="flex items-end justify-between gap-4 flex-wrap mb-5">
         <div>
           <h1 className="text-[22px] md:text-[24px] tracking-[-0.4px]">

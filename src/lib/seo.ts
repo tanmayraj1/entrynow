@@ -2,7 +2,13 @@ import "server-only";
 
 import type { EventDetail } from "@/lib/queries/event";
 import { toRupees } from "@/lib/money";
-import { absoluteUrl, SITE_DESCRIPTION, SITE_NAME, siteUrl } from "@/lib/site";
+import {
+  absoluteUrl,
+  SITE_DESCRIPTION,
+  SITE_NAME,
+  siteUrl,
+  SUPPORT_EMAIL,
+} from "@/lib/site";
 
 /**
  * schema.org payloads.
@@ -16,7 +22,15 @@ import { absoluteUrl, SITE_DESCRIPTION, SITE_NAME, siteUrl } from "@/lib/site";
  * these functions query.
  */
 
-/** The site itself — emitted once, on the city home. */
+/**
+ * The site itself — emitted once per page, on `/` and on each city home.
+ *
+ * The `@id` values are stable absolute URIs rather than page-local ids, so the
+ * Organization declared on the home page and the one referenced as an event's
+ * `organizer` publisher are understood as the same entity across the whole
+ * site. That single graph is what a knowledge panel is built from; a fresh
+ * anonymous Organization on every page is not.
+ */
 export function websiteJsonLd(citySlug: string): Record<string, unknown> {
   return {
     "@context": "https://schema.org",
@@ -25,14 +39,33 @@ export function websiteJsonLd(citySlug: string): Record<string, unknown> {
         "@type": "Organization",
         "@id": `${siteUrl()}#organization`,
         name: SITE_NAME,
+        alternateName: "EntryNow",
         url: siteUrl(),
         description: SITE_DESCRIPTION,
+        // A square mark, which is what Google wants for a logo — the wordmark
+        // lockup gets cropped. `icon.svg` is the same artwork the tab uses.
+        logo: {
+          "@type": "ImageObject",
+          url: absoluteUrl("/apple-icon.png"),
+          width: 180,
+          height: 180,
+        },
+        email: SUPPORT_EMAIL,
+        areaServed: { "@type": "Country", name: "India" },
+        contactPoint: {
+          "@type": "ContactPoint",
+          contactType: "customer support",
+          email: SUPPORT_EMAIL,
+          areaServed: "IN",
+          availableLanguage: ["en", "hi", "gu"],
+        },
       },
       {
         "@type": "WebSite",
         "@id": `${siteUrl()}#website`,
         name: SITE_NAME,
         url: siteUrl(),
+        inLanguage: "en-IN",
         publisher: { "@id": `${siteUrl()}#organization` },
         // Declares the search endpoint so a search box can appear under the
         // result. It points at the real listing route with the real param —
@@ -48,6 +81,79 @@ export function websiteJsonLd(citySlug: string): Record<string, unknown> {
         },
       },
     ],
+  };
+}
+
+/**
+ * The trail Google draws in place of the raw URL under a result.
+ *
+ * Worth more here than on most sites, because these paths are deep and
+ * meaningful — `entrynow.in › ahmedabad › events › rangilo-re-garba…` becomes
+ * "Entry Now › Ahmedabad › Events › Rangilo Re Garba Mahotsav". The `position`
+ * values must start at 1 and be contiguous, and every `item` must be an
+ * absolute URL that resolves, or Google drops the whole block silently.
+ */
+export function breadcrumbJsonLd(
+  trail: { name: string; path: string }[],
+): Record<string, unknown> {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: trail.map((t, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: t.name,
+      item: absoluteUrl(t.path),
+    })),
+  };
+}
+
+/**
+ * A listing, as an ordered list of the things on it.
+ *
+ * This is what lets a listing page be understood as a set of events rather
+ * than as one document that happens to mention several. Each entry is a URL
+ * reference, not an inlined Event — the full description lives on the event's
+ * own page, and duplicating it here would put two competing copies of the same
+ * entity in the graph.
+ */
+export function itemListJsonLd(
+  name: string,
+  items: { name: string; path: string }[],
+): Record<string, unknown> {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name,
+    numberOfItems: items.length,
+    itemListElement: items.map((it, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: it.name,
+      url: absoluteUrl(it.path),
+    })),
+  };
+}
+
+/**
+ * Questions and answers, both on the page and in the markup.
+ *
+ * The rule Google enforces and that is easy to break: every question and
+ * answer in this block must be **visible on the page**. Marking up an answer
+ * that only exists in the JSON is a structured-data violation, so the caller
+ * passes the same array it renders.
+ */
+export function faqJsonLd(
+  qa: { q: string; a: string }[],
+): Record<string, unknown> {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: qa.map((item) => ({
+      "@type": "Question",
+      name: item.q,
+      acceptedAnswer: { "@type": "Answer", text: item.a },
+    })),
   };
 }
 

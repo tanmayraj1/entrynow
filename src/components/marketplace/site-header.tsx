@@ -17,12 +17,22 @@ export function SiteHeader({
   cities,
   user,
   unreadCount = 0,
+  autoPromptCity = true,
 }: {
   citySlug: string;
   cityName: string;
   cities: PickerCity[];
   user: SessionUser | null;
   unreadCount?: number;
+  /**
+   * Ask a first-time visitor which city they are in.
+   *
+   * On by default, and off on the national home page. That page exists to
+   * answer this question with a grid of cities the visitor can read; opening a
+   * modal over it on first paint asks the same thing twice, and the first ask
+   * lands as a wall in front of a page someone reached from a search result.
+   */
+  autoPromptCity?: boolean;
 }) {
   const nav = [
     { href: `/${citySlug}/events`, label: "Explore events" },
@@ -101,7 +111,7 @@ export function SiteHeader({
               cities={cities}
               compact
               triggerClassName="md:hidden"
-              autoPrompt
+              autoPrompt={autoPromptCity}
             />
 
             {/* The home page used to carry a large search card in its hero.

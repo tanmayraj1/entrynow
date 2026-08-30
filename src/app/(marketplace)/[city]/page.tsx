@@ -29,8 +29,8 @@ import {
 import { formatIstShortDate } from "@/lib/ist";
 import { TicketTearScreen } from "@/components/brand/ticket-tear";
 import { JsonLd } from "@/components/seo/json-ld";
-import { websiteJsonLd } from "@/lib/seo";
-import { shareMetadata } from "@/lib/site";
+import { breadcrumbJsonLd, websiteJsonLd } from "@/lib/seo";
+import { shareMetadata, SITE_NAME } from "@/lib/site";
 
 export const revalidate = 300;
 
@@ -43,9 +43,12 @@ export async function generateMetadata({
   // The path is relative — `metadataBase` in the root layout makes it
   // absolute. A city home is reachable as `/` too (the root redirects by
   // cookie), so saying which address is the real one is not optional.
+  // "Ahmedabad's festivals, one ticket away" was brand copy standing where a
+  // title should be. It read well and answered nothing: the query is "book
+  // garba tickets ahmedabad", and the title it competed against said so.
   return shareMetadata({
-    title: `${found.name}’s festivals, one ticket away`,
-    description: `Garba nights, Diwali melas, concerts and more in ${found.name}. Book digital tickets, scan and enter.`,
+    title: `Book event tickets in ${found.name}`,
+    description: `Garba and Navratri nights, concerts, comedy and melas in ${found.name}. Book online — one QR per ticket, scanned at the gate.`,
     path: `/${found.slug}`,
   });
 }
@@ -73,6 +76,12 @@ export default async function CityHomePage({
       {/* Above the boundary, unlike the event page's Event block: this one is
           built from the city slug alone, so there is nothing to wait for. */}
       <JsonLd data={websiteJsonLd(citySlug)} />
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: SITE_NAME, path: "/" },
+          { name: city.name, path: `/${citySlug}` },
+        ])}
+      />
       <Suspense
         key={tab}
         fallback={<TicketTearScreen label="Finding tonight's events" />}

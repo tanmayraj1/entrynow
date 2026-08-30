@@ -1130,3 +1130,61 @@ claims everything changed on every crawl teaches Google to ignore the field.
 It still lists nothing empty and nothing behind a login, and it no longer lists
 `/`, which 307s to a city and comes back in Search Console as "Page with
 redirect — excluded".
+
+## D-044 — `/` is a page, not a redirect
+
+**Gap.** The root sent every visitor to `/{city}` with a 307, on the reasoning
+that the marketplace is city-scoped (spec C2.2). That is true of every listing
+and was the wrong answer for the root, in three ways that only became visible
+once the site was actually indexed:
+
+1. **The strongest URL on the domain held no content.** Google showed the
+   redirect target for the brand's own name, so a search for "entry now"
+   returned *"Ahmedabad's festivals, one ticket away"* — a city page standing
+   in for a company.
+2. **No page could answer a non-geographic query.** "book event tickets",
+   "ticket booking", "event booking" contain no city, so no city-scoped page is
+   the right result for them. There was nothing else.
+3. **The redirect itself was a liability in Search Console**, reported as
+   "Page with redirect — excluded", which is why the sitemap had to omit it.
+
+**Decision.** `/` renders a national landing page: an h1 carrying the head
+term, the twelve categories each linking to the city where that category is
+busiest, a rail of what is on next anywhere in the country, every city as a
+tile, and six FAQs marked up as `FAQPage`.
+
+**The redirect is removed for everyone, not just for crawlers.** Serving a
+landing page to Googlebot and a redirect to people is cloaking — a
+manual-action offence, and one the site would deserve. The returning visitor
+loses one tap and keeps everything else: the header still opens on their
+remembered city, and every tile links into a city-scoped page.
+
+**Two things this forced.**
+
+- **The first-visit city modal had to be suppressed here.** `SiteHeader` gained
+  `autoPromptCity`, default true, false on `/`. The national page exists to ask
+  "which city" in a form the visitor can read; opening a modal over it on first
+  paint asks the same question twice, and the first ask lands as a wall in
+  front of a page someone reached from a search result.
+- **The national queries live in `queries/national.ts`, not `marketplace.ts`.**
+  Every query in the latter takes a `cityId` and that stays true. The national
+  rail spreads `eventCardSelect` and adds the city join for itself rather than
+  widening the shared select — two extra joined columns on the featured rail,
+  the listing grid, the map, the festival page and the organizer page, to serve
+  one page that is none of them, is the wrong trade.
+
+**Also in this pass.** The footer said *"Communal and cultural events across
+India"*, and Google had chosen that phrase to open the site's search snippet.
+In Indian English "communal" reads as sectarian — the word belongs to
+"communal violence", not to a Garba listing. It was never intended that way and
+had been sitting on every page. The footer also gained a category band and a
+city band: every listing on this site is behind a filter or a city segment, so
+a crawler following links reached almost none of them. A sitemap declares those
+URLs; it does not create a path to them.
+
+Titles across the templates moved from brand copy to the phrase people type —
+`Book Garba & Navratri tickets in Ahmedabad` rather than `garba navratri in
+Ahmedabad`, which was the slug with its hyphens removed. `BreadcrumbList` on
+city, listing and event pages; `ItemList` on listings; `logo`, `contactPoint`
+and `areaServed` on the Organization so the brand query has something to build
+a knowledge panel from.

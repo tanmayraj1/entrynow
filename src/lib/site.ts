@@ -18,8 +18,12 @@ export const SITE_TAGLINE = "India’s festivals, one ticket away";
  * 155 characters and truncates the rest mid-word.
  */
 export const SITE_DESCRIPTION =
-  "Book Garba and Navratri nights, Diwali melas, Holi, concerts, comedy, " +
-  "food fests and more. Digital tickets, one QR each, scanned at the gate.";
+  "Book event tickets online across India — Garba and Navratri nights, " +
+  "concerts, comedy, food fests and melas. One QR per ticket, scanned at the gate.";
+
+/** Reachable, and repeated in the footer, the Organization block and support copy. */
+export const SUPPORT_EMAIL = "support@entrynow.in";
+export const SUPPORT_PHONE_LABEL = "1800-121-ENTRY";
 
 /**
  * The same claim, short enough to fit a share card whole.

@@ -20,7 +20,7 @@ import {
   getSimilarEvents,
 } from "@/lib/queries/event";
 import { JsonLd } from "@/components/seo/json-ld";
-import { eventJsonLd } from "@/lib/seo";
+import { breadcrumbJsonLd, eventJsonLd } from "@/lib/seo";
 import { shareMetadata, SITE_NAME } from "@/lib/site";
 import { TicketTearScreen } from "@/components/brand/ticket-tear";
 import { formatIstDate, formatIstTime, isTodayIst } from "@/lib/ist";
@@ -115,6 +115,21 @@ async function EventDetail({
           stream to finish, and putting it in `generateMetadata` instead would
           mean re-querying the whole event to build it. */}
       <JsonLd data={eventJsonLd(event, citySlug)} />
+      {/* Turns `entrynow.in › ahmedabad › events › rangilo-re-garba-…` into a
+          readable trail under the search result. The category step is a real
+          filtered listing, not a fabricated level. */}
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: SITE_NAME, path: "/" },
+          { name: event.city.name, path: `/${citySlug}` },
+          { name: "Events", path: `/${citySlug}/events` },
+          {
+            name: event.category.name,
+            path: `/${citySlug}/events?category=${event.category.slug}`,
+          },
+          { name: event.title, path: `/${citySlug}/events/${event.slug}` },
+        ])}
+      />
 
       {/* ------------------------------------------------------------ Gallery */}
       {/* The same plate the card uses, deliberately: cover art when the

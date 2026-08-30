@@ -26,10 +26,6 @@ import { absoluteUrl, isIndexable } from "@/lib/site";
  *
  * Two deliberate omissions:
  *
- *   - **`/`**, because it 307s to a city. Google's own guidance is to list the
- *     destination, and a redirecting URL in a sitemap comes back in Search
- *     Console as "Page with redirect — excluded", which reads like a fault.
- *     The default city hub carries priority 1.0 in its place.
  *   - **anything behind a login** — `/account`, `/tickets`, `/booking`, the
  *     portals, `/scan`. A crawler cannot sign in, so listing them would only
  *     offer Google a set of sign-in walls to index. `robots.ts` disallows the
@@ -127,6 +123,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const cityFresh = (slug: string) => freshness.get(slug) ?? now;
 
   const staticPages = [
+    // The national home page. It was omitted while `/` was a 307 to a city —
+    // Google's guidance is to list the destination, and a redirecting URL is
+    // reported as "Page with redirect — excluded", which reads like a fault.
+    // It is a real page now (D-044) and the strongest URL on the domain.
+    entry("/", now, "daily", 1),
     // The organizer funnel. These are the pages that answer "can I sell here",
     // and they are the only marketing copy on the site that a crawler can read
     // without a city in the path.
@@ -144,8 +145,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // something on rather than by existing in the catalogue.
   const citiesWithEvents = [...new Set(events.map((e) => e.city.slug))];
   const cityPages = citiesWithEvents.flatMap((slug) => [
-    // The root redirects here, so this is the site's real front page.
-    entry(`/${slug}`, cityFresh(slug), "daily", slug === DEFAULT_CITY ? 1 : 0.9),
+    entry(`/${slug}`, cityFresh(slug), "daily", slug === DEFAULT_CITY ? 0.95 : 0.9),
     entry(`/${slug}/events`, cityFresh(slug), "daily", 0.8),
     entry(`/${slug}/festivals`, cityFresh(slug), "weekly", 0.6),
   ]);

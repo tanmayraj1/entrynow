@@ -257,10 +257,19 @@ describe("sitemap coverage", () => {
     }
   });
 
-  it("does not list the root, which redirects to a city", async () => {
+  /**
+   * The root was deliberately omitted while it was a 307 to a city — a
+   * redirecting URL in a sitemap is reported as "Page with redirect —
+   * excluded". It is a real national page now (D-044), so it belongs back in,
+   * and it is the strongest URL on the domain.
+   */
+  it("lists the root exactly once, at the top priority", async () => {
     const entries = await sitemap();
     const roots = entries.filter((e) => new URL(e.url).pathname === "/");
-    expect(roots).toEqual([]);
+    expect(roots).toHaveLength(1);
+    expect(roots[0].priority).toBe(1);
+    // Nothing else may claim 1.0, or the signal says nothing.
+    expect(entries.filter((e) => e.priority === 1)).toHaveLength(1);
   });
 
   it("never lists a page behind a login", async () => {
